@@ -1,0 +1,550 @@
+<!--
+==================================================
+ CWPS Enterprise
+
+ Material Management Page
+
+ Version:
+ Sprint 1.3.1
+ Build 0001
+
+==================================================
+-->
+
+<div class="cwps-page">
+
+```
+<!-- Page Header -->
+
+
+<div class="dashboard-title">
+
+
+    <h3>
+
+        Material Management
+
+    </h3>
+
+
+    <p>
+
+        Manage material classification and quantity information
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Toolbar -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+
+        <div>
+
+
+            <h5 class="mb-1">
+
+                Material List
+
+            </h5>
+
+
+            <small class="text-muted">
+
+                Material master data
+
+            </small>
+
+
+        </div>
+
+
+
+        <div>
+
+
+            <button class="btn btn-primary me-2">
+
+
+                + Add Material
+
+
+            </button>
+
+
+
+            <button class="btn btn-outline-secondary">
+
+
+                Import Excel
+
+
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Material Category -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Material Category
+
+
+    </div>
+
+
+
+    <div class="d-flex gap-2 flex-wrap">
+
+
+
+        <span class="badge bg-primary">
+
+            Aluminum
+
+        </span>
+
+
+
+        <span class="badge bg-secondary">
+
+            Glass
+
+        </span>
+
+
+
+        <span class="badge bg-success">
+
+            Steel
+
+        </span>
+
+
+
+        <span class="badge bg-warning text-dark">
+
+            Accessory
+
+        </span>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Material Table -->
+
+
+<div class="cwps-card">
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-hover">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        Material Code
+
+                    </th>
+
+
+                    <th>
+
+                        Name
+
+                    </th>
+
+
+                    <th>
+
+                        Category
+
+                    </th>
+
+
+                    <th>
+
+                        Specification
+
+                    </th>
+
+
+                    <th>
+
+                        Unit
+
+                    </th>
+
+
+                    <th>
+
+                        Single Weight
+
+                    </th>
+
+
+                    <th>
+
+                        Quantity
+
+                    </th>
+
+
+                    <th>
+
+                        Status
+
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+            <tbody>
+
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        AL-001
+
+                    </td>
+
+
+                    <td>
+
+                        Aluminum Profile
+
+                    </td>
+
+
+                    <td>
+
+                        Aluminum
+
+                    </td>
+
+
+                    <td>
+
+                        6063-T5
+
+                    </td>
+
+
+                    <td>
+
+                        m
+
+                    </td>
+
+
+                    <td>
+
+                        2.35 kg/m
+
+                    </td>
+
+
+                    <td>
+
+                        0
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-success">
+
+                            Active
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        GL-001
+
+                    </td>
+
+
+                    <td>
+
+                        Curtain Wall Glass
+
+                    </td>
+
+
+                    <td>
+
+                        Glass
+
+                    </td>
+
+
+                    <td>
+
+                        10mm Tempered
+
+                    </td>
+
+
+                    <td>
+
+                        ㎡
+
+                    </td>
+
+
+                    <td>
+
+                        25 kg/㎡
+
+                    </td>
+
+
+                    <td>
+
+                        0
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-success">
+
+                            Active
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Material Analysis -->
+
+
+<div class="cwps-card mt-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Material Analysis
+
+
+    </div>
+
+
+
+
+    <div class="system-info">
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Calculation Mode
+
+            </span>
+
+
+            <span>
+
+                Quantity × Single Weight
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Weight Unit
+
+            </span>
+
+
+            <span>
+
+                KG
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Supported Units
+
+            </span>
+
+
+            <span>
+
+                ㎡ / m / PCS / SET
+
+            </span>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+```
+
+</div>
+
+<script>
+
+
+function pageLoaded(page){
+
+
+    if(page !== "material"){
+
+
+        return;
+
+
+    }
+
+
+
+    console.log(
+
+        "CWPS Material Management Loaded"
+
+    );
+
+
+}
+
+
+
+</script>
