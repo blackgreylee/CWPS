@@ -1,0 +1,98 @@
+CWPS Enterprise License
+
+Copyright (c) 2026 CWPS Enterprise
+
+All rights reserved.
+
+==================================================
+
+1. Usage Permission
+
+This software is developed for internal business operation purposes only.
+
+Permission is granted to authorized users and internal departments to use this software for company-related activities.
+
+==================================================
+
+2. Restrictions
+
+Without prior written permission, the following actions are prohibited:
+
+* Redistributing this software.
+* Selling or licensing this software to third parties.
+* Copying or modifying this software for external use.
+* Reverse engineering or extracting source code for unauthorized purposes.
+* Publishing this software or related materials publicly.
+
+==================================================
+
+3. Ownership
+
+All source code, documents, database designs, system architecture,
+and related materials are the intellectual property of CWPS Enterprise.
+
+Ownership remains with the original organization.
+
+==================================================
+
+4. Confidentiality
+
+Users shall keep all project information confidential, including but not limited to:
+
+* Source code
+* Database structure
+* Business logic
+* Procurement workflow
+* Project data
+* Customer information
+
+==================================================
+
+5. Modification Policy
+
+Any modification, extension, or customization of this software must follow the official development process.
+
+All changes should be:
+
+* Documented
+* Version controlled
+* Tested before release
+
+==================================================
+
+6. Warranty Disclaimer
+
+This software is provided "AS IS".
+
+CWPS Enterprise makes no warranties regarding:
+
+* System availability
+* Error-free operation
+* Data accuracy
+* Compatibility with unauthorized environments
+
+==================================================
+
+7. Version Control
+
+This project follows a controlled release process.
+
+Version format:
+
+Sprint X.X.X
+
+Build XXXX
+
+Example:
+
+Sprint 1.3.1
+
+Build 0001
+
+==================================================
+
+CWPS Enterprise
+
+Curtain Wall Procurement System
+
+Internal Use Only
