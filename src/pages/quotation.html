@@ -1,0 +1,486 @@
+<!--
+==================================================
+ CWPS Enterprise
+
+ Quotation Management Page
+
+ Version:
+ Sprint 1.3.1
+ Build 0001
+
+==================================================
+-->
+
+<div class="cwps-page">
+
+```
+<!-- Page Header -->
+
+
+<div class="dashboard-title">
+
+
+    <h3>
+
+        Quotation Management
+
+    </h3>
+
+
+    <p>
+
+        Manage supplier quotation and price analysis
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Toolbar -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+
+        <div>
+
+
+            <h5 class="mb-1">
+
+                Quotation List
+
+            </h5>
+
+
+            <small class="text-muted">
+
+                RFQ and supplier quotation records
+
+            </small>
+
+
+        </div>
+
+
+
+        <div>
+
+
+            <button class="btn btn-primary me-2">
+
+
+                + New RFQ
+
+
+            </button>
+
+
+
+            <button class="btn btn-outline-secondary">
+
+
+                Import Quote
+
+
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Quotation Status -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Quotation Status
+
+
+    </div>
+
+
+
+
+    <div class="d-flex gap-2 flex-wrap">
+
+
+
+        <span class="badge bg-secondary">
+
+            Draft
+
+        </span>
+
+
+
+        <span class="badge bg-primary">
+
+            Sent
+
+        </span>
+
+
+
+        <span class="badge bg-warning text-dark">
+
+            Waiting Reply
+
+        </span>
+
+
+
+        <span class="badge bg-success">
+
+            Completed
+
+        </span>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Quotation Table -->
+
+
+<div class="cwps-card">
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-hover">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        RFQ No.
+
+                    </th>
+
+
+                    <th>
+
+                        Supplier
+
+                    </th>
+
+
+                    <th>
+
+                        Material
+
+                    </th>
+
+
+                    <th>
+
+                        Quantity
+
+                    </th>
+
+
+                    <th>
+
+                        Quote Price
+
+                    </th>
+
+
+                    <th>
+
+                        Version
+
+                    </th>
+
+
+                    <th>
+
+                        Status
+
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+
+            <tbody>
+
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        RFQ-001
+
+                    </td>
+
+
+                    <td>
+
+                        Example Factory
+
+                    </td>
+
+
+                    <td>
+
+                        Aluminum Profile
+
+                    </td>
+
+
+                    <td>
+
+                        0 m
+
+                    </td>
+
+
+                    <td>
+
+                        NT$ 0
+
+                    </td>
+
+
+                    <td>
+
+                        V001
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-warning">
+
+                            Waiting
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+
+                <tr>
+
+
+                    <td colspan="7"
+
+                        class="text-center text-muted">
+
+
+                        No More Data
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Price Analysis -->
+
+
+<div class="cwps-card mt-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Price Analysis
+
+
+    </div>
+
+
+
+
+
+    <div class="system-info">
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Material Cost
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Processing Cost
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Total Quotation
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+```
+
+</div>
+
+<script>
+
+
+function pageLoaded(page){
+
+
+    if(page !== "quotation"){
+
+
+        return;
+
+
+    }
+
+
+
+    console.log(
+
+        "CWPS Quotation Management Loaded"
+
+    );
+
+
+}
+
+
+
+</script>
