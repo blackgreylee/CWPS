@@ -2,7 +2,7 @@
 
 CWPS Enterprise
 
-Invoice Model
+Invoice Management Engine
 
 Sprint:
 
@@ -14,253 +14,19 @@ Build:
 
 Description:
 
-Invoice and payment tracking data model
+Invoice workflow and payment tracking engine
 
 ==================================================
 */
 
-class InvoiceModel {
+class InvoiceEngine {
 
 ```
-constructor(data = {}){
+constructor(){
 
 
 
-    this.id =
-
-
-
-        data.id ||
-
-        this.generateId();
-
-
-
-
-
-    this.purchaseId =
-
-
-
-        data.purchaseId ||
-
-        "";
-
-
-
-
-
-    this.shipmentId =
-
-
-
-        data.shipmentId ||
-
-        "";
-
-
-
-
-
-    this.projectId =
-
-
-
-        data.projectId ||
-
-        "";
-
-
-
-
-
-    this.batchId =
-
-
-
-        data.batchId ||
-
-        "";
-
-
-
-
-
-    this.supplierId =
-
-
-
-        data.supplierId ||
-
-        "";
-
-
-
-
-
-    this.supplierName =
-
-
-
-        data.supplierName ||
-
-        "";
-
-
-
-
-
-    this.invoiceNo =
-
-
-
-        data.invoiceNo ||
-
-        "";
-
-
-
-
-
-    this.invoiceDate =
-
-
-
-        data.invoiceDate ||
-
-        "";
-
-
-
-
-
-    this.amount =
-
-
-
-        Number(
-
-            data.amount
-
-        )
-
-        || 0;
-
-
-
-
-
-    this.taxRate =
-
-
-
-        Number(
-
-            data.taxRate
-
-        )
-
-        || 5;
-
-
-
-
-
-    this.tax =
-
-
-
-        this.calculateTax();
-
-
-
-
-
-    this.totalAmount =
-
-
-
-        this.amount +
-
-        this.tax;
-
-
-
-
-
-    this.status =
-
-
-
-        data.status ||
-
-        "Draft";
-
-
-
-
-
-    this.paymentStatus =
-
-
-
-        data.paymentStatus ||
-
-        "Unpaid";
-
-
-
-
-
-    this.paidAmount =
-
-
-
-        Number(
-
-            data.paidAmount
-
-        )
-
-        || 0;
-
-
-
-
-
-    this.remark =
-
-
-
-        data.remark ||
-
-        "";
-
-
-
-
-
-    this.createdDate =
-
-
-
-        data.createdDate ||
-
-        new Date()
-
-        .toISOString();
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
+    this.invoices = [];
 
 
 
@@ -277,7 +43,7 @@ constructor(data = {}){
 /*
 ----------------------------------------------
 
-Generate ID
+Create Invoice From Purchase
 
 
 ----------------------------------------------
@@ -285,20 +51,140 @@ Generate ID
 */
 
 
-generateId(){
+createInvoice(
+
+    purchase,
+
+    shipment = null
+
+){
 
 
 
-    return (
+    let amount = 0;
 
-        "INV-" +
 
-        Date.now()
+
+
+
+    purchase.items.forEach(item=>{
+
+
+
+        amount +=
+
+
+
+            Number(
+
+                item.amount
+
+            )
+
+            ||
+
+
+
+            (
+
+                item.quantity *
+
+                item.unitPrice
+
+            );
+
+
+
+    });
+
+
+
+
+
+
+
+    let invoice =
+
+
+
+        new InvoiceModel({
+
+
+
+            purchaseId:
+
+                purchase.id,
+
+
+
+            shipmentId:
+
+                shipment
+
+                ?
+
+                shipment.id
+
+                :
+
+                "",
+
+
+
+            projectId:
+
+                purchase.projectId,
+
+
+
+            batchId:
+
+                purchase.batchId,
+
+
+
+            supplierId:
+
+                purchase.supplierId,
+
+
+
+            supplierName:
+
+                purchase.supplierName,
+
+
+
+            amount:
+
+                amount
+
+
+
+        });
+
+
+
+
+
+
+
+
+
+    this.invoices.push(
+
+        invoice
 
     );
 
 
 
+
+
+    return invoice;
+
+
+
 }
 
 
@@ -312,7 +198,7 @@ generateId(){
 /*
 ----------------------------------------------
 
-Calculate Tax
+Add Invoice
 
 
 ----------------------------------------------
@@ -320,23 +206,95 @@ Calculate Tax
 */
 
 
-calculateTax(){
+addInvoice(
+
+    invoice
+
+){
 
 
 
-    return Math.round(
+    this.invoices.push(
+
+        invoice
+
+    );
 
 
 
-        this.amount *
 
-        (
 
-            this.taxRate /
+    return invoice;
 
-            100
 
-        )
+
+}
+
+
+
+
+
+
+
+
+
+/*
+----------------------------------------------
+
+Get All Invoices
+
+
+----------------------------------------------
+
+*/
+
+
+getAll(){
+
+
+
+    return this.invoices;
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+----------------------------------------------
+
+Get Invoice By ID
+
+
+----------------------------------------------
+
+*/
+
+
+getById(
+
+    id
+
+){
+
+
+
+    return this.invoices.find(
+
+
+
+        item =>
+
+
+
+        item.id === id
 
 
 
@@ -357,7 +315,7 @@ calculateTax(){
 /*
 ----------------------------------------------
 
-Calculate Total
+Find By Purchase Order
 
 
 ----------------------------------------------
@@ -365,31 +323,27 @@ Calculate Total
 */
 
 
-calculateTotal(){
+getByPurchase(
+
+    purchaseId
+
+){
 
 
 
-    this.tax =
-
-        this.calculateTax();
+    return this.invoices.filter(
 
 
 
-
-
-    this.totalAmount =
-
-
-
-        this.amount +
-
-        this.tax;
+        item =>
 
 
 
+        item.purchaseId === purchaseId
 
 
-    return this.totalAmount;
+
+    );
 
 
 
@@ -414,19 +368,49 @@ Issue Invoice
 */
 
 
-issue(){
+issueInvoice(
+
+    invoiceId
+
+){
 
 
 
-    this.status =
-
-        "Issued";
+    let invoice =
 
 
 
+        this.getById(
+
+            invoiceId
+
+        );
 
 
-    this.updateTime();
+
+
+
+    if(!invoice){
+
+
+
+        return null;
+
+
+
+    }
+
+
+
+
+
+    invoice.issue();
+
+
+
+
+
+    return invoice;
 
 
 
@@ -453,19 +437,49 @@ Verify Invoice
 */
 
 
-verify(){
+verifyInvoice(
+
+    invoiceId
+
+){
 
 
 
-    this.status =
-
-        "Verified";
+    let invoice =
 
 
 
+        this.getById(
+
+            invoiceId
+
+        );
 
 
-    this.updateTime();
+
+
+
+    if(!invoice){
+
+
+
+        return null;
+
+
+
+    }
+
+
+
+
+
+    invoice.verify();
+
+
+
+
+
+    return invoice;
 
 
 
@@ -492,19 +506,49 @@ Approve Invoice
 */
 
 
-approve(){
+approveInvoice(
+
+    invoiceId
+
+){
 
 
 
-    this.status =
-
-        "Approved";
+    let invoice =
 
 
 
+        this.getById(
+
+            invoiceId
+
+        );
 
 
-    this.updateTime();
+
+
+
+    if(!invoice){
+
+
+
+        return null;
+
+
+
+    }
+
+
+
+
+
+    invoice.approve();
+
+
+
+
+
+    return invoice;
 
 
 
@@ -521,7 +565,7 @@ approve(){
 /*
 ----------------------------------------------
 
-Record Payment
+Payment Record
 
 
 ----------------------------------------------
@@ -531,51 +575,35 @@ Record Payment
 */
 
 
-pay(amount){
+recordPayment(
+
+    invoiceId,
+
+    amount
+
+){
 
 
 
-    this.paidAmount +=
+    let invoice =
 
 
 
-        Number(amount)
+        this.getById(
 
-        || 0;
+            invoiceId
 
-
-
-
-
-    if(
-
-        this.paidAmount >=
-
-        this.totalAmount
-
-    ){
+        );
 
 
 
-        this.paymentStatus =
-
-            "Paid";
 
 
-
-    }
-
-    else if(
-
-        this.paidAmount > 0
-
-    ){
+    if(!invoice){
 
 
 
-        this.paymentStatus =
-
-            "Partial";
+        return null;
 
 
 
@@ -585,7 +613,240 @@ pay(amount){
 
 
 
-    this.updateTime();
+    invoice.pay(
+
+        amount
+
+    );
+
+
+
+
+
+    return invoice;
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+----------------------------------------------
+
+Get Unpaid Invoice
+
+
+----------------------------------------------
+
+----------------------------------------------
+
+*/
+
+
+getUnpaidInvoices(){
+
+
+
+    return this.invoices.filter(
+
+
+
+        invoice =>
+
+
+
+        invoice.paymentStatus
+
+        !==
+
+        "Paid"
+
+
+
+    );
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+----------------------------------------------
+
+Calculate Outstanding Amount
+
+
+----------------------------------------------
+
+----------------------------------------------
+
+*/
+
+
+getOutstandingAmount(){
+
+
+
+    let total = 0;
+
+
+
+
+
+    this.getUnpaidInvoices()
+
+    .forEach(invoice=>{
+
+
+
+        total +=
+
+
+
+            invoice.getRemainingAmount();
+
+
+
+    });
+
+
+
+
+
+    return total;
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+----------------------------------------------
+
+Invoice Summary
+
+
+----------------------------------------------
+
+----------------------------------------------
+
+*/
+
+
+summary(){
+
+
+
+    let total = 0;
+
+
+
+    let paid = 0;
+
+
+
+    let unpaid = 0;
+
+
+
+
+
+    this.invoices.forEach(invoice=>{
+
+
+
+        total +=
+
+
+
+            invoice.totalAmount;
+
+
+
+
+
+        paid +=
+
+
+
+            invoice.paidAmount;
+
+
+
+    });
+
+
+
+
+
+    unpaid =
+
+        total -
+
+        paid;
+
+
+
+
+
+    return {
+
+
+
+        invoiceCount:
+
+            this.invoices.length,
+
+
+
+        totalAmount:
+
+            total,
+
+
+
+        paidAmount:
+
+            paid,
+
+
+
+        unpaidAmount:
+
+            unpaid,
+
+
+
+        generatedDate:
+
+            new Date()
+
+            .toISOString()
+
+
+
+    };
 
 
 
@@ -612,204 +873,49 @@ Close Invoice
 */
 
 
-close(){
+closeInvoice(
 
+    invoiceId
 
+){
 
-    this.status =
 
-        "Closed";
 
+    let invoice =
 
 
 
+        this.getById(
 
-    this.updateTime();
+            invoiceId
 
+        );
 
 
-}
 
 
 
+    if(!invoice){
 
 
 
+        return null;
 
 
 
-/*
-----------------------------------------------
+    }
 
-Remaining Payment
 
 
-----------------------------------------------
 
-----------------------------------------------
 
-*/
+    invoice.close();
 
 
-getRemainingAmount(){
 
 
 
-    return (
-
-
-
-        this.totalAmount -
-
-        this.paidAmount
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Time
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-updateTime(){
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        purchaseId:
-
-            this.purchaseId,
-
-
-
-        shipmentId:
-
-            this.shipmentId,
-
-
-
-        supplierId:
-
-            this.supplierId,
-
-
-
-        supplierName:
-
-            this.supplierName,
-
-
-
-        invoiceNo:
-
-            this.invoiceNo,
-
-
-
-        amount:
-
-            this.amount,
-
-
-
-        tax:
-
-            this.tax,
-
-
-
-        totalAmount:
-
-            this.totalAmount,
-
-
-
-        status:
-
-            this.status,
-
-
-
-        paymentStatus:
-
-            this.paymentStatus,
-
-
-
-        paidAmount:
-
-            this.paidAmount
-
-
-
-    };
+    return invoice;
 
 
 
@@ -818,4 +924,4 @@ toJSON(){
 
 }
 
-window.InvoiceModel = InvoiceModel;
+window.InvoiceEngine = InvoiceEngine;
