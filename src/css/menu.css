@@ -1,0 +1,362 @@
+# /*
+
+CWPS Enterprise
+Curtain Wall Procurement System
+
+Menu Style Sheet
+
+Version:
+Sprint 1.3.1
+Build 0001
+
+==================================================
+*/
+
+## /*
+
+## Menu Container
+
+*/
+
+.cwps-menu {
+
+```
+list-style:
+
+    none;
+
+
+padding:
+
+    1rem 0;
+
+
+margin:
+
+    0;
+```
+
+}
+
+## /*
+
+## Menu Item
+
+*/
+
+.cwps-menu li {
+
+```
+margin:
+
+    0.25rem 0;
+```
+
+}
+
+.cwps-menu li a {
+
+```
+display:
+
+    flex;
+
+
+align-items:
+
+    center;
+
+
+padding:
+
+    0.75rem 1.25rem;
+
+
+color:
+
+    var(--cwps-text-primary);
+
+
+font-size:
+
+    0.95rem;
+
+
+transition:
+
+    all 0.2s ease;
+
+
+border-left:
+
+    4px solid transparent;
+```
+
+}
+
+## /*
+
+## Menu Hover
+
+*/
+
+.cwps-menu li a:hover {
+
+```
+background:
+
+    rgba(31,78,121,0.08);
+
+
+color:
+
+    var(--cwps-primary);
+
+
+border-left:
+
+    4px solid var(--cwps-primary);
+```
+
+}
+
+## /*
+
+## Active Menu
+
+*/
+
+.cwps-menu li.active a {
+
+```
+background:
+
+    rgba(31,78,121,0.12);
+
+
+color:
+
+    var(--cwps-primary);
+
+
+font-weight:
+
+    600;
+
+
+border-left:
+
+    4px solid var(--cwps-primary);
+```
+
+}
+
+## /*
+
+## Menu Divider
+
+*/
+
+.cwps-menu-divider {
+
+```
+height:
+
+    1px;
+
+
+background:
+
+    var(--cwps-border-color);
+
+
+margin:
+
+    0.75rem 1rem;
+```
+
+}
+
+## /*
+
+## Menu Group Title
+
+*/
+
+.cwps-menu-title {
+
+```
+padding:
+
+    0.75rem 1.25rem 0.25rem;
+
+
+font-size:
+
+    0.75rem;
+
+
+color:
+
+    var(--cwps-text-secondary);
+
+
+font-weight:
+
+    600;
+
+
+text-transform:
+
+    uppercase;
+```
+
+}
+
+## /*
+
+Menu Icon
+
+Reserved for Future
+
+---
+
+*/
+
+.cwps-menu-icon {
+
+```
+width:
+
+    24px;
+
+
+margin-right:
+
+    0.5rem;
+
+
+text-align:
+
+    center;
+```
+
+}
+
+## /*
+
+## Sidebar Scrollbar
+
+*/
+
+.cwps-sidebar::-webkit-scrollbar {
+
+```
+width:
+
+    6px;
+```
+
+}
+
+.cwps-sidebar::-webkit-scrollbar-track {
+
+```
+background:
+
+    #FFFFFF;
+```
+
+}
+
+.cwps-sidebar::-webkit-scrollbar-thumb {
+
+```
+background:
+
+    #CED4DA;
+
+
+border-radius:
+
+    10px;
+```
+
+}
+
+## /*
+
+Mobile Menu
+
+---
+
+*/
+
+@media screen and (max-width: 992px) {
+
+```
+.cwps-menu {
+
+
+    display:
+
+        flex;
+
+
+    flex-wrap:
+
+        wrap;
+
+
+}
+
+
+
+.cwps-menu li {
+
+
+    flex:
+
+        1 1 50%;
+
+
+}
+```
+
+}
+
+@media screen and (max-width: 576px) {
+
+```
+.cwps-menu {
+
+
+    display:
+
+        block;
+
+
+}
+
+
+
+.cwps-menu li {
+
+
+    width:
+
+        100%;
+
+
+}
+```
+
+}
+
+## /*
+
+End of menu.css
+
+---
+
+*/
