@@ -1,0 +1,463 @@
+<!--
+==================================================
+ CWPS Enterprise
+
+ Invoice Management Page
+
+ Version:
+ Sprint 1.3.1
+ Build 0001
+
+==================================================
+-->
+
+<div class="cwps-page">
+
+```
+<!-- Page Header -->
+
+
+<div class="dashboard-title">
+
+
+    <h3>
+
+        Invoice Management
+
+    </h3>
+
+
+    <p>
+
+        Manage supplier invoices and payment records
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Toolbar -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+
+        <div>
+
+
+            <h5 class="mb-1">
+
+                Invoice List
+
+            </h5>
+
+
+            <small class="text-muted">
+
+                Invoice and payment tracking
+
+            </small>
+
+
+        </div>
+
+
+
+        <div>
+
+
+            <button class="btn btn-primary">
+
+
+                + Add Invoice
+
+
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Invoice Status -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Invoice Status
+
+
+    </div>
+
+
+
+
+    <div class="d-flex gap-2 flex-wrap">
+
+
+
+        <span class="badge bg-secondary">
+
+            Draft
+
+        </span>
+
+
+
+        <span class="badge bg-primary">
+
+            Submitted
+
+        </span>
+
+
+
+        <span class="badge bg-warning text-dark">
+
+            Reviewing
+
+        </span>
+
+
+
+        <span class="badge bg-success">
+
+            Paid
+
+        </span>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Invoice Table -->
+
+
+<div class="cwps-card">
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-hover">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        Invoice No.
+
+                    </th>
+
+
+                    <th>
+
+                        PO No.
+
+                    </th>
+
+
+                    <th>
+
+                        Supplier
+
+                    </th>
+
+
+                    <th>
+
+                        Invoice Date
+
+                    </th>
+
+
+                    <th>
+
+                        Amount
+
+                    </th>
+
+
+                    <th>
+
+                        Status
+
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+
+            <tbody>
+
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        INV-001
+
+                    </td>
+
+
+                    <td>
+
+                        PO-001
+
+                    </td>
+
+
+                    <td>
+
+                        Example Factory
+
+                    </td>
+
+
+                    <td>
+
+                        -
+
+                    </td>
+
+
+                    <td>
+
+                        NT$ 0
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-warning">
+
+                            Reviewing
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+
+                <tr>
+
+
+                    <td colspan="6"
+
+                        class="text-center text-muted">
+
+
+                        No Invoice Data
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Invoice Summary -->
+
+
+<div class="cwps-card mt-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Invoice Summary
+
+
+    </div>
+
+
+
+
+
+    <div class="system-info">
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Total Invoice
+
+            </span>
+
+
+            <span>
+
+                0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Total Amount
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Unpaid Amount
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+```
+
+</div>
+
+<script>
+
+
+function pageLoaded(page){
+
+
+    if(page !== "invoice"){
+
+
+        return;
+
+
+    }
+
+
+
+    console.log(
+
+        "CWPS Invoice Management Loaded"
+
+    );
+
+
+}
+
+
+
+</script>
