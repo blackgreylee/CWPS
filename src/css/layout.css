@@ -1,0 +1,356 @@
+# /*
+
+CWPS Enterprise
+Curtain Wall Procurement System
+
+Layout Style Sheet
+
+Version:
+Sprint 1.3.1
+Build 0001
+
+==================================================
+*/
+
+## /*
+
+## Main Application Layout
+
+*/
+
+.cwps-container {
+
+```
+display:
+
+    flex;
+
+
+min-height:
+
+    calc(100vh - 70px);
+```
+
+}
+
+## /*
+
+## Header
+
+*/
+
+.cwps-header {
+
+```
+height:
+
+    70px;
+
+
+background:
+
+    var(--cwps-primary);
+
+
+color:
+
+    #FFFFFF;
+
+
+display:
+
+    flex;
+
+
+align-items:
+
+    center;
+
+
+padding:
+
+    0 1.5rem;
+
+
+box-shadow:
+
+    0 2px 6px rgba(0,0,0,0.15);
+
+
+position:
+
+    relative;
+
+
+z-index:
+
+    100;
+```
+
+}
+
+.cwps-header h4 {
+
+```
+font-weight:
+
+    600;
+```
+
+}
+
+.cwps-header small {
+
+```
+opacity:
+
+    0.85;
+```
+
+}
+
+## /*
+
+## Sidebar Layout
+
+*/
+
+.cwps-sidebar {
+
+```
+width:
+
+    250px;
+
+
+min-width:
+
+    250px;
+
+
+background:
+
+    #FFFFFF;
+
+
+border-right:
+
+    1px solid var(--cwps-border-color);
+
+
+min-height:
+
+    calc(100vh - 70px);
+
+
+overflow-y:
+
+    auto;
+```
+
+}
+
+## /*
+
+## Main Content
+
+*/
+
+.cwps-content {
+
+```
+flex:
+
+    1;
+
+
+padding:
+
+    1.5rem;
+
+
+overflow-x:
+
+    hidden;
+```
+
+}
+
+## /*
+
+## Page Container
+
+*/
+
+#page-container {
+
+```
+width:
+
+    100%;
+```
+
+}
+
+## /*
+
+## Responsive Layout
+
+*/
+
+@media screen and (max-width: 992px) {
+
+```
+.cwps-container {
+
+
+    flex-direction:
+
+        column;
+
+
+}
+
+
+
+.cwps-sidebar {
+
+
+    width:
+
+        100%;
+
+
+    min-width:
+
+        100%;
+
+
+    min-height:
+
+        auto;
+
+
+}
+
+
+
+.cwps-content {
+
+
+    padding:
+
+        1rem;
+
+
+}
+```
+
+}
+
+## /*
+
+## Mobile Layout
+
+*/
+
+@media screen and (max-width: 576px) {
+
+```
+.cwps-header {
+
+
+    height:
+
+        auto;
+
+
+    padding:
+
+        1rem;
+
+
+}
+
+
+
+.cwps-header h4 {
+
+
+    font-size:
+
+        1.1rem;
+
+
+}
+
+
+
+.cwps-content {
+
+
+    padding:
+
+        0.75rem;
+
+
+}
+```
+
+}
+
+## /*
+
+Layout Helper Classes
+
+---
+
+*/
+
+.cwps-row {
+
+```
+display:
+
+    flex;
+
+
+gap:
+
+    1rem;
+```
+
+}
+
+.cwps-column {
+
+```
+display:
+
+    flex;
+
+
+flex-direction:
+
+    column;
+```
+
+}
+
+.cwps-full {
+
+```
+width:
+
+    100%;
+```
+
+}
+
+## /*
+
+End of layout.css
+
+---
+
+*/
