@@ -1,0 +1,654 @@
+<!--
+==================================================
+ CWPS Enterprise
+
+ BOM Tree Management Page
+
+ Version:
+ Sprint 1.3.1
+ Build 0001
+
+==================================================
+-->
+
+<div class="cwps-page">
+
+```
+<!-- Page Header -->
+
+
+<div class="dashboard-title">
+
+
+    <h3>
+
+        BOM Tree Management
+
+    </h3>
+
+
+    <p>
+
+        Manage curtain wall bill of materials hierarchy
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+<!-- Toolbar -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+
+        <div>
+
+
+            <h5 class="mb-1">
+
+                BOM Structure
+
+            </h5>
+
+
+            <small class="text-muted">
+
+                Batch → AU → AC → Processing Part
+
+            </small>
+
+
+        </div>
+
+
+
+        <div>
+
+
+            <button class="btn btn-primary me-2">
+
+                Import BOM
+
+            </button>
+
+
+
+            <button class="btn btn-outline-secondary">
+
+                Refresh
+
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- BOM Tree Area -->
+
+
+<div class="cwps-card">
+
+
+
+    <div class="dashboard-panel-title">
+
+        Tree View
+
+
+    </div>
+
+
+
+
+
+    <div class="bom-tree">
+
+
+
+
+
+        <!-- Batch Node -->
+
+
+        <div class="bom-node bom-level-0">
+
+
+            <span class="bom-icon">
+
+                📁
+
+            </span>
+
+
+            <strong>
+
+                Z05
+
+            </strong>
+
+
+            <span class="bom-type">
+
+                Batch
+
+            </span>
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- AU Node -->
+
+
+        <div class="bom-node bom-level-1">
+
+
+            <span class="bom-icon">
+
+                📂
+
+            </span>
+
+
+            AU001
+
+
+            <span class="bom-type">
+
+                Assembly Drawing
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- AC Node -->
+
+
+        <div class="bom-node bom-level-2">
+
+
+            <span class="bom-icon">
+
+                📄
+
+            </span>
+
+
+            AC001
+
+
+            <span class="bom-type">
+
+                Sub Assembly
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- Processing Parts -->
+
+
+        <div class="bom-node bom-level-3">
+
+
+            <span class="bom-icon">
+
+                🔧
+
+            </span>
+
+
+            AC001-1
+
+
+            <span class="bom-type">
+
+                Processing Part
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="bom-node bom-level-3">
+
+
+            <span class="bom-icon">
+
+                🔧
+
+            </span>
+
+
+            AC001-2
+
+
+            <span class="bom-type">
+
+                Processing Part
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="bom-node bom-level-3">
+
+
+            <span class="bom-icon">
+
+                🔧
+
+            </span>
+
+
+            AC001-3
+
+
+            <span class="bom-type">
+
+                Processing Part
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- Glass -->
+
+
+        <div class="bom-node bom-level-2">
+
+
+            <span class="bom-icon">
+
+                🪟
+
+            </span>
+
+
+            GL001
+
+
+            <span class="bom-type">
+
+                Glass
+
+            </span>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- BOM Detail -->
+
+
+<div class="cwps-card mt-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Node Detail
+
+
+    </div>
+
+
+
+
+    <div class="table-responsive">
+
+
+
+        <table class="table">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        Node
+
+                    </th>
+
+
+                    <th>
+
+                        Type
+
+                    </th>
+
+
+                    <th>
+
+                        Quantity
+
+                    </th>
+
+
+                    <th>
+
+                        Unit
+
+                    </th>
+
+
+                    <th>
+
+                        Status
+
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+            <tbody>
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        AC001-1
+
+                    </td>
+
+
+                    <td>
+
+                        Processing Part
+
+                    </td>
+
+
+                    <td>
+
+                        0
+
+                    </td>
+
+
+                    <td>
+
+                        PCS
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-warning">
+
+                            Pending
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+
+    </div>
+
+
+
+</div>
+```
+
+</div>
+
+<style>
+
+
+/*
+--------------------------------------------------
+ BOM Tree Style
+
+--------------------------------------------------
+*/
+
+
+.bom-tree{
+
+
+    padding:
+
+        1rem;
+
+
+}
+
+
+
+.bom-node{
+
+
+    padding:
+
+        0.6rem;
+
+
+    margin:
+
+        0.25rem 0;
+
+
+    background:
+
+        #f8f9fa;
+
+
+    border-radius:
+
+        5px;
+
+
+}
+
+
+
+.bom-level-0{
+
+
+    margin-left:
+
+        0;
+
+
+}
+
+
+
+.bom-level-1{
+
+
+    margin-left:
+
+        30px;
+
+
+}
+
+
+
+.bom-level-2{
+
+
+    margin-left:
+
+        60px;
+
+
+}
+
+
+
+.bom-level-3{
+
+
+    margin-left:
+
+        90px;
+
+
+}
+
+
+
+.bom-icon{
+
+
+    margin-right:
+
+        0.5rem;
+
+
+}
+
+
+
+.bom-type{
+
+
+    margin-left:
+
+        1rem;
+
+
+    color:
+
+        #6c757d;
+
+
+    font-size:
+
+        0.85rem;
+
+
+}
+
+
+
+</style>
+
+<script>
+
+
+function pageLoaded(page){
+
+
+    if(page !== "bom"){
+
+
+        return;
+
+
+    }
+
+
+
+    console.log(
+
+        "CWPS BOM Tree Loaded"
+
+    );
+
+
+}
+
+
+
+</script>
