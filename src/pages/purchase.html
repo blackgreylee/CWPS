@@ -1,0 +1,487 @@
+<!--
+==================================================
+ CWPS Enterprise
+
+ Purchase Management Page
+
+ Version:
+ Sprint 1.3.1
+ Build 0001
+
+==================================================
+-->
+
+<div class="cwps-page">
+
+```
+<!-- Page Header -->
+
+
+<div class="dashboard-title">
+
+
+    <h3>
+
+        Purchase Management
+
+    </h3>
+
+
+    <p>
+
+        Manage purchase orders and procurement status
+
+    </p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Toolbar -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+
+        <div>
+
+
+            <h5 class="mb-1">
+
+                Purchase Orders
+
+            </h5>
+
+
+            <small class="text-muted">
+
+                Procurement execution tracking
+
+            </small>
+
+
+        </div>
+
+
+
+        <div>
+
+
+            <button class="btn btn-primary me-2">
+
+
+                + New Purchase Order
+
+
+            </button>
+
+
+
+            <button class="btn btn-outline-secondary">
+
+
+                Export
+
+
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Purchase Status -->
+
+
+<div class="cwps-card mb-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Purchase Status
+
+
+    </div>
+
+
+
+
+    <div class="d-flex gap-2 flex-wrap">
+
+
+
+        <span class="badge bg-secondary">
+
+            Draft
+
+        </span>
+
+
+
+        <span class="badge bg-primary">
+
+            Approved
+
+        </span>
+
+
+
+        <span class="badge bg-warning text-dark">
+
+            Processing
+
+        </span>
+
+
+
+        <span class="badge bg-success">
+
+            Completed
+
+        </span>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Purchase Table -->
+
+
+<div class="cwps-card">
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-hover">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        PO No.
+
+                    </th>
+
+
+                    <th>
+
+                        Supplier
+
+                    </th>
+
+
+                    <th>
+
+                        Material
+
+                    </th>
+
+
+                    <th>
+
+                        Quantity
+
+                    </th>
+
+
+                    <th>
+
+                        Amount
+
+                    </th>
+
+
+                    <th>
+
+                        Delivery Date
+
+                    </th>
+
+
+                    <th>
+
+                        Status
+
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+
+            <tbody>
+
+
+
+
+                <tr>
+
+
+                    <td>
+
+                        PO-001
+
+                    </td>
+
+
+                    <td>
+
+                        Example Processing Factory
+
+                    </td>
+
+
+                    <td>
+
+                        Aluminum Profile
+
+                    </td>
+
+
+                    <td>
+
+                        0 m
+
+                    </td>
+
+
+                    <td>
+
+                        NT$ 0
+
+                    </td>
+
+
+                    <td>
+
+                        -
+
+                    </td>
+
+
+                    <td>
+
+
+                        <span class="cwps-status cwps-status-warning">
+
+                            Draft
+
+                        </span>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+
+                <tr>
+
+
+                    <td colspan="7"
+
+                        class="text-center text-muted">
+
+
+                        No Purchase Order
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Purchase Summary -->
+
+
+<div class="cwps-card mt-3">
+
+
+    <div class="dashboard-panel-title">
+
+        Purchase Summary
+
+
+    </div>
+
+
+
+
+
+    <div class="system-info">
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Total Orders
+
+            </span>
+
+
+            <span>
+
+                0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Total Amount
+
+            </span>
+
+
+            <span>
+
+                NT$ 0
+
+            </span>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-info-item">
+
+
+            <span>
+
+                Pending Delivery
+
+            </span>
+
+
+            <span>
+
+                0
+
+            </span>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>
+```
+
+</div>
+
+<script>
+
+
+function pageLoaded(page){
+
+
+    if(page !== "purchase"){
+
+
+        return;
+
+
+    }
+
+
+
+    console.log(
+
+        "CWPS Purchase Management Loaded"
+
+    );
+
+
+}
+
+
+
+</script>
