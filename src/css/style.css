@@ -1,0 +1,422 @@
+# /*
+
+CWPS Enterprise
+Curtain Wall Procurement System
+
+Global Style Sheet
+
+Version:
+Sprint 1.3.1
+Build 0001
+
+==================================================
+*/
+
+## /*
+
+## Root Variables
+
+*/
+
+:root {
+
+```
+/*
+Primary Colors
+*/
+
+--cwps-primary: #1F4E79;
+
+--cwps-secondary: #5B9BD5;
+
+--cwps-success: #70AD47;
+
+--cwps-warning: #ED7D31;
+
+--cwps-danger: #C00000;
+
+
+/*
+Background
+*/
+
+--cwps-background: #F5F6F8;
+
+--cwps-card-background: #FFFFFF;
+
+
+/*
+Text
+*/
+
+--cwps-text-primary: #212529;
+
+--cwps-text-secondary: #6C757D;
+
+
+/*
+Border
+*/
+
+--cwps-border-color: #DEE2E6;
+
+
+/*
+Shadow
+*/
+
+--cwps-shadow:
+
+    0 2px 8px rgba(0,0,0,0.08);
+
+
+/*
+Radius
+*/
+
+--cwps-radius:
+
+    6px;
+```
+
+}
+
+## /*
+
+## Global Reset
+
+*/
+
+* {
+
+  box-sizing: border-box;
+
+}
+
+html,
+body {
+
+```
+width: 100%;
+
+height: 100%;
+```
+
+}
+
+body {
+
+```
+margin: 0;
+
+padding: 0;
+
+font-family:
+
+    "Microsoft JhengHei",
+    "Noto Sans TC",
+    Arial,
+    sans-serif;
+
+
+background:
+
+    var(--cwps-background);
+
+
+color:
+
+    var(--cwps-text-primary);
+```
+
+}
+
+## /*
+
+## Link Style
+
+*/
+
+a {
+
+```
+text-decoration: none;
+
+color: inherit;
+```
+
+}
+
+a:hover {
+
+```
+text-decoration: none;
+```
+
+}
+
+## /*
+
+## CWPS Application Container
+
+*/
+
+#cwps-app {
+
+```
+min-height: 100vh;
+```
+
+}
+
+## /*
+
+## Common Card
+
+*/
+
+.cwps-card {
+
+```
+background:
+
+    var(--cwps-card-background);
+
+
+border:
+
+    1px solid var(--cwps-border-color);
+
+
+border-radius:
+
+    var(--cwps-radius);
+
+
+box-shadow:
+
+    var(--cwps-shadow);
+
+
+padding:
+
+    1rem;
+```
+
+}
+
+## /*
+
+## Button Style
+
+*/
+
+.cwps-btn {
+
+```
+border-radius:
+
+    var(--cwps-radius);
+
+
+padding:
+
+    0.5rem 1rem;
+
+
+cursor:
+
+    pointer;
+```
+
+}
+
+.cwps-btn-primary {
+
+```
+background:
+
+    var(--cwps-primary);
+
+
+color:
+
+    #FFFFFF;
+
+
+border:
+
+    none;
+```
+
+}
+
+.cwps-btn-primary:hover {
+
+```
+opacity:
+
+    0.9;
+```
+
+}
+
+## /*
+
+## Status Badge
+
+*/
+
+.cwps-status {
+
+```
+display:
+
+    inline-block;
+
+
+padding:
+
+    0.25rem 0.75rem;
+
+
+border-radius:
+
+    20px;
+
+
+font-size:
+
+    0.85rem;
+```
+
+}
+
+.cwps-status-success {
+
+```
+background:
+
+    var(--cwps-success);
+
+
+color:
+
+    #FFFFFF;
+```
+
+}
+
+.cwps-status-warning {
+
+```
+background:
+
+    var(--cwps-warning);
+
+
+color:
+
+    #FFFFFF;
+```
+
+}
+
+.cwps-status-danger {
+
+```
+background:
+
+    var(--cwps-danger);
+
+
+color:
+
+    #FFFFFF;
+```
+
+}
+
+## /*
+
+## Utility Classes
+
+*/
+
+.cwps-hidden {
+
+```
+display:
+
+    none !important;
+```
+
+}
+
+.cwps-text-center {
+
+```
+text-align:
+
+    center;
+```
+
+}
+
+.cwps-text-right {
+
+```
+text-align:
+
+    right;
+```
+
+}
+
+.cwps-mt-1 {
+
+```
+margin-top:
+
+    0.5rem;
+```
+
+}
+
+.cwps-mt-2 {
+
+```
+margin-top:
+
+    1rem;
+```
+
+}
+
+.cwps-mb-1 {
+
+```
+margin-bottom:
+
+    0.5rem;
+```
+
+}
+
+.cwps-mb-2 {
+
+```
+margin-bottom:
+
+    1rem;
+```
+
+}
+
+## /*
+
+End of style.css
+
+---
+
+*/
