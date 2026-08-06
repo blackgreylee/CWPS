@@ -1,773 +1,302 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Project View
+ File:
+ src/js/views/project-view.js
 
-Sprint:
 
-1.8.2
+ Sprint:
+ 2.7.1
 
-Build:
 
-0001
+ Build:
+ Enterprise Project View Layer
 
-Description:
 
-Project management UI renderer
+ Description:
+ Project Management UI View
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class ProjectView {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.containerId =
 
-        "project-container";
+        this.controller =
 
+            null;
 
 
+        this.container =
 
+            null;
 
-    this.controller =
 
-        null;
+    }
 
 
 
 
 
-    this.projects = [];
 
+    /*
+    ==============================================
 
+    Initialize
 
+    ==============================================
+    */
 
 
-    this.currentProject =
-
-        null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    projectController
-
-){
-
-
-
-    this.controller =
-
-        projectController;
-
-
-
-    this.load();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Projects
-
-
-----------------------------------------------
-
-*/
-
-
-load(){
-
-
-
-    if(
-
-        !this.controller
-
+    init(
+        controller,
+        containerId = "app"
     ){
 
 
 
-        return;
+        this.controller =
 
+            controller;
 
 
-    }
 
+        this.container =
 
 
+            document.getElementById(
 
-
-
-
-
-
-    this.projects =
-
-
-
-        this.controller.projects;
-
-
-
-
-
-    this.render();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Main Page
-
-
-----------------------------------------------
-
-*/
-
-
-render(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    container.innerHTML = `
-
-
-
-    <div class="project-header">
-
-
-
-        <h2>
-
-        專案管理
-
-        </h2>
-
-
-
-        <button
-
-        id="btn-add-project">
-
-        新增專案
-
-        </button>
-
-
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="project-form">
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="project-list">
-
-    </div>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.renderList();
-
-
-
-    this.bindEvents();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Project List
-
-
-----------------------------------------------
-
-*/
-
-
-renderList(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            "project-list"
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    let html = `
-
-
-
-    <table>
-
-
-
-    <thead>
-
-
-
-    <tr>
-
-
-
-    <th>
-
-    專案編號
-
-    </th>
-
-
-
-    <th>
-
-    專案名稱
-
-    </th>
-
-
-
-    <th>
-
-    客戶
-
-    </th>
-
-
-
-    <th>
-
-    狀態
-
-    </th>
-
-
-
-    <th>
-
-    操作
-
-    </th>
-
-
-
-    </tr>
-
-
-
-    </thead>
-
-
-
-    <tbody>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.projects.forEach(
-
-        project=>{
-
-
-
-            html += `
-
-
-
-            <tr>
-
-
-
-            <td>
-
-            ${project.projectNo}
-
-            </td>
-
-
-
-            <td>
-
-            ${project.projectName}
-
-            </td>
-
-
-
-            <td>
-
-            ${project.customer || ""}
-
-            </td>
-
-
-
-            <td>
-
-            ${project.status}
-
-            </td>
-
-
-
-            <td>
-
-
-
-            <button
-
-            data-id="${project.id}"
-
-            class="btn-view-project">
-
-            查看
-
-            </button>
-
-
-
-            </td>
-
-
-
-            </tr>
-
-
-
-            `;
-
-
-
-        }
-
-    );
-
-
-
-
-
-
-
-
-
-    html += `
-
-
-
-    </tbody>
-
-
-
-    </table>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    container.innerHTML =
-
-        html;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Project Form
-
-
-----------------------------------------------
-
-*/
-
-
-renderForm(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            "project-form"
-
-        );
-
-
-
-
-
-
-
-
-
-    container.innerHTML = `
-
-
-
-    <div class="form-box">
-
-
-
-    <input
-
-    id="project-no"
-
-    placeholder="專案編號">
-
-
-
-    <input
-
-    id="project-name"
-
-    placeholder="專案名稱">
-
-
-
-    <input
-
-    id="project-customer"
-
-    placeholder="客戶">
-
-
-
-    <button
-
-    id="save-project">
-
-    儲存
-
-    </button>
-
-
-
-    </div>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Bind Events
-
-
-----------------------------------------------
-
-*/
-
-
-bindEvents(){
-
-
-
-    let addButton =
-
-
-
-        document.getElementById(
-
-            "btn-add-project"
-
-        );
-
-
-
-
-
-
-
-
-
-    if(addButton){
-
-
-
-        addButton.onclick = ()=>{
-
-
-
-            this.renderForm();
-
-
-
-        };
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    document
-
-    .querySelectorAll(
-
-        ".btn-view-project"
-
-    )
-
-    .forEach(button=>{
-
-
-
-        button.onclick = ()=>{
-
-
-
-            this.showDetail(
-
-                button.dataset.id
+                containerId
 
             );
 
 
 
-        };
+
+
+        this.bindEvents();
 
 
 
-    });
-
-
-
-}
-
-
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
 
-/*
-----------------------------------------------
+    Render Project List
 
-Show Detail
-
-
-----------------------------------------------
-
-*/
+    ==============================================
+    */
 
 
-showDetail(
-
-    id
-
-){
+    render(
+        projects
+    ){
 
 
 
-    let project =
+        if(!this.container){
+
+
+            return;
+
+
+        }
 
 
 
-        this.controller
 
-        .getProject(
 
-            id
+        let html = `
+
+
+        <div class="project-page">
+
+
+            <div class="page-header">
+
+
+                <h2>
+
+                    Project Management
+
+                </h2>
+
+
+                <button
+
+                    id="btn-create-project"
+
+                    class="btn btn-primary"
+
+                >
+
+                    New Project
+
+                </button>
+
+
+            </div>
+
+
+
+
+            <table class="table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Project No
+                        </th>
+
+
+                        <th>
+                            Project Name
+                        </th>
+
+
+                        <th>
+                            Customer
+                        </th>
+
+
+                        <th>
+                            Status
+                        </th>
+
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+
+                </thead>
+
+
+                <tbody>
+
+
+        `;
+
+
+
+
+
+        projects.forEach(
+
+            project=>{
+
+
+                html += `
+
+
+                <tr>
+
+
+                    <td>
+
+                        ${
+
+                            project.id || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            project.name || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            project.customer || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            project.status || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+
+                        <button
+
+                            data-id="${
+
+                                project.id
+
+                            }"
+
+                            class="btn-detail"
+
+                        >
+
+                            Detail
+
+                        </button>
+
+
+                    </td>
+
+
+
+                </tr>
+
+
+                `;
+
+
+            }
 
         );
 
@@ -775,33 +304,289 @@ showDetail(
 
 
 
+        html += `
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+        `;
 
 
 
 
-    this.currentProject =
 
-        project;
-
+        this.container.innerHTML = html;
 
 
 
 
 
+        this.bindRowEvents();
 
 
 
-    console.log(
-
-        "Current Project",
-
-        project
-
-    );
+    }
 
 
 
-    return project;
+
+
+
+    /*
+    ==============================================
+
+    Create Project Form
+
+    ==============================================
+    */
+
+
+    showCreateForm(){
+
+
+
+        const name =
+
+
+            prompt(
+
+                "Project Name"
+
+            );
+
+
+
+
+
+        const customer =
+
+
+            prompt(
+
+                "Customer"
+
+            );
+
+
+
+
+
+        if(
+
+            !name
+
+        ){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        this.controller.create({
+
+
+
+            name:
+
+                name,
+
+
+
+            customer:
+
+                customer
+
+
+
+        });
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Detail
+
+    ==============================================
+    */
+
+
+    async showDetail(
+        id
+    ){
+
+
+
+        const project =
+
+
+            await this.controller.detail(
+
+                id
+
+            );
+
+
+
+
+
+        if(!project){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        alert(
+
+            JSON.stringify(
+
+                project,
+
+                null,
+
+                4
+
+            )
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Bind Events
+
+    ==============================================
+    */
+
+
+    bindEvents(){
+
+
+        document.addEventListener(
+
+            "click",
+
+            event=>{
+
+
+                if(
+
+                    event.target.id ===
+
+                    "btn-create-project"
+
+                ){
+
+
+                    this.showCreateForm();
+
+
+                }
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Row Events
+
+    ==============================================
+    */
+
+
+    bindRowEvents(){
+
+
+
+        const buttons =
+
+
+            document.querySelectorAll(
+
+                ".btn-detail"
+
+            );
+
+
+
+
+
+        buttons.forEach(
+
+            btn=>{
+
+
+                btn.addEventListener(
+
+                    "click",
+
+                    ()=>{
+
+
+                        this.showDetail(
+
+                            btn.dataset.id
+
+                        );
+
+
+                    }
+
+                );
+
+
+            }
+
+        );
+
+
+    }
+
+
+
 
 
 
@@ -812,31 +597,10 @@ showDetail(
 
 
 
+global.ProjectView =
+
+    ProjectView;
 
 
 
-/*
-----------------------------------------------
-
-Refresh
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    this.load();
-
-
-
-}
-```
-
-}
-
-window.ProjectView = ProjectView;
+})(window);
