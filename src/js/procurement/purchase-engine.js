@@ -1,78 +1,214 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Purchase Order Engine
+ File:
+ src/js/procurement/purchase-engine.js
 
-Sprint:
 
-1.5.3
+ Sprint:
+ 2.3.3
 
-Build:
 
-0001
+ Build:
+ Enterprise Purchase Engine
 
-Description:
 
-Purchase order workflow engine
+ Description:
+ Purchase Order Management Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class PurchaseEngine {
 
-```
-constructor(){
 
 
-
-    this.purchaseOrders = [];
-
+    constructor(){
 
 
-}
+        this.storage =
+
+            new PurchaseStorage();
 
 
-
-
+    }
 
 
 
 
 
-/*
-----------------------------------------------
 
-Create Purchase Order
+    /*
+    ==============================================
 
+    Initialize
 
-From Approved Quotation
-
-
-----------------------------------------------
-
-*/
+    ==============================================
+    */
 
 
-createPurchaseOrder(
-
-    quotation
-
-){
+    async init(){
 
 
-
-    let purchase =
-
+        if(this.storage.init){
 
 
-        new PurchaseModel({
+            await this.storage.init();
 
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Purchase Order
+
+    建立採購單
+
+    ==============================================
+    */
+
+
+    async create(data){
+
+
+
+        if(!data){
+
+
+            throw new Error(
+
+                "Purchase data required"
+
+            );
+
+
+        }
+
+
+
+
+
+        data.status =
+
+
+            data.status ||
+
+            CWPSTypes.PurchaseStatus.DRAFT;
+
+
+
+
+
+        data.createdAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.create(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Generate From Quotation
+
+    Quotation → Purchase
+
+    ==============================================
+    */
+
+
+    async generateFromQuotation(
+        quotation
+    ){
+
+
+
+        if(!quotation){
+
+
+            throw new Error(
+
+                "Quotation required"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(
+
+            !quotation.selectedSupplierId
+
+        ){
+
+
+            throw new Error(
+
+                "Supplier not selected"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
 
 
             quotationId:
 
                 quotation.id,
+
+
+
+            requirementId:
+
+                quotation.requirementId,
 
 
 
@@ -82,250 +218,52 @@ createPurchaseOrder(
 
 
 
-            batchId:
-
-                quotation.batchId,
-
-
-
             supplierId:
 
-                quotation.supplierId,
+                quotation.selectedSupplierId,
 
 
 
-            supplierName:
+            materialCode:
 
-                quotation.supplierName
+                quotation.materialCode,
 
 
 
-        });
+            materialName:
 
+                quotation.materialName,
 
 
 
+            quantity:
 
+                quotation.quantity,
 
 
-    purchase.addItem({
 
+            unit:
 
+                quotation.unit,
 
-        materialCode:
 
-            quotation.materialCode,
 
+            status:
 
+                CWPSTypes.PurchaseStatus.DRAFT,
 
-        materialName:
 
-            quotation.materialName,
 
+            createdAt:
 
 
-        quantity:
+                new Date()
 
-            quotation.quantity,
+                .toISOString()
 
 
 
-        unit:
-
-            quotation.unit,
-
-
-
-        unitPrice:
-
-            quotation.unitPrice
-
-
-
-    });
-
-
-
-
-
-    this.purchaseOrders.push(
-
-        purchase
-
-    );
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Purchase Order
-
-
-----------------------------------------------
-
-*/
-
-
-addPurchaseOrder(
-
-    purchase
-
-){
-
-
-
-    this.purchaseOrders.push(
-
-        purchase
-
-    );
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get All Purchase Orders
-
-
-----------------------------------------------
-
-*/
-
-
-getAll(){
-
-
-
-    return this.purchaseOrders;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find Purchase Order
-
-
-----------------------------------------------
-
-*/
-
-
-getById(
-
-    id
-
-){
-
-
-
-    return this.purchaseOrders.find(
-
-
-
-        item =>
-
-
-
-        item.id === id
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Submit Purchase
-
-
-----------------------------------------------
-
-*/
-
-
-submitPurchase(
-
-    id
-
-){
-
-
-
-    let purchase =
-
-        this.getById(
-
-            id
-
-        );
-
-
-
-
-
-    if(!purchase){
-
-
-
-        return null;
-
+        };
 
 
     }
@@ -334,52 +272,84 @@ submitPurchase(
 
 
 
-    purchase.submit();
+
+    /*
+    ==============================================
+
+    Add Purchase Item
+
+    加入採購明細
+
+    ==============================================
+    */
+
+
+    async addItem(
+        purchaseId,
+        item
+    ){
+
+
+
+        const purchase =
+
+
+            await this.storage.get(
+
+                purchaseId
+
+            );
 
 
 
 
 
-    return purchase;
+        if(!purchase){
+
+
+            throw new Error(
+
+                "Purchase not found"
+
+            );
+
+
+        }
 
 
 
-}
+
+
+        purchase.items =
+
+
+            purchase.items || [];
 
 
 
 
 
+        purchase.items.push(
+
+
+            {
+
+
+                ...item,
 
 
 
-
-/*
-----------------------------------------------
-
-Confirm Purchase
+                createdAt:
 
 
-----------------------------------------------
+                    new Date()
 
-----------------------------------------------
-
-*/
-
-
-confirmPurchase(
-
-    id
-
-){
+                    .toISOString()
 
 
 
-    let purchase =
+            }
 
-        this.getById(
-
-            id
 
         );
 
@@ -387,438 +357,164 @@ confirmPurchase(
 
 
 
-    if(!purchase){
+        purchase.updatedAt =
 
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    purchase.confirm();
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Start Processing
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-processing(
-
-    id
-
-){
-
-
-
-    let purchase =
-
-        this.getById(
-
-            id
-
-        );
-
-
-
-
-
-    if(!purchase){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    purchase.processing();
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Complete Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-complete(
-
-    id
-
-){
-
-
-
-    let purchase =
-
-        this.getById(
-
-            id
-
-        );
-
-
-
-
-
-    if(!purchase){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    purchase.complete();
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Cancel Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-cancel(
-
-    id
-
-){
-
-
-
-    let purchase =
-
-        this.getById(
-
-            id
-
-        );
-
-
-
-
-
-    if(!purchase){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    purchase.cancel();
-
-
-
-
-
-    return purchase;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Purchase By Supplier
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getBySupplier(
-
-    supplierId
-
-){
-
-
-
-    return this.purchaseOrders.filter(
-
-
-
-        item =>
-
-
-
-        item.supplierId === supplierId
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Total Purchase Amount
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getTotalAmount(){
-
-
-
-    let total = 0;
-
-
-
-
-
-    this.purchaseOrders.forEach(po=>{
-
-
-
-        total +=
-
-
-
-            po.totalAmount;
-
-
-
-    });
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Purchase Summary
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-summary(){
-
-
-
-    return {
-
-
-
-        count:
-
-            this.purchaseOrders.length,
-
-
-
-        totalAmount:
-
-            this.getTotalAmount(),
-
-
-
-        generatedDate:
 
             new Date()
 
-            .toISOString()
-
-
-
-    };
-
-
-
-}
+            .toISOString();
 
 
 
 
 
+        return await this.storage.update(
+
+            purchase
+
+        );
+
+
+    }
 
 
 
 
-/*
-----------------------------------------------
-
-Convert To Shipment Data
 
 
-下一階段使用
+    /*
+    ==============================================
+
+    Get Purchase List
+
+    ==============================================
+    */
 
 
-----------------------------------------------
-
-*/
-
-
-prepareShipment(
-
-    purchaseId
-
-){
+    async getAll(){
 
 
 
-    let purchase =
+        return await this.storage.getAll();
 
-        this.getById(
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find By Project
+
+    ==============================================
+    */
+
+
+    async findByProject(
+        projectId
+    ){
+
+
+
+        return await this.storage.findByProject(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find Supplier Orders
+
+    ==============================================
+    */
+
+
+    async findBySupplier(
+        supplierId
+    ){
+
+
+
+        return await this.storage.findBySupplier(
+
+            supplierId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Approve Purchase
+
+    ==============================================
+    */
+
+
+    async approve(
+        purchaseId
+    ){
+
+
+
+        return await this.storage.approve(
 
             purchaseId
 
         );
 
 
+    }
 
 
 
-    if(!purchase){
 
 
 
-        return null;
+    /*
+    ==============================================
 
+    Send Order
+
+    發出採購
+
+    ==============================================
+    */
+
+
+    async order(
+        purchaseId
+    ){
+
+
+
+        return await this.storage.order(
+
+            purchaseId
+
+        );
 
 
     }
@@ -827,47 +523,106 @@ prepareShipment(
 
 
 
-    return {
+
+    /*
+    ==============================================
+
+    Receive
+
+    收料完成
+
+    ==============================================
+    */
+
+
+    async receive(
+        purchaseId
+    ){
 
 
 
-        purchaseId:
+        return await this.storage.receive(
 
-            purchase.id,
+            purchaseId
 
-
-
-        supplierId:
-
-            purchase.supplierId,
+        );
 
 
-
-        supplierName:
-
-            purchase.supplierName,
+    }
 
 
 
-        items:
-
-            purchase.items,
 
 
 
-        status:
+    /*
+    ==============================================
 
-            "Waiting Shipment"
+    Close
+
+    ==============================================
+    */
+
+
+    async close(
+        purchaseId
+    ){
 
 
 
-    };
+        return await this.storage.close(
+
+            purchaseId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Version Management
+
+    ==============================================
+    */
+
+
+    async createVersion(
+        purchase
+    ){
+
+
+
+        return await this.storage.createVersion(
+
+            purchase
+
+        );
+
+
+    }
+
+
 
 
 
 }
-```
 
-}
 
-window.PurchaseEngine = PurchaseEngine;
+
+
+
+
+global.PurchaseEngine =
+
+    PurchaseEngine;
+
+
+
+})(window);
