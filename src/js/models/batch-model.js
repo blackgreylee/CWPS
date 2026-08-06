@@ -1,586 +1,228 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Batch Data Model
+ Batch Model
 
-Sprint:
-1.3.2
+ Sprint:
+ 2.0.6
 
-Build:
-0001
+ Description:
+ Project Batch Entity
 
 ==================================================
 */
 
-class BatchModel {
+(function (global) {
 
-```
-constructor(data = {}) {
+    "use strict";
 
+    class Batch {
 
+        constructor(data = {}) {
 
-    /*
-    System ID
+            this.id = data.id || crypto.randomUUID();
 
-    */
+            // 所屬 Project
+            this.projectId = data.projectId || null;
 
-    this.id =
+            // 批次編號
+            this.code = data.code || "";
 
-        data.id ||
+            // 批次名稱
+            this.name = data.name || "";
 
-        this.generateId();
+            // 批次狀態
+            this.status =
+                data.status ||
+                CWPSTypes.BatchStatus.DRAFT;
 
+            // 所有版本
+            this.versions = [];
 
+            if (Array.isArray(data.versions)) {
 
+                this.versions = data.versions.map(version =>
 
+                    version instanceof BatchVersion
+                        ? version
+                        : new BatchVersion(version)
 
+                );
 
-    /*
-    Batch Number
+            }
 
-    Example:
+            // 目前版本 ID
+            this.currentVersionId =
+                data.currentVersionId || null;
 
-    Z05
+            // 備註
+            this.remark = data.remark || "";
 
-    */
+            this.createdAt =
+                data.createdAt ||
+                new Date().toISOString();
 
-    this.batchNo =
-
-        data.batchNo ||
-
-        "";
-
-
-
-
-
-
-    /*
-    Parent Project
-
-    */
-
-    this.projectId =
-
-        data.projectId ||
-
-        "";
-
-
-
-
-
-
-    /*
-    Batch Description
-
-    */
-
-    this.description =
-
-        data.description ||
-
-        "";
-
-
-
-
-
-
-    /*
-    BOM Version
-
-
-    Example:
-
-    V001
-
-    */
-
-    this.version =
-
-        data.version ||
-
-        "V001";
-
-
-
-
-
-
-    /*
-    Status
-
-
-    Draft
-
-    Active
-
-    Locked
-
-    Obsolete
-
-
-    */
-
-    this.status =
-
-        data.status ||
-
-        "Draft";
-
-
-
-
-
-
-    /*
-    BOM Tree Nodes
-
-
-    [
-
-        BOMNode
-
-    ]
-
-    */
-
-    this.bomNodes =
-
-        data.bomNodes ||
-
-        [];
-
-
-
-
-
-
-    /*
-    Import History
-
-
-    [
-
-        {
-
-            version,
-
-            date,
-
-            user,
-
-            status
+            this.updatedAt =
+                data.updatedAt ||
+                new Date().toISOString();
 
         }
 
-    ]
+        /**
+         * 新增 Version
+         */
+        addVersion(version) {
 
-    */
+            if (!(version instanceof BatchVersion)) {
 
+                version = new BatchVersion(version);
 
-    this.importHistory =
+            }
 
-        data.importHistory ||
+            version.batchId = this.id;
 
-        [];
+            this.versions.push(version);
 
+            if (version.isCurrent) {
 
+                this.setCurrentVersion(version.id);
 
+            }
 
+            this.touch();
 
+            return version;
 
-    /*
-    Soft Delete
+        }
 
+        /**
+         * 取得 Version
+         */
+        getVersion(versionId) {
 
-    不允許真正刪除
+            return this.versions.find(
 
+                version => version.id === versionId
 
-    */
+            ) || null;
 
-    this.isDeleted =
+        }
 
-        data.isDeleted ||
+        /**
+         * 設定目前 Version
+         */
+        setCurrentVersion(versionId) {
 
-        false;
+            this.currentVersionId = versionId;
 
+            this.versions.forEach(version => {
 
+                version.isCurrent =
+                    version.id === versionId;
 
+            });
 
+            this.touch();
 
+        }
 
-    /*
-    Created Date
+        /**
+         * 取得目前 Version
+         */
+        getCurrentVersion() {
 
-    */
+            return this.getVersion(
 
-    this.createdDate =
+                this.currentVersionId
 
-        data.createdDate ||
+            );
 
-        new Date().toISOString();
+        }
 
+        /**
+         * 刪除 Version
+         */
+        removeVersion(versionId) {
 
+            this.versions = this.versions.filter(
 
+                version => version.id !== versionId
 
+            );
 
+            if (this.currentVersionId === versionId) {
 
-    /*
-    Updated Date
+                this.currentVersionId = null;
 
-    */
+            }
 
-    this.updatedDate =
+            this.touch();
 
-        data.updatedDate ||
+        }
 
-        new Date().toISOString();
+        /**
+         * 更新狀態
+         */
+        setStatus(status) {
 
+            this.status = status;
 
+            this.touch();
 
-}
+        }
 
+        /**
+         * 更新時間
+         */
+        touch() {
 
+            this.updatedAt =
+                new Date().toISOString();
 
+        }
 
+        /**
+         * JSON
+         */
+        toJSON() {
 
+            return {
 
+                id: this.id,
 
+                projectId: this.projectId,
 
+                code: this.code,
 
+                name: this.name,
 
-/*
-----------------------------------------------
+                status: this.status,
 
-Generate ID
+                currentVersionId:
+                    this.currentVersionId,
 
-----------------------------------------------
+                versions:
 
-*/
+                    this.versions.map(
 
+                        version => version.toJSON()
 
-generateId(){
+                    ),
 
+                remark: this.remark,
 
+                createdAt: this.createdAt,
 
-    return (
+                updatedAt: this.updatedAt
 
-        "BAT-" +
+            };
 
-        Date.now()
+        }
 
-    );
+    }
 
+    global.Batch = Batch;
 
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add BOM Node
-
-----------------------------------------------
-
-*/
-
-
-addBomNode(node){
-
-
-
-    this.bomNodes.push(node);
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create New Version
-
-
-Example:
-
-V001
-
-→
-
-V002
-
-
-----------------------------------------------
-
-*/
-
-
-createNewVersion(){
-
-
-
-    let current =
-
-        parseInt(
-
-            this.version.replace(
-
-                "V",
-
-                ""
-
-            )
-
-        );
-
-
-
-    current++;
-
-
-
-
-    this.version =
-
-        "V" +
-
-        current
-
-            .toString()
-
-            .padStart(3,"0");
-
-
-
-
-
-    this.importHistory.push({
-
-
-
-        version:this.version,
-
-
-        date:new Date().toISOString(),
-
-
-        status:"Created"
-
-
-
-    });
-
-
-
-
-
-    this.touch();
-
-
-
-    return this.version;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Disable Batch
-
-
-不刪除資料
-
-----------------------------------------------
-
-*/
-
-
-disable(){
-
-
-
-    this.status =
-
-        "Obsolete";
-
-
-
-    this.isDeleted =
-
-        true;
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Timestamp
-
-----------------------------------------------
-
-*/
-
-
-touch(){
-
-
-
-    this.updatedDate =
-
-        new Date().toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:this.id,
-
-
-        batchNo:this.batchNo,
-
-
-        projectId:this.projectId,
-
-
-        description:this.description,
-
-
-        version:this.version,
-
-
-        status:this.status,
-
-
-        bomNodes:this.bomNodes,
-
-
-        importHistory:this.importHistory,
-
-
-        isDeleted:this.isDeleted,
-
-
-        createdDate:this.createdDate,
-
-
-        updatedDate:this.updatedDate
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create From JSON
-
-----------------------------------------------
-
-*/
-
-
-static fromJSON(json){
-
-
-
-    return new BatchModel(json);
-
-
-
-}
-```
-
-}
-
-window.BatchModel = BatchModel;
+})(window);
