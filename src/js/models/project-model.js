@@ -1,355 +1,388 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Project Data Model
+ Project Model
 
-Sprint:
-1.3.2
+ Sprint:
+ 2.0.7
 
-Build:
-0001
+ Description:
+ Project Master Entity
 
 ==================================================
 */
 
-class ProjectModel {
+(function (global) {
 
-```
-constructor(data = {}) {
+    "use strict";
 
 
+    class Project {
 
-    this.id = data.id || this.generateId();
 
+        constructor(data = {}) {
 
 
-    /*
-    工程編號
+            this.id = data.id || crypto.randomUUID();
 
-    Example:
-    PRJ-001
 
-    */
+            // 專案編號
+            this.code = data.code || "";
 
-    this.projectNo = data.projectNo || "";
 
+            // 專案名稱
+            this.name = data.name || "";
 
 
-    /*
-    工程名稱
+            // 客戶名稱
+            this.customer = data.customer || "";
 
-    Example:
-    Taipei Curtain Wall Project
 
-    */
+            // 專案狀態
+            this.status =
+                data.status ||
+                CWPSTypes.ProjectStatus.DRAFT;
 
-    this.projectName = data.projectName || "";
 
 
+            // Batch 清單
+            this.batches = [];
 
-    /*
-    業主
 
-    */
+            if (Array.isArray(data.batches)) {
 
-    this.customer = data.customer || "";
 
+                this.batches =
+                    data.batches.map(batch =>
 
 
-    /*
-    工程地點
+                        batch instanceof Batch
+                            ? batch
+                            : new Batch(batch)
 
-    */
+                    );
 
-    this.location = data.location || "";
 
+            }
 
 
-    /*
-    Project Status
 
-    Draft
-    Active
-    Completed
+            // 專案負責人
+            this.manager = data.manager || "";
 
-    */
 
-    this.status = data.status || "Draft";
 
+            // 開始日期
+            this.startDate =
+                data.startDate || null;
 
 
-    /*
-    建立時間
 
-    */
+            // 預計完成日期
+            this.endDate =
+                data.endDate || null;
 
-    this.createdDate =
 
-        data.createdDate ||
 
-        new Date().toISOString();
+            // 備註
+            this.remark = data.remark || "";
 
 
 
+            this.createdAt =
+                data.createdAt ||
+                new Date().toISOString();
 
-    /*
-    最後更新時間
 
-    */
 
-    this.updatedDate =
+            this.updatedAt =
+                data.updatedAt ||
+                new Date().toISOString();
 
-        data.updatedDate ||
 
-        new Date().toISOString();
+        }
 
 
 
+        /**
+         * 新增 Batch
+         */
+        addBatch(batch) {
 
-    /*
-    Batch Collection
 
+            if (!(batch instanceof Batch)) {
 
-    [
 
-        BatchModel,
+                batch = new Batch(batch);
 
-        BatchModel
 
-    ]
+            }
 
-    */
 
 
-    this.batches = data.batches || [];
+            batch.projectId = this.id;
 
 
 
-}
+            this.batches.push(batch);
 
 
 
+            this.touch();
 
 
 
+            return batch;
 
 
-/*
-----------------------------------------------
-Generate ID
+        }
 
-----------------------------------------------
-*/
 
 
-generateId(){
+        /**
+         * 移除 Batch
+         */
+        removeBatch(batchId) {
 
 
+            this.batches =
+                this.batches.filter(
 
-    return (
 
-        "PRJ-" +
+                    batch =>
+                        batch.id !== batchId
 
-        Date.now()
 
-    );
+                );
 
 
 
-}
+            this.touch();
 
 
+        }
 
 
 
+        /**
+         * 查詢 Batch
+         */
+        getBatch(batchId) {
 
 
+            return this.batches.find(
 
-/*
-----------------------------------------------
-Add Batch
 
-----------------------------------------------
-*/
+                batch =>
+                    batch.id === batchId
 
 
-addBatch(batch){
+            ) || null;
 
 
+        }
 
-    this.batches.push(batch);
 
 
+        /**
+         * 依 Batch Code 查詢
+         */
+        getBatchByCode(code) {
 
-    this.touch();
 
+            return this.batches.find(
 
 
-}
+                batch =>
+                    batch.code === code
 
 
+            ) || null;
 
 
+        }
 
 
 
+        /**
+         * 取得所有目前版本
+         */
+        getCurrentVersions() {
 
-/*
-----------------------------------------------
-Remove Batch
 
-----------------------------------------------
-*/
+            return this.batches
 
+                .map(batch =>
 
-removeBatch(batchId){
+                    batch.getCurrentVersion()
 
+                )
 
+                .filter(version => version !== null);
 
-    this.batches =
 
-        this.batches.filter(
+        }
 
 
 
-            batch =>
+        /**
+         * 更新專案狀態
+         */
+        setStatus(status) {
 
-                batch.id !== batchId
 
+            this.status = status;
 
 
-        );
+            this.touch();
 
 
+        }
 
-    this.touch();
 
 
+        /**
+         * 更新基本資料
+         */
+        updateInfo(data = {}) {
 
-}
 
+            if (data.name !== undefined) {
 
+                this.name = data.name;
 
+            }
 
 
+            if (data.customer !== undefined) {
 
+                this.customer = data.customer;
 
+            }
 
-/*
-----------------------------------------------
-Update Timestamp
 
-----------------------------------------------
-*/
+            if (data.manager !== undefined) {
 
+                this.manager = data.manager;
 
-touch(){
+            }
 
 
+            if (data.startDate !== undefined) {
 
-    this.updatedDate =
+                this.startDate = data.startDate;
 
-        new Date().toISOString();
+            }
 
 
+            if (data.endDate !== undefined) {
 
-}
+                this.endDate = data.endDate;
 
+            }
 
 
+            if (data.remark !== undefined) {
 
+                this.remark = data.remark;
 
+            }
 
 
 
-/*
-----------------------------------------------
-Convert To JSON
+            this.touch();
 
 
-For LocalStorage / API
+        }
 
 
-----------------------------------------------
-*/
 
+        /**
+         * 更新時間
+         */
+        touch() {
 
-toJSON(){
 
+            this.updatedAt =
+                new Date().toISOString();
 
 
-    return {
+        }
 
 
 
-        id:this.id,
+        /**
+         * JSON
+         */
+        toJSON() {
 
 
-        projectNo:this.projectNo,
+            return {
 
 
-        projectName:this.projectName,
+                id: this.id,
 
 
-        customer:this.customer,
+                code: this.code,
 
 
-        location:this.location,
+                name: this.name,
 
 
-        status:this.status,
+                customer: this.customer,
 
 
-        createdDate:this.createdDate,
+                status: this.status,
 
 
-        updatedDate:this.updatedDate,
+                batches:
 
 
-        batches:this.batches
+                    this.batches.map(
 
 
+                        batch =>
+                            batch.toJSON()
 
-    };
 
+                    ),
 
 
-}
 
+                manager: this.manager,
 
 
+                startDate: this.startDate,
 
 
+                endDate: this.endDate,
 
 
+                remark: this.remark,
 
-/*
-----------------------------------------------
-Create From JSON
 
-----------------------------------------------
-*/
+                createdAt: this.createdAt,
 
 
-static fromJSON(json){
+                updatedAt: this.updatedAt
 
 
 
-    return new ProjectModel(json);
+            };
 
 
+        }
 
-}
-```
 
-}
 
-/*
-Export
+    }
 
-Browser Environment
 
-*/
 
-window.ProjectModel = ProjectModel;
+    global.Project = Project;
+
+
+
+})(window);
