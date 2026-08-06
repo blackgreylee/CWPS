@@ -1,100 +1,99 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Material Aggregation Engine
+ File:
+ src/js/core/material-engine.js
 
-Sprint:
 
-1.3.2
+ Sprint:
+ 2.2.2
 
-Build:
 
-0001
+ Build:
+ Enterprise Material Engine Layer
 
-Description:
 
-Material quantity and weight analysis engine
+ Description:
+ Material Classification & Aggregation Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class MaterialEngine {
 
-```
-constructor(){
 
 
-    this.summary = {};
+    constructor(){
 
 
-}
+        this.bomEngine =
+
+            new BOMEngine();
 
 
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Analyze Quantity Result
-
-
-Input:
-
-
-QuantityEngine Result
-
-
-----------------------------------------------
-
-*/
-
-
-analyze(quantityResults, materials=[]){
-
-
-
-    this.summary = {};
-
-
-
-
-    quantityResults.forEach(item=>{
-
-
-
-        if(!item.materialId){
-
-
-
-            return;
-
-
-
-        }
+    }
 
 
 
 
 
-        let material =
+
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
+
+
+        await this.bomEngine.init();
+
+
+    }
 
 
 
-            materials.find(
 
 
 
-                m =>
+    /*
+    ==============================================
 
-                m.id === item.materialId
+    Extract Material Nodes
+
+    從 BOM Tree 找材料
+
+    ==============================================
+    */
 
 
+    async extractMaterials(
+        versionId
+    ){
+
+
+
+        const nodes =
+
+
+            await this.bomEngine.storage.findByVersion(
+
+                versionId
 
             );
 
@@ -102,135 +101,17 @@ analyze(quantityResults, materials=[]){
 
 
 
-        if(!material){
+        return nodes.filter(
+
+            node =>
 
 
 
-            return;
+                node.type ===
 
-
-
-        }
-
-
-
-
-
-
-        this.addMaterial(
-
-
-
-            material,
-
-            item.quantity
-
-
+                CWPSTypes.BOMNodeType.MATERIAL
 
         );
-
-
-
-
-
-    });
-
-
-
-
-
-    return this.summary;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Material
-
-
-----------------------------------------------
-
-*/
-
-
-addMaterial(material, quantity){
-
-
-
-    let key = material.id;
-
-
-
-
-
-    if(
-
-        !this.summary[key]
-
-    ){
-
-
-
-        this.summary[key] = {
-
-
-
-            materialId:
-
-                material.id,
-
-
-
-            code:
-
-                material.materialCode,
-
-
-
-            name:
-
-                material.materialName,
-
-
-
-            category:
-
-                material.category,
-
-
-
-            unit:
-
-                material.unit,
-
-
-
-            quantity:0,
-
-
-
-            singleWeight:
-
-                material.singleWeight,
-
-
-
-            totalWeight:0
-
-
-
-        };
 
 
 
@@ -241,108 +122,553 @@ addMaterial(material, quantity){
 
 
 
-    this.summary[key].quantity
+    /*
+    ==============================================
 
-        += quantity;
+    Group Materials
 
+    材料分類合併
 
+    ==============================================
+    */
 
 
+    groupMaterials(
+        materials
+    ){
 
 
-    this.summary[key].totalWeight =
 
+        const result={};
 
 
-        this.summary[key].quantity *
 
-        this.summary[key].singleWeight;
 
 
+        materials.forEach(
 
+            material=>{
 
-}
 
 
+                const key =
 
 
 
+                    material.materialCode ||
 
+                    material.code;
 
 
 
-/*
-----------------------------------------------
 
-Group By Category
+                if(!result[key]){
 
 
-----------------------------------------------
 
-*/
+                    result[key]={
 
 
-groupByCategory(){
 
+                        code:key,
 
 
-    let result = {};
 
+                        name:
 
+                            material.name,
 
 
 
-    Object.values(
+                        category:
 
-        this.summary
+                            material.category,
 
-    )
 
-    .forEach(item=>{
 
+                        unit:
 
+                            material.unit,
 
-        let category =
 
-            item.category;
 
+                        quantity:0,
 
 
 
+                        items:[]
 
-        if(
 
-            !result[category]
 
-        ){
+                    };
 
 
+                }
 
-            result[category] = [];
 
 
 
-        }
 
+                result[key].quantity +=
 
 
 
+                    Number(
 
-        result[category].push(
+                        material.quantity || 0
 
-            item
+                    );
+
+
+
+
+
+                result[key].items.push(
+
+                    material
+
+                );
+
+
+
+            }
 
         );
 
 
 
-    });
+
+
+        return Object.values(
+
+            result
+
+        );
+
+
+    }
 
 
 
 
 
-    return result;
+
+    /*
+    ==============================================
+
+    Calculate Material Usage
+
+    ==============================================
+    */
+
+
+    async calculateUsage(
+        versionId
+    ){
+
+
+
+        const materials =
+
+
+            await this.extractMaterials(
+
+                versionId
+
+            );
+
+
+
+
+
+        return this.groupMaterials(
+
+            materials
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find Material By Category
+
+    ==============================================
+    */
+
+
+    filterByCategory(
+        materials,
+        category
+    ){
+
+
+
+        return materials.filter(
+
+            material =>
+
+
+
+                material.category === category
+
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Calculate Weight
+
+    單重分析基礎
+
+    ==============================================
+    */
+
+
+    calculateWeight(
+        material
+    ){
+
+
+
+        const quantity =
+
+
+            Number(
+
+                material.quantity || 0
+
+            );
+
+
+
+        const weight =
+
+
+            Number(
+
+                material.singleWeight || 0
+
+            );
+
+
+
+
+        return {
+
+
+            quantity,
+
+
+            singleWeight:weight,
+
+
+            totalWeight:
+
+
+
+                quantity *
+
+                weight
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Material Summary
+
+    材料統計報表基礎
+
+    ==============================================
+    */
+
+
+    async summary(
+        versionId
+    ){
+
+
+
+        const materials =
+
+
+            await this.calculateUsage(
+
+                versionId
+
+            );
+
+
+
+
+
+        let totalWeight = 0;
+
+
+
+        materials.forEach(
+
+            material=>{
+
+
+                totalWeight +=
+
+
+
+                    this.calculateWeight(
+
+                        material
+
+                    )
+
+                    .totalWeight;
+
+
+
+            }
+
+        );
+
+
+
+
+        return {
+
+
+            count:
+
+                materials.length,
+
+
+
+            materials,
+
+
+
+            totalWeight
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Compare Material Difference
+
+    ==============================================
+    */
+
+
+    compare(
+        oldMaterials,
+        newMaterials
+    ){
+
+
+
+        const result={
+
+
+
+            added:[],
+
+
+            removed:[],
+
+
+            changed:[]
+
+
+
+        };
+
+
+
+
+        const oldMap={};
+
+        const newMap={};
+
+
+
+
+        oldMaterials.forEach(
+
+            item=>{
+
+
+                oldMap[item.code]=item;
+
+
+            }
+
+        );
+
+
+
+
+        newMaterials.forEach(
+
+            item=>{
+
+
+                newMap[item.code]=item;
+
+
+            }
+
+        );
+
+
+
+
+
+        Object.keys(newMap)
+
+        .forEach(
+
+            code=>{
+
+
+
+                if(!oldMap[code]){
+
+
+
+                    result.added.push(
+
+                        newMap[code]
+
+                    );
+
+
+
+                }
+
+                else if(
+
+
+
+                    oldMap[code].quantity !==
+
+                    newMap[code].quantity
+
+
+
+                ){
+
+
+
+                    result.changed.push(
+
+
+
+                        {
+
+
+                            old:
+
+                                oldMap[code],
+
+
+
+                            new:
+
+                                newMap[code]
+
+
+
+                        }
+
+
+                    );
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        Object.keys(oldMap)
+
+        .forEach(
+
+            code=>{
+
+
+
+                if(!newMap[code]){
+
+
+
+                    result.removed.push(
+
+                        oldMap[code]
+
+                    );
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return result;
+
+
+    }
+
+
 
 
 
@@ -352,165 +678,10 @@ groupByCategory(){
 
 
 
+global.MaterialEngine =
 
+    MaterialEngine;
 
 
 
-/*
-----------------------------------------------
-
-Get Total Weight
-
-
-----------------------------------------------
-
-*/
-
-
-getTotalWeight(){
-
-
-
-    return Object.values(
-
-        this.summary
-
-    )
-
-    .reduce(
-
-
-
-        (
-
-            total,
-
-            item
-
-        )=>
-
-
-
-            total +
-
-            item.totalWeight,
-
-
-
-        0
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Purchase Summary
-
-
-----------------------------------------------
-
-*/
-
-
-getPurchaseSummary(){
-
-
-
-    return Object.values(
-
-        this.summary
-
-    )
-
-    .map(item=>({
-
-
-
-        materialCode:
-
-            item.code,
-
-
-
-        materialName:
-
-            item.name,
-
-
-
-        category:
-
-            item.category,
-
-
-
-        quantity:
-
-            item.quantity,
-
-
-
-        unit:
-
-            item.unit,
-
-
-
-        weight:
-
-            item.totalWeight
-
-
-
-    }));
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Clear
-
-----------------------------------------------
-
-*/
-
-
-clear(){
-
-
-
-    this.summary = {};
-
-
-
-}
-```
-
-}
-
-window.MaterialEngine = MaterialEngine;
+})(window);
