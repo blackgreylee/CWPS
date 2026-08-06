@@ -1,401 +1,533 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Invoice Management Engine
+ File:
+ src/js/procurement/invoice-engine.js
 
-Sprint:
 
-1.5.5
+ Sprint:
+ 2.3.5
 
-Build:
 
-0001
+ Build:
+ Enterprise Invoice Engine
 
-Description:
 
-Invoice workflow and payment tracking engine
+ Description:
+ Invoice & Payment Management Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class InvoiceEngine {
 
-```
-constructor(){
 
 
-
-    this.invoices = [];
-
+    constructor(){
 
 
-}
+        this.storage =
+
+            new InvoiceStorage();
 
 
-
+    }
 
 
 
 
 
 
-/*
-----------------------------------------------
+    /*
+    ==============================================
 
-Create Invoice From Purchase
+    Initialize
 
-
-----------------------------------------------
-
-*/
+    ==============================================
+    */
 
 
-createInvoice(
-
-    purchase,
-
-    shipment = null
-
-){
+    async init(){
 
 
+        if(this.storage.init){
 
-    let amount = 0;
+
+            await this.storage.init();
 
 
+        }
+
+
+    }
 
 
 
-    purchase.items.forEach(item=>{
 
 
 
-        amount +=
+    /*
+    ==============================================
+
+    Create Invoice
+
+    建立請款資料
+
+    ==============================================
+    */
+
+
+    async create(data){
 
 
 
-            Number(
-
-                item.amount
-
-            )
-
-            ||
+        if(!data){
 
 
+            throw new Error(
 
-            (
-
-                item.quantity *
-
-                item.unitPrice
+                "Invoice data required"
 
             );
 
 
-
-    });
-
+        }
 
 
 
 
 
-
-    let invoice =
-
+        data.status =
 
 
-        new InvoiceModel({
+            data.status ||
+
+            CWPSTypes.InvoiceStatus.DRAFT;
+
+
+
+
+
+        data.createdAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.create(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Generate From Shipment
+
+    Shipment → Invoice
+
+    ==============================================
+    */
+
+
+    async generateFromShipment(
+        shipment
+    ){
+
+
+
+        if(!shipment){
+
+
+            throw new Error(
+
+                "Shipment required"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            shipmentId:
+
+                shipment.id,
 
 
 
             purchaseId:
 
-                purchase.id,
-
-
-
-            shipmentId:
-
-                shipment
-
-                ?
-
-                shipment.id
-
-                :
-
-                "",
+                shipment.purchaseId,
 
 
 
             projectId:
 
-                purchase.projectId,
-
-
-
-            batchId:
-
-                purchase.batchId,
+                shipment.projectId,
 
 
 
             supplierId:
 
-                purchase.supplierId,
+                shipment.supplierId,
 
 
 
-            supplierName:
+            items:
 
-                purchase.supplierName,
+                shipment.items || [],
 
 
 
             amount:
 
-                amount
+                shipment.totalAmount || 0,
 
 
 
-        });
+            status:
+
+                CWPSTypes.InvoiceStatus.DRAFT,
+
+
+
+            createdAt:
+
+
+                new Date()
+
+                .toISOString()
+
+
+
+        };
+
+
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Submit Invoice
+
+    提交請款
+
+    ==============================================
+    */
+
+
+    async submit(
+        invoiceId
+    ){
 
 
 
-    this.invoices.push(
+        return await this.storage.submit(
 
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Approve Invoice
+
+    審核通過
+
+    ==============================================
+    */
+
+
+    async approve(
+        invoiceId
+    ){
+
+
+
+        return await this.storage.approve(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Pay Invoice
+
+    完成付款
+
+    ==============================================
+    */
+
+
+    async pay(
+        invoiceId
+    ){
+
+
+
+        return await this.storage.pay(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Close Invoice
+
+    ==============================================
+    */
+
+
+    async close(
+        invoiceId
+    ){
+
+
+
+        return await this.storage.close(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Query
+
+    ==============================================
+    */
+
+
+    async getAll(){
+
+
+
+        return await this.storage.getAll();
+
+
+
+    }
+
+
+
+
+
+
+    async findByProject(
+        projectId
+    ){
+
+
+
+        return await this.storage.findByProject(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    async findByPurchase(
+        purchaseId
+    ){
+
+
+
+        return await this.storage.findByPurchase(
+
+            purchaseId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    async findBySupplier(
+        supplierId
+    ){
+
+
+
+        return await this.storage.findBySupplier(
+
+            supplierId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cost Summary
+
+    採購成本統計
+
+    ==============================================
+    */
+
+
+    calculateTotal(
+        invoices
+    ){
+
+
+
+        if(!Array.isArray(invoices)){
+
+
+            return 0;
+
+
+        }
+
+
+
+
+
+        return invoices.reduce(
+
+            (total,item)=>{
+
+
+                return (
+
+                    total +
+
+                    Number(
+
+                        item.amount || 0
+
+                    )
+
+                );
+
+
+            },
+
+            0
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Version Management
+
+    ==============================================
+    */
+
+
+    async createVersion(
         invoice
+    ){
 
-    );
 
 
+        return await this.storage.createVersion(
 
-
-
-    return invoice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Invoice
-
-
-----------------------------------------------
-
-*/
-
-
-addInvoice(
-
-    invoice
-
-){
-
-
-
-    this.invoices.push(
-
-        invoice
-
-    );
-
-
-
-
-
-    return invoice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get All Invoices
-
-
-----------------------------------------------
-
-*/
-
-
-getAll(){
-
-
-
-    return this.invoices;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Invoice By ID
-
-
-----------------------------------------------
-
-*/
-
-
-getById(
-
-    id
-
-){
-
-
-
-    return this.invoices.find(
-
-
-
-        item =>
-
-
-
-        item.id === id
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find By Purchase Order
-
-
-----------------------------------------------
-
-*/
-
-
-getByPurchase(
-
-    purchaseId
-
-){
-
-
-
-    return this.invoices.filter(
-
-
-
-        item =>
-
-
-
-        item.purchaseId === purchaseId
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Issue Invoice
-
-
-----------------------------------------------
-
-*/
-
-
-issueInvoice(
-
-    invoiceId
-
-){
-
-
-
-    let invoice =
-
-
-
-        this.getById(
-
-            invoiceId
+            invoice
 
         );
-
-
-
-
-
-    if(!invoice){
-
-
-
-        return null;
-
 
 
     }
@@ -404,16 +536,6 @@ issueInvoice(
 
 
 
-    invoice.issue();
-
-
-
-
-
-    return invoice;
-
-
-
 }
 
 
@@ -421,507 +543,10 @@ issueInvoice(
 
 
 
+global.InvoiceEngine =
 
+    InvoiceEngine;
 
 
-/*
-----------------------------------------------
 
-Verify Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-verifyInvoice(
-
-    invoiceId
-
-){
-
-
-
-    let invoice =
-
-
-
-        this.getById(
-
-            invoiceId
-
-        );
-
-
-
-
-
-    if(!invoice){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    invoice.verify();
-
-
-
-
-
-    return invoice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Approve Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-approveInvoice(
-
-    invoiceId
-
-){
-
-
-
-    let invoice =
-
-
-
-        this.getById(
-
-            invoiceId
-
-        );
-
-
-
-
-
-    if(!invoice){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    invoice.approve();
-
-
-
-
-
-    return invoice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Payment Record
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-recordPayment(
-
-    invoiceId,
-
-    amount
-
-){
-
-
-
-    let invoice =
-
-
-
-        this.getById(
-
-            invoiceId
-
-        );
-
-
-
-
-
-    if(!invoice){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    invoice.pay(
-
-        amount
-
-    );
-
-
-
-
-
-    return invoice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Unpaid Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getUnpaidInvoices(){
-
-
-
-    return this.invoices.filter(
-
-
-
-        invoice =>
-
-
-
-        invoice.paymentStatus
-
-        !==
-
-        "Paid"
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Outstanding Amount
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getOutstandingAmount(){
-
-
-
-    let total = 0;
-
-
-
-
-
-    this.getUnpaidInvoices()
-
-    .forEach(invoice=>{
-
-
-
-        total +=
-
-
-
-            invoice.getRemainingAmount();
-
-
-
-    });
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Invoice Summary
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-summary(){
-
-
-
-    let total = 0;
-
-
-
-    let paid = 0;
-
-
-
-    let unpaid = 0;
-
-
-
-
-
-    this.invoices.forEach(invoice=>{
-
-
-
-        total +=
-
-
-
-            invoice.totalAmount;
-
-
-
-
-
-        paid +=
-
-
-
-            invoice.paidAmount;
-
-
-
-    });
-
-
-
-
-
-    unpaid =
-
-        total -
-
-        paid;
-
-
-
-
-
-    return {
-
-
-
-        invoiceCount:
-
-            this.invoices.length,
-
-
-
-        totalAmount:
-
-            total,
-
-
-
-        paidAmount:
-
-            paid,
-
-
-
-        unpaidAmount:
-
-            unpaid,
-
-
-
-        generatedDate:
-
-            new Date()
-
-            .toISOString()
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Close Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-closeInvoice(
-
-    invoiceId
-
-){
-
-
-
-    let invoice =
-
-
-
-        this.getById(
-
-            invoiceId
-
-        );
-
-
-
-
-
-    if(!invoice){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    invoice.close();
-
-
-
-
-
-    return invoice;
-
-
-
-}
-```
-
-}
-
-window.InvoiceEngine = InvoiceEngine;
+})(window);
