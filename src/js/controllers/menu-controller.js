@@ -1,519 +1,343 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Menu Controller
+ File:
+ src/js/controllers/menu-controller.js
 
-Sprint:
 
-1.7.3
+ Sprint:
+ 2.6.4
 
-Build:
 
-0001
+ Build:
+ Enterprise Menu Navigation Controller
 
-Description:
 
-Navigation menu controller
+ Description:
+ Main Navigation Controller
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class MenuController {
 
-```
-constructor(
 
-    pageLoader = null
 
-){
+    constructor(){
 
 
+        this.router =
 
-    this.pageLoader =
+            new Router();
 
-        pageLoader;
 
 
+        this.currentMenu = null;
 
 
 
-    this.menuItems = {
+        this.menuItems = {
 
 
 
-        dashboard:
+            dashboard:
 
 
+            {
 
-        {
 
+                path:
 
+                    "dashboard",
 
-            text:
 
-                "Dashboard",
 
+                title:
 
+                    "Dashboard"
 
-            page:
 
-                "dashboard"
+            },
 
 
 
-        },
 
+            project:
 
 
+            {
 
 
-        project:
+                path:
 
+                    "project",
 
 
-        {
 
+                title:
 
+                    "Project Management"
 
-            text:
 
-                "專案管理",
+            },
 
 
 
-            page:
 
-                "project"
+            batch:
 
 
+            {
 
-        },
 
+                path:
 
+                    "batch",
 
 
 
-        batch:
+                title:
 
+                    "Batch Management"
 
 
-        {
+            },
 
 
 
-            text:
 
-                "批次管理",
+            bom:
 
 
+            {
 
-            page:
 
-                "batch"
+                path:
 
+                    "bom",
 
 
-        },
 
+                title:
 
+                    "BOM Management"
 
 
+            },
 
-        bom:
 
 
 
-        {
+            material:
 
 
+            {
 
-            text:
 
-                "BOM管理",
+                path:
 
+                    "material",
 
 
-            page:
 
-                "bom"
+                title:
 
+                    "Material Management"
 
 
-        },
+            },
 
 
 
 
+            supplier:
 
-        material:
 
+            {
 
 
-        {
+                path:
 
+                    "supplier",
 
 
-            text:
 
-                "材料管理",
+                title:
 
+                    "Supplier Management"
 
 
-            page:
+            },
 
-                "material"
 
 
 
-        },
+            quotation:
 
 
+            {
 
 
+                path:
 
-        supplier:
+                    "quotation",
 
 
 
-        {
+                title:
 
+                    "Quotation Management"
 
 
-            text:
+            },
 
-                "供應商管理",
 
 
 
-            page:
+            purchase:
 
-                "supplier"
 
+            {
 
 
-        },
+                path:
 
+                    "purchase",
 
 
 
+                title:
 
-        quotation:
+                    "Purchase Management"
 
 
+            },
 
-        {
 
 
 
-            text:
+            shipment:
 
-                "詢價管理",
 
+            {
 
 
-            page:
+                path:
 
-                "quotation"
+                    "shipment",
 
 
 
-        },
+                title:
 
+                    "Shipment Management"
 
 
+            },
 
 
-        purchase:
 
 
+            invoice:
 
-        {
 
+            {
 
 
-            text:
+                path:
 
-                "採購管理",
+                    "invoice",
 
 
 
-            page:
+                title:
 
-                "purchase"
+                    "Invoice Management"
 
 
+            },
 
-        },
 
 
 
+            report:
 
 
-        shipment:
+            {
 
 
+                path:
 
-        {
+                    "report",
 
 
 
-            text:
+                title:
 
-                "出貨管理",
+                    "Report & Analysis"
 
 
+            },
 
-            page:
 
-                "shipment"
 
 
+            setting:
 
-        },
 
+            {
 
 
+                path:
 
+                    "setting",
 
-        invoice:
 
 
+                title:
 
-        {
-
-
-
-            text:
-
-                "發票管理",
-
-
-
-            page:
-
-                "invoice"
-
-
-
-        },
-
-
-
-
-
-        setting:
-
-
-
-        {
-
-
-
-            text:
-
-                "系統設定",
-
-
-
-            page:
-
-                "setting"
-
-
-
-        }
-
-
-
-    };
-
-
-
-
-
-
-
-
-
-    this.currentMenu =
-
-        "dashboard";
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize Menu
-
-
-----------------------------------------------
-
-*/
-
-
-init(){
-
-
-
-    this.bindEvents();
-
-
-
-    this.setActive(
-
-        this.currentMenu
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Bind Click Events
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-bindEvents(){
-
-
-
-    let menus =
-
-
-
-        document.querySelectorAll(
-
-            "[data-page]"
-
-        );
-
-
-
-
-
-
-
-
-
-    menus.forEach(menu=>{
-
-
-
-        menu.addEventListener(
-
-
-
-            "click",
-
-
-
-            ()=>{
-
-
-
-                let page =
-
-
-
-                    menu.dataset.page;
-
-
-
-
-
-                this.navigate(
-
-                    page
-
-                );
-
+                    "System Setting"
 
 
             }
 
 
 
-        );
+        };
 
 
-
-    });
-
-
-
-}
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    init(){
 
 
 
-/*
-----------------------------------------------
-
-Navigate Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-navigate(
-
-    page
-
-){
-
-
-
-    if(
-
-        this.pageLoader
-
-    ){
-
-
-
-        this.pageLoader.load(
-
-            page
-
-        );
+        this.bindEvents();
 
 
 
@@ -523,151 +347,191 @@ navigate(
 
 
 
-    this.setActive(
 
-        page
+    /*
+    ==============================================
 
-    );
+    Bind Menu Events
 
+    ==============================================
+    */
 
 
+    bindEvents(){
 
 
-    this.currentMenu =
 
-        page;
+        const menus =
 
 
+            document.querySelectorAll(
 
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Set Active Menu
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-setActive(
-
-    page
-
-){
-
-
-
-    let menus =
-
-
-
-        document.querySelectorAll(
-
-            "[data-page]"
-
-        );
-
-
-
-
-
-
-
-
-
-    menus.forEach(item=>{
-
-
-
-        item.classList.remove(
-
-            "active"
-
-        );
-
-
-
-
-
-        if(
-
-            item.dataset.page
-
-            ===
-
-            page
-
-        ){
-
-
-
-            item.classList.add(
-
-                "active"
+                "[data-menu]"
 
             );
 
+
+
+
+
+        menus.forEach(
+
+            menu=>{
+
+
+                menu.addEventListener(
+
+                    "click",
+
+                    ()=>{
+
+
+                        const target =
+
+
+                            menu.dataset.menu;
+
+
+
+
+
+                        this.open(
+
+                            target
+
+                        );
+
+
+                    }
+
+                );
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Open Menu
+
+    ==============================================
+    */
+
+
+    open(
+        menu
+    ){
+
+
+
+        const item =
+
+
+            this.menuItems[menu];
+
+
+
+
+
+        if(!item){
+
+
+            console.warn(
+
+                "Menu not found:",
+
+                menu
+
+            );
+
+
+            return;
 
 
         }
 
 
 
-    });
 
 
-
-}
-
-
+        this.currentMenu = menu;
 
 
 
 
 
+        this.router.navigate(
+
+            item.path
+
+        );
 
 
-/*
-----------------------------------------------
+        this.setActive(
 
-Generate Menu HTML
+            menu
 
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
+        );
 
 
-render(
-
-    containerId
-
-){
+    }
 
 
 
-    let container =
 
 
 
-        document.getElementById(
+    /*
+    ==============================================
 
-            containerId
+    Active Menu
+
+    ==============================================
+    */
+
+
+    setActive(
+        menu
+    ){
+
+
+
+        const menus =
+
+
+            document.querySelectorAll(
+
+                "[data-menu]"
+
+            );
+
+
+
+
+
+        menus.forEach(
+
+            item=>{
+
+
+                item.classList.remove(
+
+                    "active"
+
+                );
+
+
+            }
 
         );
 
@@ -675,11 +539,53 @@ render(
 
 
 
-    if(!container){
+        const active =
+
+
+            document.querySelector(
+
+                `[data-menu="${menu}"]`
+
+            );
 
 
 
-        return;
+
+
+        if(active){
+
+
+            active.classList.add(
+
+                "active"
+
+            );
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Current Menu
+
+    ==============================================
+    */
+
+
+    getCurrent(){
+
+
+
+        return this.currentMenu;
 
 
 
@@ -690,84 +596,35 @@ render(
 
 
 
+    /*
+    ==============================================
+
+    Refresh
+
+    ==============================================
+    */
+
+
+    refresh(){
 
 
 
-    let html = "";
+        if(this.currentMenu){
 
 
+            this.open(
+
+                this.currentMenu
+
+            );
 
 
-
-    Object.keys(
-
-        this.menuItems
-
-    )
-
-    .forEach(key=>{
+        }
 
 
-
-        let item =
-
+    }
 
 
-            this.menuItems[key];
-
-
-
-
-
-        html += `
-
-
-
-        <li>
-
-
-
-            <a href="#"
-
-               data-page="${item.page}">
-
-
-
-                ${item.text}
-
-
-
-            </a>
-
-
-
-        </li>
-
-
-
-        `;
-
-
-
-    });
-
-
-
-
-
-
-
-
-
-    container.innerHTML =
-
-        html;
-
-
-
-
-
-    this.bindEvents();
 
 
 
@@ -778,64 +635,10 @@ render(
 
 
 
+global.MenuController =
+
+    MenuController;
 
 
 
-/*
-----------------------------------------------
-
-Get Current Menu
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getCurrent(){
-
-
-
-    return this.currentMenu;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Menu List
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getMenus(){
-
-
-
-    return this.menuItems;
-
-
-
-}
-```
-
-}
-
-window.MenuController = MenuController;
+})(window);
