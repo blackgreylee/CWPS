@@ -1,201 +1,83 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Dashboard View
+ File:
+ src/js/views/dashboard-view.js
 
-Sprint:
 
-1.8.1
+ Sprint:
+ 2.7.5
 
-Build:
 
-0001
+ Build:
+ Enterprise Dashboard View Layer
 
-Description:
 
-Dashboard UI renderer
+ Description:
+ Dashboard UI View
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class DashboardView {
 
-```
-constructor(){
 
 
-
-    this.containerId =
-
-        "dashboard-container";
+    constructor(){
 
 
+        this.service = null;
 
 
-
-    this.dashboardService =
-
-        null;
+        this.container = null;
 
 
-
-
-
-    this.data = null;
-
-
-
-}
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
 
 
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    dashboardService
-
-){
-
-
-
-    this.dashboardService =
-
-        dashboardService;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Dashboard Data
-
-
-----------------------------------------------
-
-*/
-
-
-load(){
-
-
-
-    if(
-
-        !this.dashboardService
-
+    init(
+        service,
+        containerId = "app"
     ){
 
 
 
-        console.error(
-
-            "Dashboard Service Missing"
-
-        );
+        this.service = service;
 
 
 
-        return;
+        this.container =
 
 
+            document.getElementById(
 
-    }
+                containerId
 
-
-
-
-
-
-
-
-
-    this.data =
-
-
-
-        this.dashboardService.generate();
-
-
-
-    this.render();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Dashboard
-
-
-----------------------------------------------
-
-*/
-
-
-render(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
+            );
 
 
 
@@ -206,84 +88,512 @@ render(){
 
 
 
+    /*
+    ==============================================
+
+    Load Dashboard
+
+    ==============================================
+    */
+
+
+    async load(){
 
 
 
-    container.innerHTML = `
+        const data =
 
 
-
-    <div class="dashboard-header">
-
-
-
-        <h2>
-
-        CWPS Dashboard
-
-        </h2>
-
-
-
-    </div>
+            await this.service.getDashboard();
 
 
 
 
 
-    <div class="dashboard-cards">
+        this.render(
+
+            data
+
+        );
 
 
 
-        ${
 
-            this.renderOverview()
+
+        return data;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Render Dashboard
+
+    ==============================================
+    */
+
+
+    render(
+        data
+    ){
+
+
+
+        if(!this.container){
+
+
+            return;
+
 
         }
 
 
 
-    </div>
+
+
+        const project =
+
+            data.project || {};
+
+
+
+        const procurement =
+
+            data.procurement || {};
+
+
+
+        const supplier =
+
+            data.supplier || {};
+
+
+
+        const material =
+
+            data.material || {};
 
 
 
 
 
-    <div class="dashboard-section">
+
+        this.container.innerHTML = `
 
 
 
-        ${
+        <div class="dashboard-page">
 
-            this.renderFinancial()
+
+            <div class="page-header">
+
+
+                <h2>
+
+                    CWPS Dashboard
+
+                </h2>
+
+
+            </div>
+
+
+
+
+
+            <div class="dashboard-cards">
+
+
+                ${
+
+                    this.card(
+
+                        "Projects",
+
+                        project.count || 0
+
+                    )
+
+                }
+
+
+
+                ${
+
+                    this.card(
+
+                        "Materials",
+
+                        material.count || 0
+
+                    )
+
+                }
+
+
+
+                ${
+
+                    this.card(
+
+                        "Purchase Amount",
+
+                        procurement.amount || 0
+
+                    )
+
+                }
+
+
+
+                ${
+
+                    this.card(
+
+                        "Suppliers",
+
+                        supplier.count || 0
+
+                    )
+
+                }
+
+
+            </div>
+
+
+
+
+
+            <div class="dashboard-section">
+
+
+                <h3>
+
+                    Procurement Progress
+
+                </h3>
+
+
+
+                ${
+
+                    this.renderProgress(
+
+                        procurement
+
+                    )
+
+                }
+
+
+            </div>
+
+
+
+
+
+            <div class="dashboard-section">
+
+
+                <h3>
+
+                    Supplier Ranking
+
+                </h3>
+
+
+
+                ${
+
+                    this.renderSupplier(
+
+                        supplier.ranking
+
+                    )
+
+                }
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+        `;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Card Component
+
+    ==============================================
+    */
+
+
+    card(
+        title,
+        value
+    ){
+
+
+
+        return `
+
+
+
+        <div class="dashboard-card">
+
+
+            <div class="card-title">
+
+                ${title}
+
+            </div>
+
+
+
+            <div class="card-value">
+
+                ${value}
+
+            </div>
+
+
+        </div>
+
+
+        `;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Procurement Progress
+
+    ==============================================
+    */
+
+
+    renderProgress(
+        data
+    ){
+
+
+
+        return `
+
+
+
+        <div class="progress-box">
+
+
+            Requirement:
+
+            ${
+
+                data.requirementProgress || 0
+
+            }%
+
+
+
+            <br>
+
+
+
+            Purchase:
+
+            ${
+
+                data.purchaseProgress || 0
+
+            }%
+
+
+
+            <br>
+
+
+
+            Shipment:
+
+            ${
+
+                data.shipmentProgress || 0
+
+            }%
+
+
+
+            <br>
+
+
+
+            Invoice:
+
+            ${
+
+                data.invoiceProgress || 0
+
+            }%
+
+
+
+        </div>
+
+
+        `;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Supplier Ranking
+
+    ==============================================
+    */
+
+
+    renderSupplier(
+        list
+    ){
+
+
+
+        if(
+
+            !Array.isArray(list)
+
+        ){
+
+
+            return "No Data";
+
 
         }
 
 
 
-    </div>
+
+
+        return `
+
+
+
+        <ol>
+
+
+            ${
+
+                list.map(
+
+                    item=>{
+
+
+                        return `
+
+
+                        <li>
+
+
+                            ${
+
+                                item.name || ""
+
+                            }
+
+
+                            -
+
+                            Score:
+
+                            ${
+
+                                item.performanceScore || 0
+
+                            }
+
+
+                        </li>
+
+
+                        `;
+
+
+                    }
+
+                )
+
+                .join("")
+
+            }
+
+
+        </ol>
+
+
+        `;
+
+
+    }
 
 
 
 
 
-    <div class="dashboard-section">
+
+    /*
+    ==============================================
+
+    Refresh
+
+    ==============================================
+    */
+
+
+    async refresh(){
 
 
 
-        ${
-
-            this.renderShipment()
-
-        }
+        return await this.load();
 
 
 
-    </div>
+    }
 
 
-
-    `;
 
 
 
@@ -294,445 +604,10 @@ render(){
 
 
 
+global.DashboardView =
 
+    DashboardView;
 
 
-/*
-----------------------------------------------
 
-Overview Cards
-
-
-----------------------------------------------
-
-*/
-
-
-renderOverview(){
-
-
-
-    let data =
-
-
-
-        this.data.overview;
-
-
-
-
-
-
-
-
-
-    return `
-
-
-
-    <div class="card">
-
-
-
-        <h4>專案數</h4>
-
-
-
-        <span>
-
-        ${data.projects}
-
-        </span>
-
-
-
-    </div>
-
-
-
-
-
-    <div class="card">
-
-
-
-        <h4>需求數</h4>
-
-
-
-        <span>
-
-        ${data.requirements}
-
-        </span>
-
-
-
-    </div>
-
-
-
-
-
-    <div class="card">
-
-
-
-        <h4>採購單</h4>
-
-
-
-        <span>
-
-        ${data.purchases}
-
-        </span>
-
-
-
-    </div>
-
-
-
-
-
-    <div class="card">
-
-
-
-        <h4>出貨單</h4>
-
-
-
-        <span>
-
-        ${data.shipments}
-
-        </span>
-
-
-
-    </div>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Financial
-
-
-----------------------------------------------
-
-*/
-
-
-renderFinancial(){
-
-
-
-    let data =
-
-
-
-        this.data.financial;
-
-
-
-
-
-
-
-
-
-    return `
-
-
-
-    <h3>
-
-    採購金額分析
-
-    </h3>
-
-
-
-    <table>
-
-
-
-    <tr>
-
-    <td>
-
-    採購總額
-
-    </td>
-
-
-    <td>
-
-    ${data.purchaseAmount}
-
-    </td>
-
-
-    </tr>
-
-
-
-
-
-    <tr>
-
-    <td>
-
-    發票金額
-
-    </td>
-
-
-    <td>
-
-    ${data.invoiceAmount}
-
-    </td>
-
-
-    </tr>
-
-
-
-
-
-    <tr>
-
-    <td>
-
-    已付款
-
-    </td>
-
-
-    <td>
-
-    ${data.paidAmount}
-
-    </td>
-
-
-    </tr>
-
-
-
-
-
-    <tr>
-
-    <td>
-
-    未付款
-
-    </td>
-
-
-    <td>
-
-    ${data.unpaidAmount}
-
-    </td>
-
-
-    </tr>
-
-
-
-    </table>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Shipment Status
-
-
-----------------------------------------------
-
-*/
-
-
-renderShipment(){
-
-
-
-    let data =
-
-
-
-        this.data.shipment;
-
-
-
-
-
-
-
-
-
-    return `
-
-
-
-    <h3>
-
-    出貨狀態
-
-    </h3>
-
-
-
-    <ul>
-
-
-
-    <li>
-
-    總出貨：
-
-    ${data.total}
-
-    </li>
-
-
-
-    <li>
-
-    已完成：
-
-    ${data.completed}
-
-    </li>
-
-
-
-    <li>
-
-    運送中：
-
-    ${data.shipping}
-
-    </li>
-
-
-
-    <li>
-
-    等待：
-
-    ${data.waiting}
-
-    </li>
-
-
-
-    </ul>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Refresh
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    this.load();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Data
-
-
-----------------------------------------------
-
-*/
-
-
-getData(){
-
-
-
-    return this.data;
-
-
-
-}
-```
-
-}
-
-window.DashboardView = DashboardView;
+})(window);
