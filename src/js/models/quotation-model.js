@@ -1,717 +1,404 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Supplier Quotation Model
+ Quotation Model
 
-Sprint:
+ Sprint:
+ 2.0.10
 
-1.5.2
-
-Build:
-
-0001
-
-Description:
-
-Supplier quotation data model
+ Description:
+ Supplier Quotation Entity
 
 ==================================================
 */
 
-class QuotationModel {
+(function (global) {
 
-```
-constructor(data = {}){
+    "use strict";
 
 
+    class Quotation {
 
-    this.id =
 
+        constructor(data = {}) {
 
 
-        data.id ||
+            this.id =
+                data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 供應商
+            this.supplierId =
+                data.supplierId || null;
 
 
 
-    this.requirementId =
+            // 專案
+            this.projectId =
+                data.projectId || null;
 
 
 
-        data.requirementId ||
+            // 採購需求
+            this.requirementId =
+                data.requirementId || null;
 
-        "";
 
 
+            // 報價編號
+            this.code =
+                data.code || "";
 
 
 
-    this.projectId =
+            // 報價版本
+            this.version =
+                Number(data.version ?? 1);
 
 
 
-        data.projectId ||
+            // 報價日期
+            this.quoteDate =
+                data.quoteDate ||
 
-        "";
+                new Date().toISOString();
 
 
 
+            // 有效日期
+            this.validUntil =
+                data.validUntil || null;
 
 
-    this.batchId =
 
+            // 報價狀態
+            this.status =
 
+                data.status ||
 
-        data.batchId ||
+                CWPSTypes.QuotationStatus.DRAFT;
 
-        "";
 
 
+            // 報價明細
+            this.items = [];
 
 
 
-    this.supplierId =
+            if (Array.isArray(data.items)) {
 
 
+                this.items =
+                    data.items.map(item => ({
 
-        data.supplierId ||
 
-        "";
+                        materialId:
+                            item.materialId || null,
 
 
+                        materialName:
+                            item.materialName || "",
 
 
+                        specification:
+                            item.specification || "",
 
-    this.supplierName =
 
+                        quantity:
+                            Number(item.quantity ?? 0),
 
 
-        data.supplierName ||
+                        unit:
+                            item.unit || "",
 
-        "";
 
+                        unitPrice:
+                            Number(item.unitPrice ?? 0),
 
 
+                        amount:
+                            Number(item.amount ?? 0),
 
 
-    this.materialCode =
+                        remark:
+                            item.remark || ""
 
 
+                    }));
 
-        data.materialCode ||
+            }
 
-        "";
 
 
+            // 總金額
+            this.totalAmount =
+                Number(data.totalAmount ?? 0);
 
 
 
-    this.materialName =
+            // 備註
+            this.remark =
+                data.remark || "";
 
 
 
-        data.materialName ||
+            this.createdAt =
+                data.createdAt ||
 
-        "";
+                new Date().toISOString();
 
 
 
+            this.updatedAt =
+                data.updatedAt ||
 
+                new Date().toISOString();
 
-    this.category =
 
+        }
 
 
-        data.category ||
 
-        "";
+        /**
+         * 新增報價項目
+         */
+        addItem(item) {
 
 
+            const quotationItem = {
 
 
+                materialId:
+                    item.materialId || null,
 
-    this.quantity =
 
+                materialName:
+                    item.materialName || "",
 
 
-        Number(
+                specification:
+                    item.specification || "",
 
-            data.quantity
 
-        )
+                quantity:
+                    Number(item.quantity ?? 0),
 
-        || 0;
 
+                unit:
+                    item.unit || "",
 
 
+                unitPrice:
+                    Number(item.unitPrice ?? 0),
 
 
-    this.unit =
+                amount:
+                    Number(item.quantity ?? 0) *
 
+                    Number(item.unitPrice ?? 0),
 
 
-        data.unit ||
+                remark:
+                    item.remark || ""
 
-        "PCS";
 
+            };
 
 
+            this.items.push(quotationItem);
 
 
-    this.unitPrice =
+            this.calculateTotal();
 
 
+            this.touch();
 
-        Number(
 
-            data.unitPrice
+        }
 
-        )
 
-        || 0;
 
+        /**
+         * 移除項目
+         */
+        removeItem(index) {
 
 
+            this.items.splice(index, 1);
 
 
-    this.totalAmount =
+            this.calculateTotal();
 
 
+            this.touch();
 
-        this.quantity *
 
-        this.unitPrice;
+        }
 
 
 
+        /**
+         * 計算總價
+         */
+        calculateTotal() {
 
 
-    this.currency =
+            this.totalAmount =
 
+                this.items.reduce(
 
 
-        data.currency ||
+                    (sum, item) =>
 
-        "TWD";
+                        sum + item.amount,
 
 
+                    0
 
 
+                );
 
-    this.deliveryDays =
 
+            return this.totalAmount;
 
 
-        Number(
+        }
 
-            data.deliveryDays
 
-        )
 
-        || 0;
+        /**
+         * 採用報價
+         */
+        approve() {
 
 
+            this.status =
 
+                CWPSTypes.QuotationStatus.APPROVED;
 
 
-    this.status =
+            this.touch();
 
 
+        }
 
-        data.status ||
 
-        "Draft";
 
+        /**
+         * 作廢
+         */
+        cancel() {
 
 
+            this.status =
 
+                CWPSTypes.QuotationStatus.CANCELLED;
 
-    this.remark =
 
+            this.touch();
 
 
-        data.remark ||
+        }
 
-        "";
 
 
+        /**
+         * 更新時間
+         */
+        touch() {
 
 
+            this.updatedAt =
 
-    this.createdDate =
+                new Date().toISOString();
 
 
+        }
 
-        data.createdDate ||
 
-        new Date()
 
-        .toISOString();
+        /**
+         * JSON
+         */
+        toJSON() {
 
 
+            return {
 
 
+                id:
+                    this.id,
 
-    this.updatedDate =
 
+                supplierId:
+                    this.supplierId,
 
 
-        new Date()
+                projectId:
+                    this.projectId,
 
-        .toISOString();
 
+                requirementId:
+                    this.requirementId,
 
 
-}
+                code:
+                    this.code,
 
 
+                version:
+                    this.version,
 
 
+                quoteDate:
+                    this.quoteDate,
 
 
+                validUntil:
+                    this.validUntil,
 
 
+                status:
+                    this.status,
 
-/*
-----------------------------------------------
 
-Generate ID
+                items:
+                    this.items,
 
 
-----------------------------------------------
+                totalAmount:
+                    this.totalAmount,
 
-*/
 
+                remark:
+                    this.remark,
 
-generateId(){
 
+                createdAt:
+                    this.createdAt,
 
 
-    return (
+                updatedAt:
+                    this.updatedAt
 
-        "QUO-" +
 
-        Date.now()
 
-    );
+            };
 
 
+        }
 
-}
 
 
+    }
 
 
 
+    global.Quotation = Quotation;
 
 
 
-
-/*
-----------------------------------------------
-
-Calculate Total Amount
-
-
-----------------------------------------------
-
-*/
-
-
-calculateAmount(){
-
-
-
-    this.totalAmount =
-
-
-
-        this.quantity *
-
-        this.unitPrice;
-
-
-
-    return this.totalAmount;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Price
-
-
-----------------------------------------------
-
-*/
-
-
-updatePrice(
-
-    price
-
-){
-
-
-
-    this.unitPrice =
-
-
-
-        Number(price)
-
-        || 0;
-
-
-
-
-
-    this.calculateAmount();
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Send Quotation Request
-
-
-----------------------------------------------
-
-*/
-
-
-send(){
-
-
-
-    this.status =
-
-        "Sent";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Supplier Submitted
-
-
-----------------------------------------------
-
-*/
-
-
-submit(){
-
-
-
-    this.status =
-
-        "Submitted";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Approve Quotation
-
-
-----------------------------------------------
-
-*/
-
-
-approve(){
-
-
-
-    this.status =
-
-        "Approved";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Reject Quotation
-
-
-----------------------------------------------
-
-*/
-
-
-reject(){
-
-
-
-    this.status =
-
-        "Rejected";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Price Per Unit
-
-
-----------------------------------------------
-
-*/
-
-
-getUnitPrice(){
-
-
-
-    return this.unitPrice;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        requirementId:
-
-            this.requirementId,
-
-
-
-        supplierId:
-
-            this.supplierId,
-
-
-
-        supplierName:
-
-            this.supplierName,
-
-
-
-        materialCode:
-
-            this.materialCode,
-
-
-
-        materialName:
-
-            this.materialName,
-
-
-
-        quantity:
-
-            this.quantity,
-
-
-
-        unit:
-
-            this.unit,
-
-
-
-        unitPrice:
-
-            this.unitPrice,
-
-
-
-        totalAmount:
-
-            this.totalAmount,
-
-
-
-        currency:
-
-            this.currency,
-
-
-
-        deliveryDays:
-
-            this.deliveryDays,
-
-
-
-        status:
-
-            this.status
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.QuotationModel = QuotationModel;
+})(window);
