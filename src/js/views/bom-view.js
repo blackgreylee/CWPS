@@ -1,208 +1,49 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-BOM View
+ File:
+ src/js/views/bom-view.js
 
-Sprint:
 
-1.8.3
+ Sprint:
+ 2.7.4
 
-Build:
 
-0001
+ Build:
+ Enterprise BOM View Layer
 
-Description:
 
-BOM tree UI renderer
+ Description:
+ BOM Tree Management UI View
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class BOMView {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.containerId =
 
-        "bom-container";
+        this.controller = null;
 
 
+        this.container = null;
 
 
-
-    this.bomEngine =
-
-        null;
-
-
-
-
-
-    this.currentBatch =
-
-        null;
-
-
-
-
-
-    this.treeData = [];
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    bomEngine
-
-){
-
-
-
-    this.bomEngine =
-
-        bomEngine;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load BOM
-
-
-----------------------------------------------
-
-*/
-
-
-load(
-
-    batchId
-
-){
-
-
-
-    this.currentBatch =
-
-        batchId;
-
-
-
-
-
-
-
-
-
-    this.treeData =
-
-
-
-        this.bomEngine
-
-        .getTree(
-
-            batchId
-
-        );
-
-
-
-
-
-
-
-
-
-    this.render();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render BOM Page
-
-
-----------------------------------------------
-
-*/
-
-
-render(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
+        this.currentVersion = null;
 
 
     }
@@ -212,175 +53,40 @@ render(){
 
 
 
+    /*
+    ==============================================
 
+    Initialize
 
+    ==============================================
+    */
 
-    container.innerHTML = `
 
-
-
-    <div class="bom-header">
-
-
-
-        <h2>
-
-        BOM 結構
-
-        </h2>
-
-
-
-        <span>
-
-        批次：
-
-        ${this.currentBatch}
-
-        </span>
-
-
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="bom-tree">
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="bom-summary">
-
-    </div>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.renderTree();
-
-
-
-    this.renderSummary();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Tree
-
-
-----------------------------------------------
-
-*/
-
-
-renderTree(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            "bom-tree"
-
-        );
-
-
-
-
-
-
-
-
-
-    container.innerHTML =
-
-
-
-        this.createNode(
-
-            this.treeData
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Tree Node
-
-
-----------------------------------------------
-
-*/
-
-
-createNode(
-
-    nodes
-
-){
-
-
-
-    if(
-
-        !nodes
-
-        ||
-
-        nodes.length === 0
-
+    init(
+        controller,
+        containerId = "app"
     ){
 
 
 
-        return "";
+        this.controller = controller;
 
+
+
+        this.container =
+
+
+            document.getElementById(
+
+                containerId
+
+            );
+
+
+
+
+
+        this.bindEvents();
 
 
     }
@@ -390,59 +96,227 @@ createNode(
 
 
 
+    /*
+    ==============================================
+
+    Render BOM
+
+    ==============================================
+    */
+
+
+    render(
+        bom
+    ){
 
 
 
-    let html = "<ul>";
+        if(!this.container){
 
 
+            return;
 
-
-
-
-
-
-
-    nodes.forEach(node=>{
-
-
-
-        html += `
-
-
-
-        <li>
-
-
-
-        <span
-
-        class="bom-node"
-
-        data-id="${node.id}">
-
-
-
-        ${
-
-            node.code
 
         }
 
 
 
-        -
 
-        ${
 
-            node.name || ""
+        this.container.innerHTML = `
+
+
+        <div class="bom-page">
+
+
+            <div class="page-header">
+
+
+                <h2>
+
+                    BOM Management
+
+                </h2>
+
+
+                <button
+
+                    id="btn-import-bom"
+
+                >
+
+                    Import BOM
+
+                </button>
+
+
+            </div>
+
+
+
+
+
+            <div class="bom-version">
+
+
+                Version:
+
+                <span>
+
+                    ${
+
+                        bom.version ||
+
+                        ""
+
+                    }
+
+                </span>
+
+
+            </div>
+
+
+
+
+
+            <div class="bom-tree">
+
+
+                ${
+
+                    this.renderNode(
+
+                        bom.root
+
+                    )
+
+                }
+
+
+            </div>
+
+
+        </div>
+
+
+        `;
+
+
+
+        this.bindTreeEvents();
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Render BOM Node
+
+    ==============================================
+    */
+
+
+    renderNode(
+        node
+    ){
+
+
+
+        if(!node){
+
+
+            return "";
+
 
         }
 
 
 
-        </span>
 
+
+        let html = `
+
+
+
+        <div class="bom-node">
+
+
+            <div class="node-header">
+
+
+                <span
+
+                    class="toggle"
+
+                    data-id="${
+
+                        node.id
+
+                    }"
+
+                >
+
+                    [+]
+
+                </span>
+
+
+
+                <b>
+
+                    ${
+
+                        node.code ||
+
+                        ""
+
+                    }
+
+                </b>
+
+
+
+                <span>
+
+                    (
+
+                    ${
+
+                        node.type ||
+
+                        ""
+
+                    }
+
+                    )
+
+                </span>
+
+
+
+                <span>
+
+                    Qty:
+
+                    ${
+
+                        node.quantity ||
+
+                        0
+
+                    }
+
+                </span>
+
+
+            </div>
 
 
         `;
@@ -452,31 +326,36 @@ createNode(
 
 
 
-
-
-
         if(
 
-            node.children
-
-            &&
-
-            node.children.length
+            node.material
 
         ){
 
 
-
-            html +=
-
+            html += `
 
 
-                this.createNode(
 
-                    node.children
+            <div class="material-info">
 
-                );
 
+                Material:
+
+                ${
+
+                    node.material.name ||
+
+                    ""
+
+                }
+
+
+
+            </div>
+
+
+            `;
 
 
         }
@@ -486,247 +365,363 @@ createNode(
 
 
 
+        if(
 
+            node.children &&
 
+            node.children.length
 
-        html += "</li>";
+        ){
 
 
 
-    });
+            html += `
 
 
+            <div
 
+                class="children"
 
+                id="node-${
 
+                    node.id
 
+                }"
 
+            >
 
 
-    html += "</ul>";
+            `;
 
 
 
 
 
+            node.children.forEach(
 
+                child=>{
 
 
+                    html +=
 
-    return html;
 
+                        this.renderNode(
 
+                            child
 
-}
+                        );
 
 
+                }
 
+            );
 
 
 
 
 
+            html += `
 
-/*
-----------------------------------------------
 
-BOM Summary
+            </div>
 
 
-----------------------------------------------
+            `;
 
-*/
 
+        }
 
-renderSummary(){
 
 
 
-    let container =
 
+        html += `
 
 
-        document.getElementById(
+        </div>
 
-            "bom-summary"
 
-        );
+        `;
 
 
 
 
 
-
-
-
-
-    let summary =
-
-
-
-        this.bomEngine
-
-        .summary(
-
-            this.currentBatch
-
-        );
-
-
-
-
-
-
-
-
-
-    container.innerHTML = `
-
-
-
-    <h3>
-
-    BOM 統計
-
-    </h3>
-
-
-
-    <p>
-
-    項目數：
-
-    ${summary.count}
-
-    </p>
-
-
-
-    <p>
-
-    總數量：
-
-    ${summary.quantity}
-
-    </p>
-
-
-
-    <p>
-
-    材料種類：
-
-    ${summary.materialCount}
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Select Node
-
-
-----------------------------------------------
-
-*/
-
-
-selectNode(
-
-    id
-
-){
-
-
-
-    let node =
-
-
-
-        this.bomEngine
-
-        .getNode(
-
-            id
-
-        );
-
-
-
-
-
-
-
-
-
-    return node;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Refresh
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    if(
-
-        this.currentBatch
-
-    ){
-
-
-
-        this.load(
-
-            this.currentBatch
-
-        );
-
+        return html;
 
 
     }
 
 
 
-}
-```
+
+
+
+    /*
+    ==============================================
+
+    Version Change
+
+    ==============================================
+    */
+
+
+    async changeVersion(
+        versionId
+    ){
+
+
+
+        this.currentVersion =
+
+            versionId;
+
+
+
+
+
+        const bom =
+
+
+            await this.controller.getVersion(
+
+                versionId
+
+            );
+
+
+
+
+
+        this.render(
+
+            bom
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Import BOM
+
+    ==============================================
+    */
+
+
+    importBOM(){
+
+
+
+        if(
+
+            this.controller.import
+
+        ){
+
+
+            this.controller.import();
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Toggle Node
+
+    ==============================================
+    */
+
+
+    toggleNode(
+        id
+    ){
+
+
+
+        const element =
+
+
+            document.getElementById(
+
+                "node-" + id
+
+            );
+
+
+
+
+
+        if(!element){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        element.style.display =
+
+
+            element.style.display ===
+
+            "none"
+
+            ?
+
+            "block"
+
+            :
+
+            "none";
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Events
+
+    ==============================================
+    */
+
+
+    bindEvents(){
+
+
+
+        document.addEventListener(
+
+            "click",
+
+            event=>{
+
+
+                if(
+
+                    event.target.id ===
+
+                    "btn-import-bom"
+
+                ){
+
+
+                    this.importBOM();
+
+
+                }
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Tree Events
+
+    ==============================================
+    */
+
+
+    bindTreeEvents(){
+
+
+
+        const buttons =
+
+
+            document.querySelectorAll(
+
+                ".toggle"
+
+            );
+
+
+
+
+
+        buttons.forEach(
+
+            button=>{
+
+
+                button.addEventListener(
+
+                    "click",
+
+                    ()=>{
+
+
+                        this.toggleNode(
+
+                            button.dataset.id
+
+                        );
+
+
+                    }
+
+                );
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
 
 }
 
-window.BOMView = BOMView;
+
+
+
+
+
+global.BOMView =
+
+    BOMView;
+
+
+
+})(window);
