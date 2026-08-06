@@ -1,254 +1,49 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Project Controller
+ File:
+ src/js/controllers/project-controller.js
 
-Sprint:
 
-1.7.4
+ Sprint:
+ 2.6.3
 
-Build:
 
-0001
+ Build:
+ Enterprise Project Controller Layer
 
-Description:
 
-Project management controller
+ Description:
+ Project Management Controller
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class ProjectController {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.projects = [];
 
+        this.storage =
 
+            new ProjectStorage();
 
 
 
-    this.currentProject =
-
-        null;
-
-
-
-
-
-    this.storage =
-
-        null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    storage = null
-
-){
-
-
-
-    this.storage =
-
-        storage;
-
-
-
-
-
-    this.loadProjects();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Projects
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-loadProjects(){
-
-
-
-    if(
-
-        this.storage
-
-    ){
-
-
-
-        this.projects =
-
-
-
-            this.storage.getAll();
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createProject(
-
-    data
-
-){
-
-
-
-    let project =
-
-
-
-        new ProjectModel(
-
-            data
-
-        );
-
-
-
-
-
-    this.projects.push(
-
-        project
-
-    );
-
-
-
-
-
-    this.save();
-
-
-
-    return project;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-updateProject(
-
-    id,
-
-    data
-
-){
-
-
-
-    let project =
-
-
-
-        this.getProject(
-
-            id
-
-        );
-
-
-
-
-
-    if(!project){
-
-
-
-        return null;
+        this.view = null;
 
 
 
@@ -259,286 +54,252 @@ updateProject(
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(view){
 
 
 
-    Object.assign(
+        this.view = view;
 
-        project,
 
+
+        await this.storage.init();
+
+
+
+        await this.load();
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Load Projects
+
+    ==============================================
+    */
+
+
+    async load(){
+
+
+
+        const projects =
+
+
+            await this.storage.getAll();
+
+
+
+
+
+        if(
+
+            this.view &&
+
+            this.view.render
+
+        ){
+
+
+            this.view.render(
+
+                projects
+
+            );
+
+
+        }
+
+
+
+
+
+        return projects;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Project
+
+    建立專案
+
+    ==============================================
+    */
+
+
+    async create(
         data
+    ){
 
-    );
 
 
+        if(!data){
 
 
+            throw new Error(
 
-    this.save();
+                "Project data required"
 
+            );
 
 
+        }
 
 
-    return project;
 
 
 
-}
+        data.status =
 
 
+            data.status ||
 
+            CWPSTypes.ProjectStatus.ACTIVE;
 
 
 
 
 
+        data.createdAt =
 
-/*
-----------------------------------------------
 
-Delete Project
+            new Date()
 
+            .toISOString();
 
-----------------------------------------------
 
-----------------------------------------------
 
-*/
 
 
-deleteProject(
+        const result =
 
-    id
 
-){
+            await this.storage.create(
 
+                data
 
+            );
 
-    this.projects =
 
 
 
-        this.projects.filter(
 
+        await this.load();
 
 
-            item =>
 
 
 
-            item.id !== id
+        return result;
 
 
+    }
 
-        );
 
 
 
 
 
-    this.save();
+    /*
+    ==============================================
 
+    Update Project
 
+    ==============================================
+    */
 
-}
 
+    async update(
+        data
+    ){
 
 
 
+        data.updatedAt =
 
 
+            new Date()
 
+            .toISOString();
 
 
-/*
-----------------------------------------------
 
-Get Project
 
 
-----------------------------------------------
+        const result =
 
-----------------------------------------------
 
-*/
+            await this.storage.update(
 
+                data
 
-getProject(
+            );
 
-    id
 
-){
 
 
 
-    return this.projects.find(
+        await this.load();
 
 
 
-        item =>
 
 
+        return result;
 
-        item.id === id
 
+    }
 
 
-    );
 
 
 
-}
 
+    /*
+    ==============================================
 
+    Detail
 
+    ==============================================
+    */
 
 
+    async detail(
+        projectId
+    ){
 
 
 
-
-/*
-----------------------------------------------
-
-Get By Project No
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getByProjectNo(
-
-    projectNo
-
-){
-
-
-
-    return this.projects.find(
-
-
-
-        item =>
-
-
-
-        item.projectNo === projectNo
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Select Current Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-selectProject(
-
-    id
-
-){
-
-
-
-    this.currentProject =
-
-
-
-        this.getProject(
-
-            id
-
-        );
-
-
-
-
-
-    return this.currentProject;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Batch To Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-addBatch(
-
-    projectId,
-
-    batchId
-
-){
-
-
-
-    let project =
-
-
-
-        this.getProject(
+        return await this.storage.get(
 
             projectId
 
         );
 
 
-
-
-
-    if(!project){
-
-
-
-        return null;
-
-
-
     }
 
 
@@ -546,19 +307,77 @@ addBatch(
 
 
 
+    /*
+    ==============================================
+
+    Delete Protection
+
+    僅停用，不刪除
+
+    ==============================================
+    */
 
 
-
-    if(
-
-        !project.batches
-
+    async disable(
+        projectId
     ){
 
 
 
-        project.batches = [];
+        const project =
 
+
+            await this.storage.get(
+
+                projectId
+
+            );
+
+
+
+
+
+        if(!project){
+
+
+            throw new Error(
+
+                "Project not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        project.status =
+
+
+            CWPSTypes.ProjectStatus.INACTIVE;
+
+
+
+
+
+        project.updatedAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.update(
+
+            project
+
+        );
 
 
     }
@@ -568,98 +387,67 @@ addBatch(
 
 
 
+    /*
+    ==============================================
+
+    Search
+
+    ==============================================
+    */
 
 
-
-    if(
-
-        !project.batches.includes(
-
-            batchId
-
-        )
-
+    async search(
+        keyword
     ){
 
 
 
-        project.batches.push(
-
-            batchId
-
-        );
+        const projects =
 
 
-
-    }
+            await this.storage.getAll();
 
 
 
 
 
-    this.save();
+        if(!keyword){
+
+
+            return projects;
+
+
+        }
 
 
 
 
 
-    return project;
+        return projects.filter(
+
+            item=>{
+
+
+                return (
+
+
+                    item.name &&
+
+
+                    item.name.includes(
+
+                        keyword
+
+                    )
 
 
 
-}
+                );
 
 
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remove Batch
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-removeBatch(
-
-    projectId,
-
-    batchId
-
-){
-
-
-
-    let project =
-
-
-
-        this.getProject(
-
-            projectId
+            }
 
         );
-
-
-
-
-
-    if(!project){
-
-
-
-        return null;
-
 
 
     }
@@ -669,151 +457,167 @@ removeBatch(
 
 
 
+    /*
+    ==============================================
 
+    Project Status
 
+    ==============================================
+    */
 
-    project.batches =
 
-
-
-        project.batches.filter(
-
-
-
-            id =>
-
-
-
-            id !== batchId
-
-
-
-        );
-
-
-
-
-
-    this.save();
-
-
-
-
-
-    return project;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Search Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-search(
-
-    keyword
-
-){
-
-
-
-    return this.projects.filter(
-
-
-
-        item =>
-
-
-
-        item.projectName
-
-        .includes(
-
-            keyword
-
-        )
-
-        ||
-
-        item.projectNo
-
-        .includes(
-
-            keyword
-
-        )
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Save
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-save(){
-
-
-
-    if(
-
-        this.storage
-
+    async changeStatus(
+        projectId,
+        status
     ){
 
 
 
-        this.storage.saveAll(
+        const project =
 
-            this.projects
+
+            await this.storage.get(
+
+                projectId
+
+            );
+
+
+
+
+
+        if(!project){
+
+
+            throw new Error(
+
+                "Project not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        project.status = status;
+
+
+
+
+
+        project.updatedAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.update(
+
+            project
 
         );
-
 
 
     }
 
 
 
+
+
+
+    /*
+    ==============================================
+
+    Summary
+
+    專案摘要
+
+    ==============================================
+    */
+
+
+    async summary(
+        projectId
+    ){
+
+
+
+        const project =
+
+
+            await this.storage.get(
+
+                projectId
+
+            );
+
+
+
+
+
+        if(!project){
+
+
+            return null;
+
+
+        }
+
+
+
+
+
+        return {
+
+
+
+            id:
+
+                project.id,
+
+
+
+            name:
+
+                project.name,
+
+
+
+            customer:
+
+                project.customer,
+
+
+
+            status:
+
+                project.status,
+
+
+
+            createdAt:
+
+                project.createdAt
+
+
+
+        };
+
+
+    }
+
+
+
+
+
 }
 
 
@@ -821,89 +625,10 @@ save(){
 
 
 
+global.ProjectController =
+
+    ProjectController;
 
 
 
-/*
-----------------------------------------------
-
-Summary
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-summary(){
-
-
-
-    return {
-
-
-
-        total:
-
-
-
-            this.projects.length,
-
-
-
-        active:
-
-
-
-            this.projects.filter(
-
-
-
-                item =>
-
-
-
-                item.status ===
-
-                "Active"
-
-
-
-            ).length,
-
-
-
-        completed:
-
-
-
-            this.projects.filter(
-
-
-
-                item =>
-
-
-
-                item.status ===
-
-                "Completed"
-
-
-
-            ).length
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.ProjectController = ProjectController;
+})(window);
