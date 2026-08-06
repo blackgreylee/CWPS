@@ -1,800 +1,456 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Shipment Model
+ Shipment Model
 
-Sprint:
+ Sprint:
+ 2.0.13
 
-1.5.4
-
-Build:
-
-0001
-
-Description:
-
-Shipment tracking data model
+ Description:
+ Material Shipment Entity
 
 ==================================================
 */
 
-class ShipmentModel {
+(function (global) {
 
-```
-constructor(data = {}){
+    "use strict";
 
 
+    class Shipment {
 
-    this.id =
 
+        constructor(data = {}) {
 
 
-        data.id ||
+            this.id =
+                data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 專案
+            this.projectId =
+                data.projectId || null;
 
 
 
-    this.purchaseId =
+            // 供應商
+            this.supplierId =
+                data.supplierId || null;
 
 
 
-        data.purchaseId ||
+            // 採購單
+            this.purchaseId =
+                data.purchaseId || null;
 
-        "";
 
 
+            // 出貨編號
+            this.code =
+                data.code || "";
 
 
 
-    this.projectId =
+            // 出貨日期
+            this.shipDate =
 
+                data.shipDate ||
 
+                null;
 
-        data.projectId ||
 
-        "";
 
+            // 預計到貨日期
+            this.expectedArrivalDate =
 
+                data.expectedArrivalDate ||
 
+                null;
 
 
-    this.batchId =
 
+            // 實際到貨日期
+            this.actualArrivalDate =
 
+                data.actualArrivalDate ||
 
-        data.batchId ||
+                null;
 
-        "";
 
 
+            // 狀態
+            this.status =
 
+                data.status ||
 
+                CWPSTypes.ShipmentStatus.PENDING;
 
-    this.supplierId =
 
 
+            // 出貨明細
+            this.items = [];
 
-        data.supplierId ||
 
-        "";
 
+            if (Array.isArray(data.items)) {
 
 
+                this.items =
 
+                    data.items.map(item => ({
 
-    this.supplierName =
 
+                        materialId:
+                            item.materialId || null,
 
 
-        data.supplierName ||
+                        materialName:
+                            item.materialName || "",
 
-        "";
 
+                        specification:
+                            item.specification || "",
 
 
+                        quantity:
+                            Number(item.quantity ?? 0),
 
 
-    this.items =
+                        receivedQuantity:
+                            Number(
+                                item.receivedQuantity ?? 0
+                            ),
 
 
+                        unit:
+                            item.unit || "",
 
-        data.items ||
 
-        [];
+                        remark:
+                            item.remark || ""
 
 
+                    }));
 
 
+            }
 
-    this.shipDate =
 
 
+            // 驗收備註
+            this.acceptanceRemark =
 
-        data.shipDate ||
+                data.acceptanceRemark || "";
 
-        "";
 
 
+            // 備註
+            this.remark =
 
+                data.remark || "";
 
 
-    this.arrivalDate =
 
+            this.createdAt =
 
+                data.createdAt ||
 
-        data.arrivalDate ||
+                new Date().toISOString();
 
-        "";
 
 
+            this.updatedAt =
 
+                data.updatedAt ||
 
+                new Date().toISOString();
 
-    this.driver =
 
+        }
 
 
-        data.driver ||
 
-        "";
+        /**
+         * 新增出貨項目
+         */
+        addItem(item) {
 
 
+            this.items.push({
 
 
+                materialId:
+                    item.materialId || null,
 
-    this.vehicle =
 
+                materialName:
+                    item.materialName || "",
 
 
-        data.vehicle ||
+                specification:
+                    item.specification || "",
 
-        "";
 
+                quantity:
+                    Number(item.quantity ?? 0),
 
 
+                receivedQuantity:
+                    0,
 
 
-    this.status =
+                unit:
+                    item.unit || "",
 
 
+                remark:
+                    item.remark || ""
 
-        data.status ||
 
-        "Waiting";
+            });
 
 
 
+            this.touch();
 
 
-    this.receiveStatus =
+        }
 
 
 
-        data.receiveStatus ||
+        /**
+         * 更新收貨數量
+         */
+        receive(
+            materialId,
+            quantity
+        ) {
 
-        "Pending";
 
+            const item =
 
+                this.items.find(
 
+                    item =>
 
+                        item.materialId === materialId
 
-    this.remark =
+                );
 
 
 
-        data.remark ||
+            if (item) {
 
-        "";
 
+                item.receivedQuantity =
 
+                    Number(quantity);
 
 
+            }
 
-    this.createdDate =
 
 
+            this.touch();
 
-        data.createdDate ||
 
-        new Date()
+        }
 
-        .toISOString();
 
 
+        /**
+         * 開始運送
+         */
+        ship() {
 
 
+            this.status =
 
-    this.updatedDate =
+                CWPSTypes.ShipmentStatus.SHIPPED;
 
 
 
-        new Date()
+            this.shipDate =
 
-        .toISOString();
+                new Date().toISOString();
 
 
 
-}
+            this.touch();
 
 
+        }
 
 
 
+        /**
+         * 到貨
+         */
+        arrive() {
 
 
+            this.status =
 
+                CWPSTypes.ShipmentStatus.ARRIVED;
 
-/*
-----------------------------------------------
 
-Generate ID
 
+            this.actualArrivalDate =
 
-----------------------------------------------
+                new Date().toISOString();
 
-*/
 
 
-generateId(){
+            this.touch();
 
 
+        }
 
-    return (
 
-        "SHIP-" +
 
-        Date.now()
+        /**
+         * 驗收完成
+         */
+        completeAcceptance(
+            remark = ""
+        ) {
 
-    );
 
+            this.status =
 
+                CWPSTypes.ShipmentStatus.ACCEPTED;
 
-}
 
 
+            this.acceptanceRemark =
 
+                remark;
 
 
 
+            this.touch();
 
 
+        }
 
-/*
-----------------------------------------------
 
-Add Shipment Item
 
+        /**
+         * 取消
+         */
+        cancel() {
 
-----------------------------------------------
 
-*/
+            this.status =
 
+                CWPSTypes.ShipmentStatus.CANCELLED;
 
-addItem(item){
 
 
+            this.touch();
 
-    this.items.push({
 
+        }
 
 
-        materialCode:
 
-            item.materialCode || "",
+        /**
+         * 更新時間
+         */
+        touch() {
 
 
+            this.updatedAt =
 
-        materialName:
+                new Date().toISOString();
 
-            item.materialName || "",
 
+        }
 
 
-        quantity:
 
-            Number(
+        /**
+         * JSON
+         */
+        toJSON() {
 
-                item.quantity
 
-            ) || 0,
+            return {
 
 
+                id:
+                    this.id,
 
-        unit:
 
-            item.unit || "PCS"
+                projectId:
+                    this.projectId,
 
 
+                supplierId:
+                    this.supplierId,
 
-    });
 
+                purchaseId:
+                    this.purchaseId,
 
 
+                code:
+                    this.code,
 
 
-    this.updatedDate =
+                shipDate:
+                    this.shipDate,
 
 
+                expectedArrivalDate:
+                    this.expectedArrivalDate,
 
-        new Date()
 
-        .toISOString();
+                actualArrivalDate:
+                    this.actualArrivalDate,
 
 
+                status:
+                    this.status,
 
-}
 
+                items:
+                    this.items,
 
 
+                acceptanceRemark:
+                    this.acceptanceRemark,
 
 
+                remark:
+                    this.remark,
 
 
+                createdAt:
+                    this.createdAt,
 
 
-/*
-----------------------------------------------
+                updatedAt:
+                    this.updatedAt
 
-Start Preparing
 
 
-----------------------------------------------
+            };
 
-*/
 
+        }
 
-prepare(){
 
 
+    }
 
-    this.status =
 
-        "Preparing";
 
+    global.Shipment = Shipment;
 
 
 
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Ship
-
-
-----------------------------------------------
-
-*/
-
-
-ship(){
-
-
-
-    this.status =
-
-        "Shipping";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Arrival Confirm
-
-
-----------------------------------------------
-
-*/
-
-
-arrive(){
-
-
-
-    this.status =
-
-        "Arrived";
-
-
-
-
-
-    this.receiveStatus =
-
-        "Waiting Check";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Quality Check Complete
-
-
-----------------------------------------------
-
-*/
-
-
-check(){
-
-
-
-    this.status =
-
-        "Checked";
-
-
-
-
-
-    this.receiveStatus =
-
-        "Passed";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Complete Shipment
-
-
-----------------------------------------------
-
-*/
-
-
-complete(){
-
-
-
-    this.status =
-
-        "Completed";
-
-
-
-
-
-    this.receiveStatus =
-
-        "Completed";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Date
-
-
-----------------------------------------------
-
-*/
-
-
-updateShipDate(date){
-
-
-
-    this.shipDate = date;
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Arrival Date
-
-
-----------------------------------------------
-
-*/
-
-
-updateArrivalDate(date){
-
-
-
-    this.arrivalDate = date;
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Time
-
-
-----------------------------------------------
-
-*/
-
-
-updateTime(){
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Total Quantity
-
-
-----------------------------------------------
-
-*/
-
-
-getTotalQuantity(){
-
-
-
-    let total = 0;
-
-
-
-
-
-    this.items.forEach(item=>{
-
-
-
-        total +=
-
-
-
-            Number(
-
-                item.quantity
-
-            ) || 0;
-
-
-
-    });
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        purchaseId:
-
-            this.purchaseId,
-
-
-
-        projectId:
-
-            this.projectId,
-
-
-
-        batchId:
-
-            this.batchId,
-
-
-
-        supplierId:
-
-            this.supplierId,
-
-
-
-        supplierName:
-
-            this.supplierName,
-
-
-
-        items:
-
-            this.items,
-
-
-
-        shipDate:
-
-            this.shipDate,
-
-
-
-        arrivalDate:
-
-            this.arrivalDate,
-
-
-
-        status:
-
-            this.status,
-
-
-
-        receiveStatus:
-
-            this.receiveStatus
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.ShipmentModel = ShipmentModel;
+})(window);
