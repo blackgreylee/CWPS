@@ -1,93 +1,478 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Backup Service
+ File:
+ src/js/storage/backup-service.js
 
-Sprint:
 
-1.4
+ Sprint:
+ 2.1.5
 
-Build:
 
-0001
+ Build:
+ Enterprise Persistence Layer
 
-Description:
 
-Database backup and restore service
+ Description:
+ Database Backup / Restore Service
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class BackupService {
 
-```
-constructor(){
+
+
+    constructor(){
+
+
+        this.db =
+
+            new CWPSDatabase();
 
 
 
-    this.db =
-
-        new CWPSDatabase();
-
-
-
-    this.db.init();
-
-
-
-    this.backupVersion =
-
-        "1.0";
-
-
-
-}
+    }
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
+
+
+        await this.db.open();
+
+
+    }
 
 
 
 
-/*
-----------------------------------------------
-
-Create Backup Object
 
 
-----------------------------------------------
+    /*
+    ==============================================
 
-*/
+    Export Database
+
+    ==============================================
+    */
 
 
-createBackup(){
-
-
-
-    return {
+    async export(){
 
 
 
-        backupInfo:{
+        const backup = {
 
 
 
             system:
 
-                "CWPS",
+
+            {
+
+
+                name:
+                    "CWPS Enterprise",
+
+
+                version:
+                    "2.1.5",
+
+
+                createdAt:
+
+                    new Date()
+
+                    .toISOString()
+
+
+            },
 
 
 
-            version:
-
-                this.backupVersion,
+            data:{}
 
 
 
-            createdDate:
+        };
+
+
+
+
+
+        for(
+            const storeName of
+
+            Object.values(
+
+                this.db.stores
+
+            )
+
+        ){
+
+
+
+            backup.data[storeName] =
+
+
+                await this.db.getAll(
+
+                    storeName
+
+                );
+
+
+        }
+
+
+
+
+
+        return backup;
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Download JSON Backup
+
+    ==============================================
+    */
+
+
+    async download(){
+
+
+
+        const backup =
+
+
+            await this.export();
+
+
+
+
+        const json =
+
+
+            JSON.stringify(
+
+                backup,
+
+                null,
+
+                4
+
+            );
+
+
+
+
+        const blob =
+
+
+            new Blob(
+
+                [json],
+
+                {
+
+
+                    type:
+
+                    "application/json"
+
+
+                }
+
+            );
+
+
+
+
+
+        const url =
+
+
+            URL.createObjectURL(
+
+                blob
+
+            );
+
+
+
+
+
+        const link =
+
+
+            document.createElement(
+
+                "a"
+
+            );
+
+
+
+
+
+        link.href = url;
+
+
+
+        link.download =
+
+
+            "CWPS_Backup_" +
+
+            new Date()
+
+            .toISOString()
+
+            .slice(0,10)
+
+            +
+
+            ".json";
+
+
+
+
+
+        link.click();
+
+
+
+
+        URL.revokeObjectURL(
+
+            url
+
+        );
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Import Backup
+
+    ==============================================
+    */
+
+
+    async import(data){
+
+
+
+        if(
+            !data ||
+            !data.data
+        ){
+
+
+
+            throw new Error(
+
+                "Invalid backup file"
+
+            );
+
+
+        }
+
+
+
+
+
+
+        for(
+
+            const storeName of
+
+            Object.keys(
+
+                data.data
+
+            )
+
+        ){
+
+
+
+            const records =
+
+
+                data.data[storeName];
+
+
+
+
+
+            await this.db.clear(
+
+                storeName
+
+            );
+
+
+
+
+
+            for(
+
+                const record of records
+
+            ){
+
+
+
+                await this.db.add(
+
+                    storeName,
+
+                    record
+
+                );
+
+
+            }
+
+
+        }
+
+
+
+
+
+        return true;
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Restore From File
+
+    ==============================================
+    */
+
+
+    async restoreFile(file){
+
+
+
+        const text =
+
+
+            await file.text();
+
+
+
+
+        const json =
+
+
+            JSON.parse(
+
+                text
+
+            );
+
+
+
+
+        return await this.import(
+
+            json
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Backup Record
+
+    ==============================================
+    */
+
+
+    async createBackupRecord(){
+
+
+
+        const record = {
+
+
+
+            id:
+
+            crypto.randomUUID(),
+
+
+
+            type:
+
+            "DATABASE_BACKUP",
+
+
+
+            createdAt:
 
                 new Date()
 
@@ -95,356 +480,16 @@ createBackup(){
 
 
 
-        },
+        };
 
 
 
-        database:
 
-            this.db.load()
+        return await this.db.add(
 
+            "cwps_meta",
 
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Export JSON
-
-
-----------------------------------------------
-
-*/
-
-
-exportJSON(){
-
-
-
-    let backup =
-
-        this.createBackup();
-
-
-
-
-
-    return JSON.stringify(
-
-
-
-        backup,
-
-
-
-        null,
-
-
-
-        4
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Download Backup File
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-download(){
-
-
-
-    let json =
-
-        this.exportJSON();
-
-
-
-
-
-    let blob =
-
-        new Blob(
-
-
-
-            [
-
-                json
-
-            ],
-
-
-
-            {
-
-                type:
-
-                "application/json"
-
-            }
-
-
-
-        );
-
-
-
-
-
-    let url =
-
-        URL.createObjectURL(
-
-            blob
-
-        );
-
-
-
-
-
-    let link =
-
-        document.createElement(
-
-            "a"
-
-        );
-
-
-
-
-
-    link.href =
-
-        url;
-
-
-
-
-
-    link.download =
-
-
-
-        "CWPS_Backup_" +
-
-        new Date()
-
-        .toISOString()
-
-        .slice(
-
-            0,
-
-            10
-
-        )
-
-        +
-
-        ".json";
-
-
-
-
-
-    link.click();
-
-
-
-
-
-    URL.revokeObjectURL(
-
-        url
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Validate Backup
-
-
-----------------------------------------------
-
-*/
-
-
-validateBackup(
-
-    backup
-
-){
-
-
-
-    if(
-
-        !backup.database
-
-    ){
-
-
-
-        return false;
-
-
-
-    }
-
-
-
-
-
-
-    let required = [
-
-
-
-        "projects",
-
-        "bom",
-
-        "versions"
-
-
-
-    ];
-
-
-
-
-
-    return required.every(
-
-
-
-        key =>
-
-
-
-        backup.database
-
-        .hasOwnProperty(
-
-            key
-
-        )
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Restore Backup
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-restoreJSON(
-
-    json
-
-){
-
-
-
-    let backup;
-
-
-
-    try{
-
-
-
-        backup =
-
-            JSON.parse(
-
-                json
-
-            );
-
-
-
-    }
-
-    catch(e){
-
-
-
-        throw new Error(
-
-            "Invalid Backup Format"
+            record
 
         );
 
@@ -455,97 +500,14 @@ restoreJSON(
 
 
 
-
-    if(
-
-        !this.validateBackup(
-
-            backup
-
-        )
-
-    ){
-
-
-
-        throw new Error(
-
-            "Backup Validation Failed"
-
-        );
-
-
-
-    }
-
-
-
-
-
-    this.db.save(
-
-        backup.database
-
-    );
-
-
-
-
-
-    return true;
-
-
-
 }
 
 
 
+global.BackupService =
+
+    BackupService;
 
 
 
-
-
-
-/*
-----------------------------------------------
-
-Get Backup Information
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getInfo(
-
-    json
-
-){
-
-
-
-    let backup =
-
-        JSON.parse(
-
-            json
-
-        );
-
-
-
-
-
-    return backup.backupInfo;
-
-
-
-}
-```
-
-}
-
-window.BackupService = BackupService;
+})(window);
