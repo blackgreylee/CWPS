@@ -1,220 +1,46 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Procurement View
+ File:
+ src/js/views/procurement-view.js
 
-Sprint:
 
-1.8.4
+ Sprint:
+ 2.7.3
 
-Build:
 
-0001
+ Build:
+ Enterprise Procurement View Layer
 
-Description:
 
-Procurement workflow UI renderer
+ Description:
+ Procurement Workflow UI View
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class ProcurementView {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.containerId =
 
-        "procurement-container";
+        this.controller = null;
 
 
-
-
-
-    this.controller =
-
-        null;
-
-
-
-
-
-    this.project =
-
-        null;
-
-
-
-
-
-    this.data = null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    procurementController
-
-){
-
-
-
-    this.controller =
-
-        procurementController;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Procurement Data
-
-
-----------------------------------------------
-
-*/
-
-
-load(
-
-    project
-
-){
-
-
-
-    this.project =
-
-        project;
-
-
-
-
-
-
-
-
-
-    this.controller
-
-    .setProject(
-
-        project
-
-    );
-
-
-
-
-
-
-
-
-
-    this.data =
-
-
-
-        this.controller
-
-        .getStatus();
-
-
-
-
-
-
-
-
-
-    this.render();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Page
-
-
-----------------------------------------------
-
-*/
-
-
-render(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
+        this.container = null;
 
 
     }
@@ -224,555 +50,424 @@ render(){
 
 
 
+    /*
+    ==============================================
 
+    Initialize
 
+    ==============================================
+    */
 
-    container.innerHTML = `
 
+    init(
+        controller,
+        containerId = "app"
+    ){
 
 
-    <div class="procurement-header">
+        this.controller = controller;
 
 
 
-        <h2>
+        this.container =
 
-        採購管理
 
-        </h2>
+            document.getElementById(
 
+                containerId
 
+            );
 
-        <p>
 
-        專案：
 
-        ${
 
-            this.project.projectName
 
-        }
+        this.bindEvents();
 
-        </p>
-
-
-
-    </div>
-
-
-
-
-
-    <div id="requirement-panel">
-
-    </div>
-
-
-
-
-
-    <div id="quotation-panel">
-
-    </div>
-
-
-
-
-
-    <div id="purchase-panel">
-
-    </div>
-
-
-
-
-
-    <div id="shipment-panel">
-
-    </div>
-
-
-
-
-
-    <div id="invoice-panel">
-
-    </div>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.renderRequirement();
-
-
-
-    this.renderQuotation();
-
-
-
-    this.renderPurchase();
-
-
-
-    this.renderShipment();
-
-
-
-    this.renderInvoice();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Requirement
-
-
-----------------------------------------------
-
-*/
-
-
-renderRequirement(){
-
-
-
-    let box =
-
-
-
-        document.getElementById(
-
-            "requirement-panel"
-
-        );
-
-
-
-
-
-
-
-
-
-    box.innerHTML = `
-
-
-
-    <h3>
-
-    材料需求
-
-    </h3>
-
-
-
-    <p>
-
-    需求數量：
-
-    ${
-
-        this.data.requirementCount || 0
 
     }
 
-    </p>
 
 
 
-    `;
 
 
+    /*
+    ==============================================
 
-}
+    Render Procurement Dashboard
 
+    ==============================================
+    */
 
 
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Quotation
-
-
-----------------------------------------------
-
-*/
-
-
-renderQuotation(){
-
-
-
-    let box =
-
-
-
-        document.getElementById(
-
-            "quotation-panel"
-
-        );
-
-
-
-
-
-
-
-
-
-    box.innerHTML = `
-
-
-
-    <h3>
-
-    詢價管理
-
-    </h3>
-
-
-
-    <p>
-
-    詢價單：
-
-    ${
-
-        this.data.quotationCount || 0
-
-    }
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Purchase
-
-
-----------------------------------------------
-
-*/
-
-
-renderPurchase(){
-
-
-
-    let box =
-
-
-
-        document.getElementById(
-
-            "purchase-panel"
-
-        );
-
-
-
-
-
-
-
-
-
-    box.innerHTML = `
-
-
-
-    <h3>
-
-    採購單
-
-    </h3>
-
-
-
-    <p>
-
-    採購數量：
-
-    ${
-
-        this.data.purchaseCount || 0
-
-    }
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Shipment
-
-
-----------------------------------------------
-
-*/
-
-
-renderShipment(){
-
-
-
-    let box =
-
-
-
-        document.getElementById(
-
-            "shipment-panel"
-
-        );
-
-
-
-
-
-
-
-
-
-    box.innerHTML = `
-
-
-
-    <h3>
-
-    出貨追蹤
-
-    </h3>
-
-
-
-    <p>
-
-    出貨單：
-
-    ${
-
-        this.data.shipmentCount || 0
-
-    }
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Invoice
-
-
-----------------------------------------------
-
-*/
-
-
-renderInvoice(){
-
-
-
-    let box =
-
-
-
-        document.getElementById(
-
-            "invoice-panel"
-
-        );
-
-
-
-
-
-
-
-
-
-    box.innerHTML = `
-
-
-
-    <h3>
-
-    發票管理
-
-    </h3>
-
-
-
-    <p>
-
-    發票：
-
-    ${
-
-        this.data.invoiceCount || 0
-
-    }
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Requirement
-
-
-----------------------------------------------
-
-*/
-
-
-createRequirement(
-
-    data
-
-){
-
-
-
-    return this.controller
-
-        .createRequirement(
-
-            data
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Refresh
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    if(
-
-        this.project
-
+    render(
+        data
     ){
 
 
 
-        this.load(
+        if(!this.container){
 
-            this.project
 
-        );
+            return;
+
+
+        }
+
+
+
+
+
+        const requirements =
+
+            data.requirements || [];
+
+
+
+        const quotations =
+
+            data.quotations || [];
+
+
+
+        const purchases =
+
+            data.purchases || [];
+
+
+
+        const shipments =
+
+            data.shipments || [];
+
+
+
+        const invoices =
+
+            data.invoices || [];
+
+
+
+
+
+
+        this.container.innerHTML = `
+
+
+
+        <div class="procurement-page">
+
+
+            <div class="page-header">
+
+
+                <h2>
+
+                    Procurement Management
+
+                </h2>
+
+
+            </div>
+
+
+
+
+
+            <div class="summary-card">
+
+
+                <div>
+
+                    Requirement
+
+                    <br>
+
+                    <b>
+
+                    ${requirements.length}
+
+                    </b>
+
+                </div>
+
+
+
+                <div>
+
+                    Quotation
+
+                    <br>
+
+                    <b>
+
+                    ${quotations.length}
+
+                    </b>
+
+                </div>
+
+
+
+                <div>
+
+                    Purchase
+
+                    <br>
+
+                    <b>
+
+                    ${purchases.length}
+
+                    </b>
+
+                </div>
+
+
+
+                <div>
+
+                    Shipment
+
+                    <br>
+
+                    <b>
+
+                    ${shipments.length}
+
+                    </b>
+
+                </div>
+
+
+
+                <div>
+
+                    Invoice
+
+                    <br>
+
+                    <b>
+
+                    ${invoices.length}
+
+                    </b>
+
+                </div>
+
+
+            </div>
+
+
+
+
+
+            <hr>
+
+
+
+
+
+            <h3>
+
+                Purchase Orders
+
+            </h3>
+
+
+
+            <table class="table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+
+                        Purchase ID
+
+                        </th>
+
+
+                        <th>
+
+                        Supplier
+
+                        </th>
+
+
+                        <th>
+
+                        Amount
+
+                        </th>
+
+
+                        <th>
+
+                        Status
+
+                        </th>
+
+
+                    </tr>
+
+
+                </thead>
+
+
+
+                <tbody>
+
+
+                    ${
+
+                        this.renderPurchases(
+
+                            purchases
+
+                        )
+
+                    }
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+
+        `;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Render Purchase Rows
+
+    ==============================================
+    */
+
+
+    renderPurchases(
+        purchases
+    ){
+
+
+
+        if(
+
+            purchases.length === 0
+
+        ){
+
+
+            return `
+
+
+            <tr>
+
+                <td colspan="4">
+
+                    No Data
+
+                </td>
+
+            </tr>
+
+
+            `;
+
+
+        }
+
+
+
+
+
+
+        return purchases.map(
+
+            item=>{
+
+
+                return `
+
+
+                <tr>
+
+
+                    <td>
+
+                        ${
+
+                            item.id || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            item.supplierName || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            item.totalAmount || 0
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            item.status || ""
+
+                        }
+
+                    </td>
+
+
+                </tr>
+
+
+                `;
+
+
+            }
+
+        )
+
+        .join("");
 
 
 
@@ -780,9 +475,217 @@ refresh(){
 
 
 
-}
-```
+
+
+
+    /*
+    ==============================================
+
+    Project Summary
+
+    ==============================================
+    */
+
+
+    async showProjectSummary(
+        projectId
+    ){
+
+
+
+        const summary =
+
+
+            await this.controller.projectSummary(
+
+                projectId
+
+            );
+
+
+
+
+
+        alert(
+
+            JSON.stringify(
+
+                summary,
+
+                null,
+
+                4
+
+            )
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Requirement
+
+    ==============================================
+    */
+
+
+    showRequirementForm(){
+
+
+
+        const material =
+
+
+            prompt(
+
+                "Material Name"
+
+            );
+
+
+
+
+
+        const quantity =
+
+
+            prompt(
+
+                "Quantity"
+
+            );
+
+
+
+
+
+        if(!material){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        this.controller.createRequirement({
+
+
+
+            materialName:
+
+                material,
+
+
+
+            quantity:
+
+                Number(quantity || 0)
+
+
+
+        });
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Refresh
+
+    ==============================================
+    */
+
+
+    async refresh(){
+
+
+
+        await this.controller.load();
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Events
+
+    ==============================================
+    */
+
+
+    bindEvents(){
+
+
+
+        document.addEventListener(
+
+            "click",
+
+            event=>{
+
+
+                if(
+
+                    event.target.id ===
+
+                    "btn-create-requirement"
+
+                ){
+
+
+                    this.showRequirementForm();
+
+
+                }
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
 
 }
 
-window.ProcurementView = ProcurementView;
+
+
+
+
+
+global.ProcurementView =
+
+    ProcurementView;
+
+
+
+})(window);
