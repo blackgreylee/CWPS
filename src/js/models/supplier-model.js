@@ -1,331 +1,331 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Supplier Data Model
+ Supplier Model
 
-Sprint:
-1.3.2
+ Sprint:
+ 2.0.8
 
-Build:
-0001
+ Description:
+ Supplier Master Entity
 
 ==================================================
 */
 
-class SupplierModel {
+(function (global) {
 
-```
-constructor(data = {}) {
+    "use strict";
 
 
+    class Supplier {
 
-    /*
-    System ID
 
-    */
+        constructor(data = {}) {
 
-    this.id =
 
-        data.id ||
+            this.id = data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 供應商編號
+            this.code = data.code || "";
 
 
 
+            // 供應商名稱
+            this.name = data.name || "";
 
-    /*
-    Supplier Code
 
 
-    Example:
+            // 公司統編
+            this.taxId = data.taxId || "";
 
-    SUP-001
 
 
-    */
+            // 聯絡人
+            this.contactPerson =
+                data.contactPerson || "";
 
-    this.supplierCode =
 
-        data.supplierCode ||
 
-        "";
+            // 電話
+            this.phone =
+                data.phone || "";
 
 
 
+            // Email
+            this.email =
+                data.email || "";
 
 
 
-    /*
-    Supplier Name
+            // 地址
+            this.address =
+                data.address || "";
 
-    */
 
-    this.supplierName =
 
-        data.supplierName ||
+            // 供應材料分類
+            /*
+                [
+                    "ALUMINUM",
+                    "GLASS",
+                    "HARDWARE"
+                ]
+            */
+            this.materialTypes =
+                Array.isArray(data.materialTypes)
 
-        "";
+                    ? data.materialTypes
 
+                    : [];
 
 
 
+            // 狀態
+            this.status =
+                data.status ||
 
+                CWPSTypes.SupplierStatus.ACTIVE;
 
-    /*
-    Supplier Type
 
 
-    PROCESSING_FACTORY
+            // 備註
+            this.remark =
+                data.remark || "";
 
-    ALUMINUM_SUPPLIER
 
-    GLASS_SUPPLIER
 
-    HARDWARE_SUPPLIER
+            // 擴充欄位
+            this.attributes =
+                data.attributes || {};
 
 
-    */
 
-    this.supplierType =
+            this.createdAt =
+                data.createdAt ||
 
-        data.supplierType ||
+                new Date().toISOString();
 
-        "OTHER";
 
 
+            this.updatedAt =
+                data.updatedAt ||
 
+                new Date().toISOString();
 
 
+        }
 
-    /*
-    Contact Person
 
-    */
 
-    this.contactPerson =
+        /**
+         * 新增供應材料分類
+         */
+        addMaterialType(type) {
 
-        data.contactPerson ||
 
-        "";
+            if (!this.materialTypes.includes(type)) {
 
 
+                this.materialTypes.push(type);
 
 
+            }
 
 
-    /*
-    Phone
+            this.touch();
 
-    */
 
-    this.phone =
+        }
 
-        data.phone ||
 
-        "";
 
+        /**
+         * 移除供應材料分類
+         */
+        removeMaterialType(type) {
 
 
+            this.materialTypes =
 
+                this.materialTypes.filter(
 
+                    item => item !== type
 
-    /*
-    Email
+                );
 
-    */
 
-    this.email =
+            this.touch();
 
-        data.email ||
 
-        "";
+        }
 
 
 
+        /**
+         * 是否供應某類材料
+         */
+        canSupply(materialType) {
 
 
+            return this.materialTypes.includes(
 
-    /*
-    Address
+                materialType
 
-    */
+            );
 
-    this.address =
 
-        data.address ||
+        }
 
-        "";
 
 
+        /**
+         * 啟用
+         */
+        activate() {
 
 
+            this.status =
+                CWPSTypes.SupplierStatus.ACTIVE;
 
 
-    /*
-    Supplied Materials
+            this.touch();
 
 
-    [
+        }
 
-        materialId
 
-    ]
 
-    */
+        /**
+         * 停用
+         */
+        deactivate() {
 
-    this.materialIds =
 
-        data.materialIds ||
+            this.status =
+                CWPSTypes.SupplierStatus.INACTIVE;
 
-        [];
 
+            this.touch();
 
 
+        }
 
 
 
-    /*
-    Supplier Status
+        /**
+         * 更新資料
+         */
+        updateInfo(data = {}) {
 
 
-    Active
+            Object.keys(data).forEach(key => {
 
-    Disabled
 
-    Blacklist
+                if (key in this) {
 
 
-    */
+                    this[key] = data[key];
 
-    this.status =
 
-        data.status ||
+                }
 
-        "Active";
 
+            });
 
 
 
+            this.touch();
 
 
-    /*
-    Remark
+        }
 
-    */
 
-    this.remark =
 
-        data.remark ||
+        /**
+         * 更新時間
+         */
+        touch() {
 
-        "";
 
+            this.updatedAt =
+                new Date().toISOString();
 
 
+        }
 
 
 
-    /*
-    Date
+        /**
+         * JSON
+         */
+        toJSON() {
 
-    */
 
-    this.createdDate =
+            return {
 
-        data.createdDate ||
 
-        new Date().toISOString();
+                id: this.id,
 
 
+                code: this.code,
 
 
-    this.updatedDate =
+                name: this.name,
 
-        data.updatedDate ||
 
-        new Date().toISOString();
+                taxId: this.taxId,
 
 
+                contactPerson:
+                    this.contactPerson,
 
-}
 
+                phone:
+                    this.phone,
 
 
+                email:
+                    this.email,
 
 
+                address:
+                    this.address,
 
 
+                materialTypes:
+                    this.materialTypes,
 
 
+                status:
+                    this.status,
 
-/*
-----------------------------------------------
 
-Generate ID
+                remark:
+                    this.remark,
 
-----------------------------------------------
 
-*/
+                attributes:
+                    this.attributes,
 
 
-generateId(){
+                createdAt:
+                    this.createdAt,
 
 
+                updatedAt:
+                    this.updatedAt
 
-    return (
 
-        "SUP-" +
 
-        Date.now()
+            };
 
-    );
 
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Material Relation
-
-----------------------------------------------
-
-*/
-
-
-addMaterial(materialId){
-
-
-
-    if(
-
-        !this.materialIds.includes(
-
-            materialId
-
-        )
-
-    ){
-
-
-
-        this.materialIds.push(
-
-            materialId
-
-        );
+        }
 
 
 
@@ -333,230 +333,8 @@ addMaterial(materialId){
 
 
 
-    this.touch();
+    global.Supplier = Supplier;
 
 
 
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remove Material Relation
-
-----------------------------------------------
-
-*/
-
-
-removeMaterial(materialId){
-
-
-
-    this.materialIds =
-
-        this.materialIds.filter(
-
-
-
-            id =>
-
-            id !== materialId
-
-
-
-        );
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Disable Supplier
-
-
-不刪除資料
-
-
-----------------------------------------------
-
-*/
-
-
-disable(){
-
-
-
-    this.status =
-
-        "Disabled";
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Timestamp
-
-----------------------------------------------
-
-*/
-
-
-touch(){
-
-
-
-    this.updatedDate =
-
-        new Date().toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:this.id,
-
-
-        supplierCode:this.supplierCode,
-
-
-        supplierName:this.supplierName,
-
-
-        supplierType:this.supplierType,
-
-
-        contactPerson:this.contactPerson,
-
-
-        phone:this.phone,
-
-
-        email:this.email,
-
-
-        address:this.address,
-
-
-        materialIds:this.materialIds,
-
-
-        status:this.status,
-
-
-        remark:this.remark,
-
-
-        createdDate:this.createdDate,
-
-
-        updatedDate:this.updatedDate
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Restore JSON
-
-----------------------------------------------
-
-*/
-
-
-static fromJSON(json){
-
-
-
-    return new SupplierModel(json);
-
-
-
-}
-```
-
-}
-
-window.SupplierModel = SupplierModel;
+})(window);
