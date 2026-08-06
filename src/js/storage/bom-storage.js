@@ -1,648 +1,668 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-BOM Storage Service
+ File:
+ src/js/storage/bom-storage.js
 
-Sprint:
 
-1.4
+ Sprint:
+ 2.1.4
 
-Build:
 
-0001
+ Build:
+ Enterprise Persistence Layer
 
-Description:
 
-BOM tree persistence management
+ Description:
+ BOM Repository Service
+
 
 ==================================================
 */
 
-class BOMStorage {
 
-```
-constructor(){
+(function (global) {
 
 
+    "use strict";
 
-    this.db =
 
-        new CWPSDatabase();
 
+    class BOMStorage {
 
 
-    this.collection =
 
-        "bom";
+        constructor() {
 
 
+            this.db =
 
-    this.db.init();
+                new CWPSDatabase();
 
 
 
-}
+            this.storeName =
 
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Save BOM Tree
-
-
-----------------------------------------------
-
-*/
-
-
-saveTree(data){
-
-
-
-    let record = {
-
-
-
-        id:
-
-            data.id ||
-
-            this.generateId(),
-
-
-
-        projectId:
-
-            data.projectId || "",
-
-
-
-        batchId:
-
-            data.batchId || "",
-
-
-
-        version:
-
-            data.version || "V001",
-
-
-
-        tree:
-
-            data.tree || [],
-
-
-
-        status:
-
-            "Active",
-
-
-
-        createdDate:
-
-            new Date()
-
-            .toISOString()
-
-
-
-    };
-
-
-
-
-
-    return this.db.insert(
-
-
-
-        this.collection,
-
-        record
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Generate BOM ID
-
-
-----------------------------------------------
-
-*/
-
-
-generateId(){
-
-
-
-    return (
-
-        "BOM-" +
-
-        Date.now()
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get BOM Tree
-
-
-----------------------------------------------
-
-*/
-
-
-getTree(
-
-    batchId,
-
-    version
-
-){
-
-
-
-    let list =
-
-        this.db.get(
-
-            this.collection
-
-        );
-
-
-
-
-
-    return list.find(
-
-
-
-        item =>
-
-
-
-        item.batchId === batchId
-
-
-
-        &&
-
-
-
-        item.version === version
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Latest BOM
-
-
-----------------------------------------------
-
-*/
-
-
-getLatest(
-
-    batchId
-
-){
-
-
-
-    let list =
-
-        this.db.get(
-
-            this.collection
-
-        );
-
-
-
-
-
-    let result =
-
-
-
-        list.filter(
-
-
-
-            item =>
-
-            item.batchId === batchId
-
-
-
-            &&
-
-
-
-            item.status === "Active"
-
-
-
-        );
-
-
-
-
-
-    if(
-
-        result.length === 0
-
-    ){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    return result[
-
-        result.length-1
-
-    ];
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find Node By Code
-
-
-----------------------------------------------
-
-*/
-
-
-findByCode(
-
-    tree,
-
-    code
-
-){
-
-
-
-    let result = null;
-
-
-
-
-
-    const search=(nodes)=>{
-
-
-
-        nodes.forEach(node=>{
-
-
-
-            if(
-
-                node.code === code
-
-            ){
-
-
-
-                result = node;
-
-
-
-            }
-
-
-
-
-
-            if(
-
-                node.children
-
-                &&
-
-                node.children.length
-
-            ){
-
-
-
-                search(
-
-                    node.children
-
-                );
-
-
-
-            }
-
-
-
-        });
-
-
-
-    };
-
-
-
-
-
-    search(tree);
-
-
-
-
-
-    return result;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Flatten BOM Tree
-
-
-----------------------------------------------
-
-*/
-
-
-flatten(tree){
-
-
-
-    let result=[];
-
-
-
-
-
-    const walk=(node)=>{
-
-
-
-        result.push(
-
-            node
-
-        );
-
-
-
-
-
-        if(
-
-            node.children
-
-        ){
-
-
-
-            node.children.forEach(
-
-                child=>
-
-                walk(child)
-
-            );
-
+                "bom";
 
 
         }
 
 
 
-    };
 
 
+        /*
+        ==============================================
 
+        Initialize
 
+        ==============================================
+        */
 
-    tree.forEach(
 
-        node=>
+        async init() {
 
-        walk(node)
 
-    );
+            await this.db.open();
 
 
+        }
 
 
 
-    return result;
 
 
 
-}
+        /*
+        ==============================================
 
+        Create BOM Node
 
+        ==============================================
+        */
 
 
+        async create(node) {
 
 
 
+            if (!node) {
 
 
-/*
-----------------------------------------------
+                throw new Error(
 
-Get Material Nodes
+                    "BOM Node required"
 
+                );
 
-----------------------------------------------
 
-----------------------------------------------
+            }
 
-*/
 
 
-getParts(tree){
 
 
+            const data =
 
-    return this.flatten(
 
-        tree
+                node.toJSON
 
-    )
+                    ?
 
-    .filter(
+                    node.toJSON()
 
+                    :
 
+                    node;
 
-        node =>
 
 
 
-        node.type === "PART"
+            return await this.db.add(
 
+                this.storeName,
 
+                data
 
-        ||
+            );
 
-        node.type === "GLASS"
 
+        }
 
 
-    );
 
 
 
-}
 
+        /*
+        ==============================================
 
+        Update BOM Node
 
+        ==============================================
+        */
 
 
+        async update(node) {
 
 
 
+            if (!node) {
 
-/*
-----------------------------------------------
 
-Update BOM Node
+                throw new Error(
 
+                    "BOM Node required"
 
-----------------------------------------------
+                );
 
-----------------------------------------------
 
-*/
+            }
 
 
-updateNode(
 
-    bomId,
 
-    code,
+            const data =
 
-    changes
 
-){
+                node.toJSON
 
+                    ?
 
+                    node.toJSON()
 
-    let record =
+                    :
 
-        this.db.findById(
+                    node;
 
 
 
-            this.collection,
 
-            bomId
+            return await this.db.update(
 
+                this.storeName,
 
+                data
 
-        );
+            );
 
 
+        }
 
 
 
-    if(!record){
 
 
 
-        return null;
+        /*
+        ==============================================
+
+        Get Node
+
+        ==============================================
+        */
+
+
+        async get(nodeId) {
+
+
+            return await this.db.get(
+
+                this.storeName,
+
+                nodeId
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Get All Nodes
+
+        ==============================================
+        */
+
+
+        async getAll() {
+
+
+            return await this.db.getAll(
+
+                this.storeName
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Find BOM By Version
+
+        ==============================================
+        */
+
+
+        async findByVersion(versionId) {
+
+
+
+            const nodes =
+
+
+                await this.getAll();
+
+
+
+
+            return nodes.filter(
+
+                node =>
+
+
+                    node.versionId === versionId
+
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Find Root Nodes
+
+        ==============================================
+        */
+
+
+        async findRoots(versionId) {
+
+
+
+            const nodes =
+
+
+                await this.findByVersion(
+
+                    versionId
+
+                );
+
+
+
+
+            return nodes.filter(
+
+                node =>
+
+
+                    !node.parentId
+
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Find Children
+
+        ==============================================
+        */
+
+
+        async findChildren(nodeId) {
+
+
+
+            const nodes =
+
+
+                await this.getAll();
+
+
+
+
+            return nodes.filter(
+
+                node =>
+
+
+                    node.parentId === nodeId
+
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Build BOM Tree
+
+        ==============================================
+        */
+
+
+        async getTree(versionId) {
+
+
+
+            const nodes =
+
+
+                await this.findByVersion(
+
+                    versionId
+
+                );
+
+
+
+
+            const map = {};
+
+
+
+
+            nodes.forEach(
+
+                node => {
+
+
+
+                    map[node.id] = {
+
+
+                        ...node,
+
+
+                        children:[]
+
+
+                    };
+
+
+                }
+
+            );
+
+
+
+
+
+            const roots = [];
+
+
+
+
+
+            nodes.forEach(
+
+                node => {
+
+
+
+                    if (node.parentId) {
+
+
+
+                        const parent =
+
+                            map[node.parentId];
+
+
+
+                        if(parent){
+
+
+
+                            parent.children.push(
+
+                                map[node.id]
+
+                            );
+
+
+
+                        }
+
+
+
+                    }
+
+                    else {
+
+
+
+                        roots.push(
+
+                            map[node.id]
+
+                        );
+
+
+                    }
+
+
+
+                }
+
+            );
+
+
+
+
+            return roots;
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Add Material Usage
+
+        ==============================================
+        */
+
+
+        async attachMaterial(
+            nodeId,
+            materialUsage
+        ) {
+
+
+
+            const node =
+
+
+                await this.get(
+
+                    nodeId
+
+                );
+
+
+
+
+            if(!node){
+
+
+                throw new Error(
+
+                    "BOM Node not found"
+
+                );
+
+
+            }
+
+
+
+
+            if(!node.materialUsages){
+
+
+                node.materialUsages = [];
+
+
+            }
+
+
+
+
+
+            node.materialUsages.push(
+
+                materialUsage
+
+            );
+
+
+
+
+            return await this.update(
+
+                node
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Snapshot
+
+        ==============================================
+        */
+
+
+        async createSnapshot(
+            versionId
+        ) {
+
+
+
+            const tree =
+
+
+                await this.getTree(
+
+                    versionId
+
+                );
+
+
+
+
+            return {
+
+
+                versionId,
+
+
+                snapshot:
+
+
+                    JSON.parse(
+
+                        JSON.stringify(tree)
+
+                    ),
+
+
+
+                createdAt:
+
+                    new Date()
+
+                    .toISOString()
+
+
+
+            };
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Remove
+
+        ==============================================
+        */
+
+
+        async remove(nodeId) {
+
+
+            return await this.db.remove(
+
+                this.storeName,
+
+                nodeId
+
+            );
+
+
+        }
+
 
 
 
@@ -651,250 +671,10 @@ updateNode(
 
 
 
+    global.BOMStorage =
 
-    let node =
+        BOMStorage;
 
-        this.findByCode(
 
 
-
-            record.tree,
-
-            code
-
-
-
-        );
-
-
-
-
-
-    if(!node){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    Object.assign(
-
-
-
-        node,
-
-        changes
-
-
-
-    );
-
-
-
-
-
-    return this.db.update(
-
-
-
-        this.collection,
-
-        bomId,
-
-        record
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Disable BOM Version
-
-
-----------------------------------------------
-
-*/
-
-
-disable(
-
-    bomId
-
-){
-
-
-
-    let record =
-
-        this.db.findById(
-
-
-
-            this.collection,
-
-            bomId
-
-
-
-        );
-
-
-
-
-
-    if(!record){
-
-
-
-        return false;
-
-
-
-    }
-
-
-
-
-
-    record.status =
-
-        "Disabled";
-
-
-
-
-
-    this.db.update(
-
-
-
-        this.collection,
-
-        bomId,
-
-        record
-
-
-
-    );
-
-
-
-
-
-    return true;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Compare BOM
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-compare(
-
-    oldTree,
-
-    newTree
-
-){
-
-
-
-    let oldNodes =
-
-        this.flatten(
-
-            oldTree
-
-        );
-
-
-
-
-
-    let newNodes =
-
-        this.flatten(
-
-            newTree
-
-        );
-
-
-
-
-
-    return {
-
-
-
-        oldCount:
-
-            oldNodes.length,
-
-
-
-        newCount:
-
-            newNodes.length,
-
-
-
-        difference:
-
-            newNodes.length -
-
-            oldNodes.length
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.BOMStorage = BOMStorage;
+})(window);
