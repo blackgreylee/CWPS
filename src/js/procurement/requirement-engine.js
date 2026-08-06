@@ -1,81 +1,264 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Material Requirement Engine
+ File:
+ src/js/procurement/requirement-engine.js
 
-Sprint:
 
-1.5.1
+ Sprint:
+ 2.3.1
 
-Build:
 
-0001
+ Build:
+ Enterprise Procurement Requirement Engine
 
-Description:
 
-Generate procurement requirements
-from BOM data
+ Description:
+ Material Requirement Generation Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class RequirementEngine {
 
-```
-constructor(){
+
+
+    constructor(){
+
+
+        this.quantityEngine =
+
+            new QuantityEngine();
 
 
 
-    this.requirements = [];
+        this.storage =
+
+            new RequirementStorage();
 
 
 
-}
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
+
+
+        await this.quantityEngine.init();
 
 
 
-/*
-----------------------------------------------
-
-Generate Requirement From BOM
+        if(this.storage.init){
 
 
-BOM Tree
-
-↓
-
-Requirement List
+            await this.storage.init();
 
 
-----------------------------------------------
-
-*/
+        }
 
 
-generateFromBOM(
-
-    bomTree,
-
-    projectId,
-
-    batchId
-
-){
+    }
 
 
 
-    let parts =
 
-        this.flattenBOM(
 
-            bomTree
+
+    /*
+    ==============================================
+
+    Create Requirement
+
+    ==============================================
+    */
+
+
+    async create(data){
+
+
+
+        if(!data){
+
+
+            throw new Error(
+
+                "Requirement data required"
+
+            );
+
+
+        }
+
+
+
+
+
+        data.status =
+
+
+            data.status ||
+
+            CWPSTypes.RequirementStatus.DRAFT;
+
+
+
+
+
+        data.createdAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.create(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Generate From BOM Version
+
+    BOM → Requirement
+
+    ==============================================
+    */
+
+
+    async generateFromBOM(
+        versionId
+    ){
+
+
+
+        const materials =
+
+
+            await this.quantityEngine.calculateMaterialRequirement(
+
+                versionId
+
+            );
+
+
+
+
+
+        const requirements = [];
+
+
+
+
+
+        materials.forEach(
+
+            material=>{
+
+
+
+                requirements.push(
+
+
+
+                    {
+
+
+                        versionId,
+
+
+
+                        materialCode:
+
+                            material.code,
+
+
+
+                        materialName:
+
+                            material.name,
+
+
+
+                        quantity:
+
+                            material.quantity,
+
+
+
+                        unit:
+
+                            material.unit ||
+
+
+
+                            CWPSTypes.UnitType.PCS,
+
+
+
+                        status:
+
+
+                            CWPSTypes.RequirementStatus.DRAFT,
+
+
+
+                        createdAt:
+
+
+
+                            new Date()
+
+                            .toISOString()
+
+
+
+                    }
+
+
+
+                );
+
+
+            }
 
         );
 
@@ -83,567 +266,88 @@ generateFromBOM(
 
 
 
-    let result = [];
+        return requirements;
+
+
+
+    }
 
 
 
 
 
-    parts.forEach(node=>{
+
+    /*
+    ==============================================
+
+    Save Generated Requirements
+
+    ==============================================
+    */
+
+
+    async saveGenerated(
+        requirements
+    ){
 
 
 
-        if(
+        const result=[];
 
-            this.isMaterialNode(
 
-                node
 
-            )
+
+        for(
+
+            const item of requirements
 
         ){
-
-
-
-            let req =
-
-
-
-                new RequirementModel({
-
-
-
-                    projectId:
-
-                        projectId,
-
-
-
-                    batchId:
-
-                        batchId,
-
-
-
-                    materialId:
-
-                        node.materialId || "",
-
-
-
-                    materialCode:
-
-                        node.code,
-
-
-
-                    materialName:
-
-                        node.name,
-
-
-
-                    category:
-
-                        node.category || "",
-
-
-
-                    quantity:
-
-                        node.quantity,
-
-
-
-                    unit:
-
-                        node.unit,
-
-
-
-                    singleWeight:
-
-                        node.singleWeight || 0
-
-
-
-                });
-
-
 
 
 
             result.push(
 
-                req
+
+                await this.create(
+
+                    item
+
+                )
+
 
             );
 
 
-
-        }
-
-
-
-    });
-
-
-
-
-
-    return this.mergeRequirements(
-
-        result
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Flatten BOM
-
-
-----------------------------------------------
-
-*/
-
-
-flattenBOM(
-
-    tree
-
-){
-
-
-
-    let result = [];
-
-
-
-
-
-    const walk = node => {
-
-
-
-        result.push(
-
-            node
-
-        );
-
-
-
-
-
-        if(
-
-            node.children
-
-        ){
-
-
-
-            node.children.forEach(
-
-                child =>
-
-                walk(child)
-
-            );
-
-
-
-        }
-
-
-
-    };
-
-
-
-
-
-    tree.forEach(
-
-        node =>
-
-        walk(node)
-
-    );
-
-
-
-
-
-    return result;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Detect Material Node
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-isMaterialNode(
-
-    node
-
-){
-
-
-
-    return (
-
-
-
-        node.type === "PART"
-
-
-
-        ||
-
-
-
-        node.type === "GLASS"
-
-
-
-        ||
-
-
-
-        node.material
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Merge Same Material
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-mergeRequirements(
-
-    list
-
-){
-
-
-
-    let map = {};
-
-
-
-
-
-    list.forEach(req=>{
-
-
-
-        let key =
-
-
-
-            req.materialCode;
-
-
-
-        if(
-
-            !map[key]
-
-        ){
-
-
-
-            map[key] = req;
-
-
-
-        }
-
-        else{
-
-
-
-            map[key].quantity +=
-
-
-
-                req.quantity;
-
-
-
-            map[key].calculateWeight();
-
-
-
-        }
-
-
-
-    });
-
-
-
-
-
-    return Object.values(
-
-        map
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Group Material Category
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-groupByMaterial(
-
-    requirements
-
-){
-
-
-
-    let groups = {};
-
-
-
-
-
-    requirements.forEach(req=>{
-
-
-
-        let key =
-
-            req.category ||
-
-            "未分類";
-
-
-
-
-
-        if(
-
-            !groups[key]
-
-        ){
-
-
-
-            groups[key]=[];
-
-
-
         }
 
 
 
 
+        return result;
 
-        groups[key].push(
 
-            req
+    }
 
-        );
 
 
 
-    });
 
 
 
+    /*
+    ==============================================
 
+    Get Requirement List
 
-    return groups;
+    ==============================================
+    */
 
 
+    async getAll(){
 
-}
 
 
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Total Weight
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-calculateWeight(
-
-    requirements
-
-){
-
-
-
-    let total = 0;
-
-
-
-
-
-    requirements.forEach(req=>{
-
-
-
-        total +=
-
-
-
-            req.calculateWeight();
-
-
-
-    });
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Validate Requirement
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-validateRequirement(
-
-    requirement
-
-){
-
-
-
-    let errors=[];
-
-
-
-
-
-    if(
-
-        !requirement.materialCode
-
-    ){
-
-
-
-        errors.push(
-
-            "缺少材料編號"
-
-        );
+        return await this.storage.getAll();
 
 
 
@@ -653,20 +357,42 @@ validateRequirement(
 
 
 
-    if(
 
-        requirement.quantity <= 0
 
+    /*
+    ==============================================
+
+    Find By Project
+
+    ==============================================
+    */
+
+
+    async findByProject(
+        projectId
     ){
 
 
 
-        errors.push(
+        const list =
 
-            "數量錯誤"
+
+            await this.getAll();
+
+
+
+
+
+        return list.filter(
+
+            item =>
+
+
+                item.projectId === projectId
+
+
 
         );
-
 
 
     }
@@ -675,92 +401,173 @@ validateRequirement(
 
 
 
-    return {
+
+
+    /*
+    ==============================================
+
+    Confirm Requirement
+
+    ==============================================
+    */
+
+
+    async confirm(
+        requirementId
+    ){
 
 
 
-        valid:
-
-            errors.length===0,
+        const item =
 
 
+            await this.storage.get(
 
-        errors:
+                requirementId
 
-            errors
-
-
-
-    };
-
-
-
-}
+            );
 
 
 
 
 
+        if(!item){
+
+
+            throw new Error(
+
+                "Requirement not found"
+
+            );
+
+
+        }
 
 
 
 
-/*
-----------------------------------------------
 
-Summary
+        item.status =
 
 
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-summary(
-
-    requirements
-
-){
+            CWPSTypes.RequirementStatus.CONFIRMED;
 
 
 
-    return {
 
 
+        item.updatedAt =
 
-        materialCount:
-
-            requirements.length,
-
-
-
-        totalWeight:
-
-            this.calculateWeight(
-
-                requirements
-
-            ),
-
-
-
-        generatedDate:
 
             new Date()
 
-            .toISOString()
+            .toISOString();
 
 
 
-    };
+
+
+        return await this.storage.update(
+
+            item
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cancel Requirement
+
+    ==============================================
+    */
+
+
+    async cancel(
+        requirementId
+    ){
+
+
+
+        const item =
+
+
+            await this.storage.get(
+
+                requirementId
+
+            );
+
+
+
+
+
+        if(!item){
+
+
+            throw new Error(
+
+                "Requirement not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        item.status =
+
+
+            CWPSTypes.RequirementStatus.CLOSED;
+
+
+
+
+
+        item.updatedAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.update(
+
+            item
+
+        );
+
+
+    }
+
+
 
 
 
 }
-```
 
-}
 
-window.RequirementEngine = RequirementEngine;
+
+
+
+global.RequirementEngine =
+
+    RequirementEngine;
+
+
+
+})(window);
