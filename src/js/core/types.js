@@ -22,286 +22,617 @@
 ==================================================
 */
 
-(function (global) {
-    "use strict";
 
-    /**
-     * 凍結物件，避免執行期間被修改
-     */
-    function freeze(obj) {
-        return Object.freeze(obj);
+(function(global){
+
+
+"use strict";
+
+
+
+const CWPSTypes = {
+
+
+
+    /*
+    ==============================================
+    System
+    ==============================================
+    */
+
+
+    SystemStatus:{
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        INACTIVE:
+            "INACTIVE",
+
+
+        DELETED:
+            "DELETED"
+
+
+    },
+
+
+
+
+
+    /*
+    ==============================================
+    Project
+    ==============================================
+    */
+
+
+    ProjectStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        SUSPENDED:
+            "SUSPENDED",
+
+
+        COMPLETED:
+            "COMPLETED",
+
+
+        CLOSED:
+            "CLOSED"
+
+
+
+    },
+
+
+
+
+
+
+    /*
+    ==============================================
+    Batch
+    ==============================================
+    */
+
+
+    BatchStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        IMPORTED:
+            "IMPORTED",
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        CLOSED:
+            "CLOSED"
+
+
+
+    },
+
+
+
+
+
+
+    /*
+    ==============================================
+    Batch Version
+    ==============================================
+    */
+
+
+    VersionStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        ARCHIVED:
+            "ARCHIVED",
+
+
+        VOID:
+            "VOID"
+
+
+
+    },
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    BOM
+    ==============================================
+    */
+
+
+    BOMStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        LOCKED:
+            "LOCKED",
+
+
+        VOID:
+            "VOID"
+
+
+
+    },
+
+
+
+
+
+
+    /*
+    ==============================================
+    BOM Node Type
+
+    支援:
+    AU
+    AC
+    加工件
+    玻璃
+    材料
+
+    ==============================================
+    */
+
+
+    BOMNodeType:{
+
+
+        ASSEMBLY:
+            "ASSEMBLY",
+
+
+        SUB_ASSEMBLY:
+            "SUB_ASSEMBLY",
+
+
+        PART:
+            "PART",
+
+
+        MATERIAL:
+            "MATERIAL",
+
+
+        GLASS:
+            "GLASS"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Material
+    ==============================================
+    */
+
+
+    MaterialStatus:{
+
+
+        ACTIVE:
+            "ACTIVE",
+
+
+        INACTIVE:
+            "INACTIVE"
+
+
+
+    },
+
+
+
+
+
+    MaterialCategory:{
+
+
+        ALUMINUM:
+            "ALUMINUM",
+
+
+        STEEL:
+            "STEEL",
+
+
+        GLASS:
+            "GLASS",
+
+
+        HARDWARE:
+            "HARDWARE",
+
+
+        SEALANT:
+            "SEALANT",
+
+
+        OTHER:
+            "OTHER"
+
+
+
+    },
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Unit
+    ==============================================
+    */
+
+
+    UnitType:{
+
+
+        PCS:
+            "PCS",
+
+
+        M:
+            "M",
+
+
+        M2:
+            "M2",
+
+
+        KG:
+            "KG",
+
+
+        SET:
+            "SET",
+
+
+        ITEM:
+            "ITEM"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Requirement
+    ==============================================
+    */
+
+
+    RequirementStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        CONFIRMED:
+            "CONFIRMED",
+
+
+        PURCHASED:
+            "PURCHASED",
+
+
+        CLOSED:
+            "CLOSED"
+
+
+
+    },
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Quotation
+    ==============================================
+    */
+
+
+    QuotationStatus:{
+
+
+        REQUESTED:
+            "REQUESTED",
+
+
+        RECEIVED:
+            "RECEIVED",
+
+
+        APPROVED:
+            "APPROVED",
+
+
+        REJECTED:
+            "REJECTED"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Purchase
+    ==============================================
+    */
+
+
+    PurchaseStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        APPROVED:
+            "APPROVED",
+
+
+        ORDERED:
+            "ORDERED",
+
+
+        RECEIVED:
+            "RECEIVED",
+
+
+        CLOSED:
+            "CLOSED"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Shipment
+    ==============================================
+    */
+
+
+    ShipmentStatus:{
+
+
+        PREPARING:
+            "PREPARING",
+
+
+        SHIPPING:
+            "SHIPPING",
+
+
+        RECEIVED:
+            "RECEIVED",
+
+
+        CLOSED:
+            "CLOSED"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Invoice
+    ==============================================
+    */
+
+
+    InvoiceStatus:{
+
+
+        DRAFT:
+            "DRAFT",
+
+
+        SUBMITTED:
+            "SUBMITTED",
+
+
+        APPROVED:
+            "APPROVED",
+
+
+        PAID:
+            "PAID",
+
+
+        VOID:
+            "VOID"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Change Type
+
+    用於版本差異比對
+
+    ==============================================
+    */
+
+
+    ChangeType:{
+
+
+        ADD:
+            "ADD",
+
+
+        UPDATE:
+            "UPDATE",
+
+
+        DELETE:
+            "DELETE"
+
+
+
+    },
+
+
+
+
+
+
+
+
+    /*
+    ==============================================
+    Import Status
+
+    Excel/BOM Import 使用
+
+    ==============================================
+    */
+
+
+    ImportStatus:{
+
+
+        CREATED:
+            "CREATED",
+
+
+        VALIDATING:
+            "VALIDATING",
+
+
+        SUCCESS:
+            "SUCCESS",
+
+
+        FAILED:
+            "FAILED"
+
+
+
     }
 
-    /**
-     * BOM 節點型別
-     */
-    const NodeType = freeze({
 
-        ROOT: "ROOT",
 
-        ASSEMBLY: "ASSEMBLY",
 
-        SUB_ASSEMBLY: "SUB_ASSEMBLY",
 
-        PART: "PART",
 
-        GLASS: "GLASS",
+};
 
-        STONE: "STONE",
 
-        HARDWARE: "HARDWARE",
 
-        ACCESSORY: "ACCESSORY",
 
-        OTHER: "OTHER"
 
-    });
 
-    /**
-     * 專案狀態
-     */
-    const ProjectStatus = freeze({
+/*
+==================================================
 
-        DRAFT: "DRAFT",
+ Export
 
-        ACTIVE: "ACTIVE",
+==================================================
+*/
 
-        COMPLETED: "COMPLETED",
 
-        ARCHIVED: "ARCHIVED"
+global.CWPSTypes = CWPSTypes;
 
-    });
 
-    /**
-     * 批次狀態
-     */
-    const BatchStatus = freeze({
-
-        DRAFT: "DRAFT",
-
-        IMPORTED: "IMPORTED",
-
-        RELEASED: "RELEASED",
-
-        LOCKED: "LOCKED",
-
-        VOID: "VOID"
-
-    });
-
-    /**
-     * BOM Version
-     */
-    const VersionStatus = freeze({
-
-        DRAFT: "DRAFT",
-
-        ACTIVE: "ACTIVE",
-
-        SUPERSEDED: "SUPERSEDED",
-
-        VOID: "VOID"
-
-    });
-
-    /**
-     * 材料分類
-     */
-    const MaterialType = freeze({
-
-        ALUMINUM: "ALUMINUM",
-
-        GLASS: "GLASS",
-
-        STONE: "STONE",
-
-        STEEL: "STEEL",
-
-        HARDWARE: "HARDWARE",
-
-        GASKET: "GASKET",
-
-        SEALANT: "SEALANT",
-
-        ACCESSORY: "ACCESSORY",
-
-        OTHER: "OTHER"
-
-    });
-
-    /**
-     * 單位
-     */
-    const UnitType = freeze({
-
-        KG: "kg",
-
-        M: "m",
-
-        M2: "㎡",
-
-        M3: "㎥",
-
-        PCS: "pcs",
-
-        SET: "set",
-
-        BOX: "box",
-
-        ROLL: "roll",
-
-        SHEET: "sheet",
-
-        CUSTOM: "custom"
-
-    });
-
-    /**
-     * 採購需求狀態
-     */
-    const RequirementStatus = freeze({
-
-        PENDING: "PENDING",
-
-        GENERATED: "GENERATED",
-
-        APPROVED: "APPROVED",
-
-        CANCELLED: "CANCELLED"
-
-    });
-
-    /**
-     * 詢價狀態
-     */
-    const QuotationStatus = freeze({
-
-        DRAFT: "DRAFT",
-
-        SENT: "SENT",
-
-        RECEIVED: "RECEIVED",
-
-        ACCEPTED: "ACCEPTED",
-
-        REJECTED: "REJECTED",
-
-        EXPIRED: "EXPIRED"
-
-    });
-
-    /**
-     * 採購狀態
-     */
-    const PurchaseStatus = freeze({
-
-        DRAFT: "DRAFT",
-
-        APPROVED: "APPROVED",
-
-        ORDERED: "ORDERED",
-
-        PARTIAL_RECEIVED: "PARTIAL_RECEIVED",
-
-        COMPLETED: "COMPLETED",
-
-        CANCELLED: "CANCELLED"
-
-    });
-
-    /**
-     * 出貨狀態
-     */
-    const ShipmentStatus = freeze({
-
-        PENDING: "PENDING",
-
-        SHIPPING: "SHIPPING",
-
-        PARTIAL: "PARTIAL",
-
-        DELIVERED: "DELIVERED",
-
-        CLOSED: "CLOSED"
-
-    });
-
-    /**
-     * 發票狀態
-     */
-    const InvoiceStatus = freeze({
-
-        NOT_INVOICED: "NOT_INVOICED",
-
-        PARTIAL: "PARTIAL",
-
-        INVOICED: "INVOICED",
-
-        PAID: "PAID"
-
-    });
-
-    /**
-     * 供應商狀態
-     */
-    const SupplierStatus = freeze({
-
-        ACTIVE: "ACTIVE",
-
-        INACTIVE: "INACTIVE",
-
-        BLOCKED: "BLOCKED"
-
-    });
-
-    /**
-     * 匯入狀態
-     */
-    const ImportStatus = freeze({
-
-        READY: "READY",
-
-        VALIDATING: "VALIDATING",
-
-        IMPORTING: "IMPORTING",
-
-        SUCCESS: "SUCCESS",
-
-        FAILED: "FAILED"
-
-    });
-
-    /**
-     * 全域輸出
-     */
-    global.CWPSTypes = freeze({
-
-        NodeType,
-
-        ProjectStatus,
-
-        BatchStatus,
-
-        VersionStatus,
-
-        MaterialType,
-
-        UnitType,
-
-        RequirementStatus,
-
-        QuotationStatus,
-
-        PurchaseStatus,
-
-        ShipmentStatus,
-
-        InvoiceStatus,
-
-        SupplierStatus,
-
-        ImportStatus
-
-    });
 
 })(window);
