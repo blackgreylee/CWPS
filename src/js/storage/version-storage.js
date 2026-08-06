@@ -1,585 +1,654 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Version Storage Service
+ File:
+ src/js/storage/version-storage.js
 
-Sprint:
 
-1.4
+ Sprint:
+ 2.1.3
 
-Build:
 
-0001
+ Build:
+ Enterprise Persistence Layer
 
-Description:
 
-BOM version persistence management
+ Description:
+ Batch Version Repository Service
+
 
 ==================================================
 */
 
-class VersionStorage {
 
-```
-constructor(){
+(function (global) {
 
 
+    "use strict";
 
-    this.db =
 
-        new CWPSDatabase();
 
+    class VersionStorage {
 
 
-    this.collection =
 
-        "versions";
+        constructor() {
 
 
+            this.db =
 
-    this.db.init();
+                new CWPSDatabase();
 
 
 
-}
+            this.storeName =
 
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create New Version
-
-
-----------------------------------------------
-
-*/
-
-
-create(data){
-
-
-
-    let versions =
-
-        this.getByBatch(
-
-            data.batchId
-
-        );
-
-
-
-
-
-    let nextVersion =
-
-        this.getNextVersion(
-
-            versions
-
-        );
-
-
-
-
-
-    let record = {
-
-
-
-        id:
-
-            this.generateId(),
-
-
-
-        projectId:
-
-            data.projectId || "",
-
-
-
-        batchId:
-
-            data.batchId || "",
-
-
-
-        version:
-
-            nextVersion,
-
-
-
-        sourceFile:
-
-            data.sourceFile || "",
-
-
-
-        status:
-
-            "Active",
-
-
-
-        importDate:
-
-            new Date()
-
-            .toISOString(),
-
-
-
-        note:
-
-            data.note || ""
-
-
-
-    };
-
-
-
-
-
-    this.archiveActiveVersion(
-
-        data.batchId
-
-    );
-
-
-
-
-
-    return this.db.insert(
-
-
-
-        this.collection,
-
-        record
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Generate Version ID
-
-
-----------------------------------------------
-
-*/
-
-
-generateId(){
-
-
-
-    return (
-
-        "VER-" +
-
-        Date.now()
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Next Version
-
-
-V001
-
-V002
-
-----------------------------------------------
-
-*/
-
-
-getNextVersion(
-
-    versions
-
-){
-
-
-
-    if(
-
-        versions.length === 0
-
-    ){
-
-
-
-        return "V001";
-
-
-
-    }
-
-
-
-
-
-    let max = 0;
-
-
-
-
-
-    versions.forEach(v=>{
-
-
-
-        let num =
-
-
-
-            parseInt(
-
-                v.version.replace(
-
-                    "V",
-
-                    ""
-
-                )
-
-            );
-
-
-
-
-
-        if(
-
-            num > max
-
-        ){
-
-
-
-            max=num;
-
+                "versions";
 
 
         }
 
 
 
-    });
 
 
 
+        /*
+        ==============================================
 
+        Initialize
 
-    return (
+        ==============================================
+        */
 
-        "V" +
 
-        String(
+        async init() {
 
-            max+1
 
-        )
-
-        .padStart(
-
-            3,
-
-            "0"
-
-        )
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Archive Previous Version
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-archiveActiveVersion(
-
-    batchId
-
-){
-
-
-
-    let versions =
-
-        this.getByBatch(
-
-            batchId
-
-        );
-
-
-
-
-
-    versions.forEach(v=>{
-
-
-
-        if(
-
-            v.status === "Active"
-
-        ){
-
-
-
-            v.status =
-
-                "Archived";
-
-
-
-
-
-            this.db.update(
-
-
-
-                this.collection,
-
-                v.id,
-
-                v
-
-
-
-            );
-
+            await this.db.open();
 
 
         }
 
 
 
-    });
 
 
 
-}
+        /*
+        ==============================================
 
+        Create Version
 
+        ==============================================
+        */
 
 
+        async create(version) {
 
 
 
+            if (!version) {
 
 
-/*
-----------------------------------------------
+                throw new Error(
 
-Get Versions By Batch
+                    "Version data required"
 
+                );
 
-----------------------------------------------
 
-----------------------------------------------
+            }
 
-*/
 
 
-getByBatch(
 
-    batchId
+            const data =
 
-){
 
+                version.toJSON
 
+                    ?
 
-    return this.db.get(
+                    version.toJSON()
 
-        this.collection
+                    :
 
-    )
+                    version;
 
-    .filter(
 
 
 
-        item =>
+            return await this.db.add(
 
-        item.batchId === batchId
+                this.storeName,
 
+                data
 
+            );
 
-    );
 
+        }
 
 
-}
 
 
 
 
+        /*
+        ==============================================
 
+        Get Version
 
+        ==============================================
+        */
 
 
+        async get(versionId) {
 
-/*
-----------------------------------------------
 
-Get Current Version
 
+            return await this.db.get(
 
-----------------------------------------------
+                this.storeName,
 
-----------------------------------------------
+                versionId
 
-*/
+            );
 
 
-getCurrent(
+        }
 
-    batchId
 
-){
 
 
 
-    return this.getByBatch(
 
-        batchId
+        /*
+        ==============================================
 
-    )
+        Get All Versions
 
-    .find(
+        ==============================================
+        */
 
 
+        async getAll() {
 
-        item =>
 
-        item.status === "Active"
 
+            return await this.db.getAll(
 
+                this.storeName
 
-    );
+            );
 
 
+        }
 
-}
 
 
 
 
 
+        /*
+        ==============================================
 
+        Get Versions By Batch
 
+        ==============================================
+        */
 
 
-/*
-----------------------------------------------
+        async findByBatch(batchId) {
 
-Change Version Status
 
 
-----------------------------------------------
+            const versions =
 
-----------------------------------------------
 
-*/
+                await this.getAll();
 
 
-changeStatus(
 
-    id,
 
-    status
+            return versions.filter(
 
-){
+                version =>
 
 
+                    version.batchId === batchId
 
-    let version =
 
-        this.db.findById(
+            );
 
 
+        }
 
-            this.collection,
 
-            id
 
 
 
-        );
 
+        /*
+        ==============================================
 
+        Get Active Version
 
+        ==============================================
+        */
 
 
-    if(!version){
+        async getActive(batchId) {
 
 
 
-        return null;
+            const versions =
+
+
+                await this.findByBatch(
+
+                    batchId
+
+                );
+
+
+
+
+            return versions.find(
+
+                version =>
+
+
+                    version.status ===
+
+                    CWPSTypes.VersionStatus.ACTIVE
+
+
+            ) || null;
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Update Version
+
+        ==============================================
+        */
+
+
+        async update(version) {
+
+
+
+            if (!version) {
+
+
+                throw new Error(
+
+                    "Version data required"
+
+                );
+
+
+            }
+
+
+
+
+            const data =
+
+
+                version.toJSON
+
+                    ?
+
+                    version.toJSON()
+
+                    :
+
+                    version;
+
+
+
+
+            return await this.db.update(
+
+                this.storeName,
+
+                data
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Activate Version
+
+        ==============================================
+        */
+
+
+        async activate(versionId) {
+
+
+
+            const version =
+
+
+                await this.get(
+
+                    versionId
+
+                );
+
+
+
+
+            if (!version) {
+
+
+                throw new Error(
+
+                    "Version not found"
+
+                );
+
+
+            }
+
+
+
+
+
+            version.status =
+
+
+                CWPSTypes.VersionStatus.ACTIVE;
+
+
+
+            version.updatedAt =
+
+
+                new Date()
+
+                .toISOString();
+
+
+
+
+
+            return await this.update(
+
+                version
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Archive Version
+
+        ==============================================
+        */
+
+
+        async archive(versionId) {
+
+
+
+            const version =
+
+
+                await this.get(
+
+                    versionId
+
+                );
+
+
+
+
+            if (!version) {
+
+
+                throw new Error(
+
+                    "Version not found"
+
+                );
+
+
+            }
+
+
+
+
+            version.status =
+
+
+                CWPSTypes.VersionStatus.ARCHIVED;
+
+
+
+
+            version.updatedAt =
+
+
+                new Date()
+
+                .toISOString();
+
+
+
+
+            return await this.update(
+
+                version
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Void Version
+
+        ==============================================
+        */
+
+
+        async void(versionId) {
+
+
+
+            const version =
+
+
+                await this.get(
+
+                    versionId
+
+                );
+
+
+
+
+            if (!version) {
+
+
+                throw new Error(
+
+                    "Version not found"
+
+                );
+
+
+            }
+
+
+
+
+            version.status =
+
+
+                CWPSTypes.VersionStatus.VOID;
+
+
+
+
+            version.updatedAt =
+
+
+                new Date()
+
+                .toISOString();
+
+
+
+
+            return await this.update(
+
+                version
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Set Current Version
+
+        ==============================================
+        */
+
+
+        async setCurrent(versionId) {
+
+
+
+            const version =
+
+
+                await this.get(
+
+                    versionId
+
+                );
+
+
+
+
+            if (!version) {
+
+
+                throw new Error(
+
+                    "Version not found"
+
+                );
+
+
+            }
+
+
+
+
+
+            version.isCurrent = true;
+
+
+
+            version.updatedAt =
+
+
+                new Date()
+
+                .toISOString();
+
+
+
+
+
+            return await this.update(
+
+                version
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Delete Version
+
+        ==============================================
+        
+        注意:
+        Enterprise 不允許真正刪除版本
+        
+        ==============================================
+        */
+
+
+        async remove(versionId) {
+
+
+            throw new Error(
+
+                "CWPS Version cannot be deleted. Use void() instead."
+
+            );
+
+
+        }
 
 
 
@@ -588,225 +657,10 @@ changeStatus(
 
 
 
+    global.VersionStorage =
 
-    version.status =
+        VersionStorage;
 
-        status;
 
 
-
-
-
-    return this.db.update(
-
-
-
-        this.collection,
-
-        id,
-
-        version
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Compare Versions
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-compare(
-
-    versionA,
-
-    versionB,
-
-    bomStorage
-
-){
-
-
-
-    let bomA =
-
-        bomStorage.getTree(
-
-            versionA.batchId,
-
-            versionA.version
-
-        );
-
-
-
-
-
-    let bomB =
-
-        bomStorage.getTree(
-
-            versionB.batchId,
-
-            versionB.version
-
-        );
-
-
-
-
-
-    if(
-
-        !bomA
-
-        ||
-
-        !bomB
-
-    ){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    return bomStorage.compare(
-
-
-
-        bomA.tree,
-
-        bomB.tree
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-History
-
-
-----------------------------------------------
-
-*/
-
-
-history(
-
-    batchId
-
-){
-
-
-
-    return this.getByBatch(
-
-        batchId
-
-    )
-
-    .sort(
-
-
-
-        (a,b)=>
-
-
-
-        a.version.localeCompare(
-
-            b.version
-
-        )
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Disable Version
-
-
-不刪除
-
-----------------------------------------------
-
-*/
-
-
-disable(id){
-
-
-
-    return this.changeStatus(
-
-        id,
-
-        "Disabled"
-
-    );
-
-
-
-}
-```
-
-}
-
-window.VersionStorage = VersionStorage;
+})(window);
