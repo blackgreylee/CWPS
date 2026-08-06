@@ -1,263 +1,46 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Application Controller
+ File:
+ src/js/app/app-controller.js
 
-Sprint:
 
-1.7.1
+ Sprint:
+ 2.8.1
 
-Build:
 
-0001
+ Build:
+ Enterprise Application Controller
 
-Description:
 
-Main frontend application controller
+ Description:
+ Main Application Bootstrap Controller
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class AppController {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.appName =
 
-        "CWPS";
 
+        this.database =
 
-
-
-
-    this.version =
-
-        "v0.1 Alpha";
-
-
-
-
-
-    this.status =
-
-        "Created";
-
-
-
-
-
-    this.initialized = false;
-
-
-
-
-
-    this.core = null;
-
-
-
-
-
-    this.router = null;
-
-
-
-
-
-    this.ui = null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize Application
-
-
-----------------------------------------------
-
-*/
-
-
-init(){
-
-
-
-    if(
-
-        this.initialized
-
-    ){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    this.loadCore();
-
-
-
-
-
-    this.loadModules();
-
-
-
-
-
-    this.bindEvents();
-
-
-
-
-
-    this.status =
-
-        "Running";
-
-
-
-
-
-    this.initialized = true;
-
-
-
-
-
-    console.log(
-
-
-
-        this.appName +
-
-        " Started"
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load CWPS Core
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-loadCore(){
-
-
-
-    if(
-
-        window.CWPS
-
-    ){
-
-
-
-        this.core =
-
-            window.CWPS;
-
-
-
-        this.core.start();
-
-
-
-    }
-
-    else{
-
-
-
-        console.error(
-
-            "CWPS Core Missing"
-
-        );
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Frontend Modules
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-loadModules(){
-
-
-
-    if(
-
-        window.Router
-
-    ){
+            new Database();
 
 
 
@@ -267,133 +50,453 @@ loadModules(){
 
 
 
-    }
-
-
-
-
-
-
-
-
-
-    if(
-
-        window.UIManager
-
-    ){
-
-
-
-        this.ui =
+        this.uiManager =
 
             new UIManager();
 
 
 
+        this.controllers = {};
+
+
+
+        this.views = {};
+
+
+
+        this.initialized = false;
+
+
+
     }
 
 
 
-}
 
 
 
+    /*
+    ==============================================
+
+    Application Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
 
 
 
+        if(this.initialized){
 
 
-
-/*
-----------------------------------------------
-
-Bind Global Events
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-bindEvents(){
-
-
-
-    document
-
-    .addEventListener(
-
-
-
-        "DOMContentLoaded",
-
-
-
-        ()=>{
-
-
-
-            this.onReady();
-
+            return;
 
 
         }
 
 
 
-    );
 
 
+        console.log(
 
-}
+            "CWPS Enterprise Starting..."
 
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Application Ready
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-onReady(){
-
-
-
-    console.log(
-
-        "CWPS Ready"
-
-    );
+        );
 
 
 
 
 
-    if(
-
-        this.router
-
-    ){
+        await this.initDatabase();
 
 
 
-        this.router.load(
+        this.initUI();
+
+
+
+        this.initControllers();
+
+
+
+        this.initViews();
+
+
+
+        this.initRouter();
+
+
+
+
+
+        this.initialized = true;
+
+
+
+
+
+        console.log(
+
+            "CWPS Enterprise Ready"
+
+        );
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Database
+
+    ==============================================
+    */
+
+
+    async initDatabase(){
+
+
+
+        await this.database.init();
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    UI Manager
+
+    ==============================================
+    */
+
+
+    initUI(){
+
+
+
+        this.uiManager.init(
+
+            "app"
+
+        );
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Controllers
+
+    ==============================================
+    */
+
+
+    initControllers(){
+
+
+
+        this.controllers.project =
+
+
+            new ProjectController();
+
+
+
+
+
+        this.controllers.supplier =
+
+
+            new SupplierController();
+
+
+
+
+
+        this.controllers.procurement =
+
+
+            new ProcurementController();
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Views
+
+    ==============================================
+    */
+
+
+    initViews(){
+
+
+
+        /*
+        Project
+        */
+
+
+        this.views.project =
+
+
+            new ProjectView();
+
+
+
+
+
+        this.views.project.controller =
+
+
+            this.controllers.project;
+
+
+
+
+
+        this.uiManager.register(
+
+            "project",
+
+            this.views.project
+
+        );
+
+
+
+
+
+
+
+        /*
+        Supplier
+        */
+
+
+        this.views.supplier =
+
+
+            new SupplierView();
+
+
+
+
+
+        this.views.supplier.controller =
+
+
+            this.controllers.supplier;
+
+
+
+
+
+        this.uiManager.register(
+
+            "supplier",
+
+            this.views.supplier
+
+        );
+
+
+
+
+
+
+
+        /*
+        Procurement
+        */
+
+
+        this.views.procurement =
+
+
+            new ProcurementView();
+
+
+
+
+
+        this.views.procurement.controller =
+
+
+            this.controllers.procurement;
+
+
+
+
+
+        this.uiManager.register(
+
+            "procurement",
+
+            this.views.procurement
+
+        );
+
+
+
+
+
+
+
+        /*
+        Dashboard
+        */
+
+
+        this.views.dashboard =
+
+
+            new DashboardView();
+
+
+
+
+
+        this.views.dashboard.service =
+
+
+            new DashboardService();
+
+
+
+
+
+        this.uiManager.register(
+
+            "dashboard",
+
+            this.views.dashboard
+
+        );
+
+
+
+
+
+
+
+        /*
+        BOM
+
+        */
+
+        this.views.bom =
+
+
+            new BOMView();
+
+
+
+
+
+        this.views.bom.controller =
+
+
+            new BOMController();
+
+
+
+
+
+        this.uiManager.register(
+
+            "bom",
+
+            this.views.bom
+
+        );
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Router
+
+    ==============================================
+    */
+
+
+    initRouter(){
+
+
+
+        this.router.init(
+
+            this.uiManager
+
+        );
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Start Default Page
+
+    ==============================================
+    */
+
+
+    async start(){
+
+
+
+        await this.init();
+
+
+
+        await this.router.navigate(
 
             "dashboard"
 
@@ -405,50 +508,51 @@ onReady(){
 
 
 
-}
 
 
 
+    /*
+    ==============================================
+
+    Get Controller
+
+    ==============================================
+    */
 
 
-
-
-
-
-/*
-----------------------------------------------
-
-Navigate Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-navigate(
-
-    page
-
-){
-
-
-
-    if(
-
-        this.router
-
+    getController(
+        name
     ){
 
 
 
-        return this.router.load(
+        return this.controllers[name];
 
-            page
 
-        );
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get View
+
+    ==============================================
+    */
+
+
+    getView(
+        name
+    ){
+
+
+
+        return this.views[name];
 
 
 
@@ -463,113 +567,10 @@ navigate(
 
 
 
+global.AppController =
 
+    AppController;
 
 
-/*
-----------------------------------------------
 
-Get Application Info
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-info(){
-
-
-
-    return {
-
-
-
-        name:
-
-            this.appName,
-
-
-
-        version:
-
-            this.version,
-
-
-
-        status:
-
-            this.status,
-
-
-
-        initialized:
-
-            this.initialized
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Shutdown
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-shutdown(){
-
-
-
-    this.status =
-
-        "Stopped";
-
-
-
-
-
-    this.initialized =
-
-        false;
-
-
-
-}
-```
-
-}
-
-# /*
-
-Global Application Instance
-
-==================================================
-*/
-
-window.CWPSApp =
-
-```
-new AppController();
-```
+})(window);
