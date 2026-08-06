@@ -1,105 +1,45 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-BOM Tree Engine
+ File:
+ src/js/core/bom-engine.js
 
-Sprint:
-1.3.2
 
-Build:
-0001
+ Sprint:
+ 2.2.1
 
-Description:
 
-BOM hierarchy processing engine
+ Build:
+ Enterprise BOM Engine Layer
+
+
+ Description:
+ BOM Tree Processing Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class BOMEngine {
 
-```
-constructor(){
 
 
-    this.rootNodes = [];
-
-}
+    constructor(){
 
 
+        this.storage =
 
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Root Node
-
-
-Batch / AU
-
-
-----------------------------------------------
-
-*/
-
-
-addRoot(node){
-
-
-    this.rootNodes.push(node);
-
-
-    return node;
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Child Node
-
-
-Parent
-
-   |
-
-   Child
-
-
-----------------------------------------------
-
-*/
-
-
-addNode(parentNode, childNode){
-
-
-
-    if(!parentNode){
-
-
-
-        throw new Error(
-
-            "Parent node required"
-
-        );
+            new BOMStorage();
 
 
 
@@ -108,223 +48,236 @@ addNode(parentNode, childNode){
 
 
 
-    parentNode.addChild(
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
+
+
+        await this.storage.init();
+
+
+    }
+
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create BOM Node
+
+    ==============================================
+    */
+
+
+    async createNode(node){
+
+
+        if(!node){
+
+
+            throw new Error(
+
+                "BOM Node required"
+
+            );
+
+
+        }
+
+
+
+        return await this.storage.create(
+
+            node
+
+        );
+
+
+    }
+
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Add Child Node
+
+    ==============================================
+    */
+
+
+    async addChild(
+        parentId,
         childNode
-
-    );
-
-
-
-    return childNode;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find Node By ID
-
-
-Recursive Search
-
-
-----------------------------------------------
-
-*/
-
-
-findNode(nodeId){
-
-
-
-    for(
-
-        let node of this.rootNodes
-
     ){
 
 
 
-        let result =
+        const parent =
 
-            node.findNode(
+            await this.storage.get(
 
-                nodeId
+                parentId
 
             );
 
 
 
-        if(result){
+
+        if(!parent){
 
 
+            throw new Error(
 
-            return result;
+                "Parent BOM Node not found"
 
+            );
 
 
         }
 
 
 
+
+
+        childNode.parentId =
+
+            parentId;
+
+
+
+
+        return await this.storage.create(
+
+            childNode
+
+        );
+
+
     }
 
 
 
 
 
-    return null;
 
 
+    /*
+    ==============================================
 
-}
+    Get BOM Tree
 
+    ==============================================
+    */
 
 
+    async getTree(versionId){
 
 
+        return await this.storage.getTree(
 
+            versionId
 
+        );
 
 
+    }
 
-/*
-----------------------------------------------
 
-Find By Code
 
 
-Example:
 
-AU001
 
 
-----------------------------------------------
+    /*
+    ==============================================
 
-*/
+    Flatten Tree
 
+    樹狀轉列表
 
-findByCode(code){
+    ==============================================
+    */
 
 
+    flatten(nodes){
 
-    let nodes =
 
-        this.flatten();
 
+        let result=[];
 
 
-    return nodes.find(
 
 
+        nodes.forEach(
 
-        node =>
+            node=>{
 
-        node.code === code
 
 
+                result.push(
 
-    );
+                    node
 
+                );
 
 
-}
 
 
+                if(
 
+                    node.children &&
 
+                    node.children.length
 
+                ){
 
 
 
+                    result =
 
+                        result.concat(
 
-/*
-----------------------------------------------
+                            this.flatten(
 
-Flatten Tree
+                                node.children
 
+                            )
 
-Tree
+                        );
 
-↓
 
-Array
+                }
 
 
-----------------------------------------------
 
-*/
-
-
-flatten(){
-
-
-
-    let result = [];
-
-
-
-    const walk = (node)=>{
-
-
-
-        result.push(node);
-
-
-
-        node.children.forEach(
-
-
-
-            child =>
-
-            walk(child)
-
-
+            }
 
         );
 
 
 
-    };
+
+        return result;
 
 
-
-
-
-    this.rootNodes.forEach(
-
-
-
-        root =>
-
-        walk(root)
-
-
-
-    );
-
-
-
-
-    return result;
-
-
-
-}
+    }
 
 
 
@@ -333,121 +286,71 @@ flatten(){
 
 
 
+    /*
+    ==============================================
+
+    Find Node
+
+    ==============================================
+    */
 
 
-/*
-----------------------------------------------
-
-Get Children
-
-
-----------------------------------------------
-
-*/
+    async findNode(
+        nodeId
+    ){
 
 
-getChildren(nodeId){
-
-
-
-    let node =
-
-        this.findNode(
+        return await this.storage.get(
 
             nodeId
 
         );
 
 
-
-    if(!node){
-
-
-
-        return [];
-
-
-
-    }
-
-
-
-    return node.children;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remove Node
-
-
-----------------------------------------------
-
-*/
-
-
-removeNode(nodeId){
-
-
-
-    let node =
-
-        this.findNode(
-
-            nodeId
-
-        );
-
-
-
-    if(!node){
-
-
-
-        return false;
-
-
-
     }
 
 
 
 
 
-    if(node.parentId === null){
+
+
+    /*
+    ==============================================
+
+    Find Nodes By Type
+
+    ==============================================
+    */
+
+
+    async findByType(
+        versionId,
+        type
+    ){
 
 
 
-        this.rootNodes =
+        const nodes =
 
-            this.rootNodes.filter(
+            await this.storage.findByVersion(
 
-
-
-                item =>
-
-                item.id !== nodeId
-
-
+                versionId
 
             );
 
 
 
-        return true;
 
+        return nodes.filter(
+
+            node =>
+
+
+                node.type === type
+
+
+        );
 
 
     }
@@ -457,30 +360,29 @@ removeNode(nodeId){
 
 
 
-    let parent =
 
-        this.findNode(
+    /*
+    ==============================================
 
-            node.parentId
+    Get Material Nodes
+
+    ==============================================
+    */
+
+
+    async getMaterialNodes(
+        versionId
+    ){
+
+
+
+        return await this.findByType(
+
+            versionId,
+
+            CWPSTypes.BOMNodeType.MATERIAL
 
         );
-
-
-
-    if(parent){
-
-
-
-        parent.removeChild(
-
-            nodeId
-
-        );
-
-
-
-        return true;
-
 
 
     }
@@ -488,111 +390,59 @@ removeNode(nodeId){
 
 
 
-    return false;
 
 
 
-}
+    /*
+    ==============================================
+
+    Calculate Node Count
+
+    基礎數量累加
+
+    ==============================================
+    */
+
+
+    calculateNodeCount(node){
 
 
 
+        let count =
 
 
-
-
-
-
-
-/*
-----------------------------------------------
-
-Validate Tree
-
-
-Check:
-
-- Duplicate Code
-
-- Empty Code
-
-
-----------------------------------------------
-
-*/
-
-
-validate(){
-
-
-
-    let errors = [];
-
-
-
-    let nodes =
-
-        this.flatten();
-
-
-
-
-
-    let codes = [];
-
-
-
-
-
-    nodes.forEach(node=>{
-
-
-
-        if(!node.code){
-
-
-
-            errors.push({
-
-                node:node.id,
-
-                message:
-
-                "Empty node code"
-
-            });
-
-
-
-        }
-
+            node.quantity || 1;
 
 
 
 
         if(
 
-            codes.includes(
+            node.children &&
 
-                node.code
-
-            )
+            node.children.length
 
         ){
 
 
 
-            errors.push({
+            node.children.forEach(
 
-                node:node.id,
+                child=>{
 
-                message:
 
-                "Duplicate code: "
+                    count *=
 
-                + node.code
+                        this.calculateNodeCount(
 
-            });
+                            child
 
+                        );
+
+
+                }
+
+            );
 
 
         }
@@ -600,119 +450,257 @@ validate(){
 
 
 
+        return count;
 
-        codes.push(
 
-            node.code
+    }
+
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Compare BOM Version
+
+    ==============================================
+    */
+
+
+    async compareVersion(
+        oldVersionId,
+        newVersionId
+    ){
+
+
+
+        const oldNodes =
+
+            await this.storage.findByVersion(
+
+                oldVersionId
+
+            );
+
+
+
+
+        const newNodes =
+
+            await this.storage.findByVersion(
+
+                newVersionId
+
+            );
+
+
+
+
+        const result = {
+
+
+            added:[],
+
+
+            removed:[],
+
+
+            modified:[]
+
+
+        };
+
+
+
+
+        const oldMap={};
+
+
+        const newMap={};
+
+
+
+
+        oldNodes.forEach(
+
+            node=>{
+
+
+                oldMap[node.code]=node;
+
+
+            }
 
         );
 
 
 
-    });
 
+        newNodes.forEach(
 
+            node=>{
 
 
+                newMap[node.code]=node;
 
-    return errors;
 
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Export JSON
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return this.rootNodes.map(
-
-
-
-        node =>
-
-        node.toJSON()
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Import JSON
-
-
-----------------------------------------------
-
-*/
-
-
-load(jsonArray){
-
-
-
-    this.rootNodes =
-
-
-
-        jsonArray.map(
-
-
-
-            json =>
-
-            BOMModel.fromJSON(
-
-                json
-
-            )
-
-
+            }
 
         );
 
 
 
-    return this.rootNodes;
+
+
+        Object.keys(newMap)
+
+        .forEach(
+
+            code=>{
+
+
+                if(!oldMap[code]){
+
+
+                    result.added.push(
+
+                        newMap[code]
+
+                    );
+
+
+                }
+
+                else if(
+
+                    JSON.stringify(
+
+                        oldMap[code]
+
+                    )
+
+                    !==
+
+                    JSON.stringify(
+
+                        newMap[code]
+
+                    )
+
+                ){
+
+
+
+                    result.modified.push(
+
+                        {
+
+                            old:
+
+                                oldMap[code],
+
+
+                            new:
+
+                                newMap[code]
+
+
+                        }
+
+                    );
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        Object.keys(oldMap)
+
+        .forEach(
+
+            code=>{
+
+
+                if(!newMap[code]){
+
+
+                    result.removed.push(
+
+                        oldMap[code]
+
+                    );
+
+
+                }
+
+
+            }
+
+        );
+
+
+
+
+
+        return result;
+
+
+    }
+
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Snapshot
+
+    ==============================================
+    */
+
+
+    async snapshot(
+        versionId
+    ){
+
+
+        return await this.storage.createSnapshot(
+
+            versionId
+
+        );
+
+
+    }
+
 
 
 
 }
-```
 
-}
 
-window.BOMEngine = BOMEngine;
+
+
+
+
+global.BOMEngine =
+
+    BOMEngine;
+
+
+
+})(window);
