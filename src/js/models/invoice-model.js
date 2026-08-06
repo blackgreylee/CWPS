@@ -1,581 +1,448 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Invoice Model
+ Invoice Model
 
-Sprint:
+ Sprint:
+ 2.0.12
 
-1.5.5
-
-Build:
-
-0001
-
-Description:
-
-Invoice and payment tracking data model
+ Description:
+ Supplier Invoice Entity
 
 ==================================================
 */
 
-class InvoiceModel {
+(function (global) {
 
-```
-constructor(data = {}){
+    "use strict";
 
 
+    class Invoice {
 
-    this.id =
 
+        constructor(data = {}) {
 
 
-        data.id ||
+            this.id =
+                data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 專案
+            this.projectId =
+                data.projectId || null;
 
 
 
-    this.purchaseId =
+            // 供應商
+            this.supplierId =
+                data.supplierId || null;
 
 
 
-        data.purchaseId ||
+            // 採購單
+            this.purchaseId =
+                data.purchaseId || null;
 
-        "";
 
 
+            // 發票號碼
+            this.invoiceNo =
+                data.invoiceNo || "";
 
 
 
-    this.shipmentId =
+            // 發票日期
+            this.invoiceDate =
 
+                data.invoiceDate ||
 
+                new Date().toISOString();
 
-        data.shipmentId ||
 
-        "";
 
+            // 發票類型
+            this.type =
 
+                data.type ||
 
+                CWPSTypes.InvoiceType.NORMAL;
 
 
-    this.projectId =
 
+            // 未稅金額
+            this.subtotal =
 
+                Number(data.subtotal ?? 0);
 
-        data.projectId ||
 
-        "";
 
+            // 稅率
+            this.taxRate =
 
+                Number(data.taxRate ?? 5);
 
 
 
-    this.batchId =
+            // 稅額
+            this.taxAmount =
 
+                Number(data.taxAmount ?? 0);
 
 
-        data.batchId ||
 
-        "";
+            // 含稅總額
+            this.totalAmount =
 
+                Number(data.totalAmount ?? 0);
 
 
 
+            // 發票狀態
+            this.status =
 
-    this.supplierId =
+                data.status ||
 
+                CWPSTypes.InvoiceStatus.PENDING;
 
 
-        data.supplierId ||
 
-        "";
+            // 發票明細
 
+            this.items = [];
 
 
 
+            if (Array.isArray(data.items)) {
 
-    this.supplierName =
 
+                this.items =
 
+                    data.items.map(item => ({
 
-        data.supplierName ||
 
-        "";
+                        materialId:
+                            item.materialId || null,
 
 
+                        materialName:
+                            item.materialName || "",
 
 
+                        quantity:
+                            Number(item.quantity ?? 0),
 
-    this.invoiceNo =
 
+                        unit:
+                            item.unit || "",
 
 
-        data.invoiceNo ||
+                        amount:
+                            Number(item.amount ?? 0),
 
-        "";
 
+                        remark:
+                            item.remark || ""
 
 
+                    }));
 
 
-    this.invoiceDate =
+            }
 
 
 
-        data.invoiceDate ||
+            // 備註
+            this.remark =
+                data.remark || "";
 
-        "";
 
 
+            this.createdAt =
 
+                data.createdAt ||
 
+                new Date().toISOString();
 
-    this.amount =
 
 
+            this.updatedAt =
 
-        Number(
+                data.updatedAt ||
 
-            data.amount
+                new Date().toISOString();
 
-        )
 
-        || 0;
+        }
 
 
 
+        /**
+         * 新增發票項目
+         */
+        addItem(item) {
 
 
-    this.taxRate =
+            this.items.push({
 
 
+                materialId:
+                    item.materialId || null,
 
-        Number(
 
-            data.taxRate
+                materialName:
+                    item.materialName || "",
 
-        )
 
-        || 5;
+                quantity:
+                    Number(item.quantity ?? 0),
 
 
+                unit:
+                    item.unit || "",
 
 
+                amount:
+                    Number(item.amount ?? 0),
 
-    this.tax =
 
+                remark:
+                    item.remark || ""
 
 
-        this.calculateTax();
+            });
 
 
 
+            this.calculateAmount();
 
 
-    this.totalAmount =
+            this.touch();
 
 
+        }
 
-        this.amount +
 
-        this.tax;
 
+        /**
+         * 計算金額
+         */
+        calculateAmount() {
 
 
+            this.subtotal =
 
+                this.items.reduce(
 
-    this.status =
+                    (sum, item) =>
 
+                        sum + item.amount,
 
 
-        data.status ||
+                    0
 
-        "Draft";
+                );
 
 
 
+            this.taxAmount =
 
+                this.subtotal *
 
-    this.paymentStatus =
+                (this.taxRate / 100);
 
 
 
-        data.paymentStatus ||
+            this.totalAmount =
 
-        "Unpaid";
+                this.subtotal +
 
+                this.taxAmount;
 
 
 
+            return this.totalAmount;
 
-    this.paidAmount =
 
+        }
 
 
-        Number(
 
-            data.paidAmount
+        /**
+         * 設定稅率
+         */
+        setTaxRate(rate) {
 
-        )
 
-        || 0;
+            this.taxRate =
 
+                Number(rate);
 
 
 
+            this.calculateAmount();
 
-    this.remark =
 
 
+            this.touch();
 
-        data.remark ||
 
-        "";
+        }
 
 
 
+        /**
+         * 審核通過
+         */
+        approve() {
 
 
-    this.createdDate =
+            this.status =
 
+                CWPSTypes.InvoiceStatus.APPROVED;
 
 
-        data.createdDate ||
 
-        new Date()
+            this.touch();
 
-        .toISOString();
 
+        }
 
 
 
+        /**
+         * 已付款
+         */
+        markPaid() {
 
-    this.updatedDate =
 
+            this.status =
 
+                CWPSTypes.InvoiceStatus.PAID;
 
-        new Date()
 
-        .toISOString();
 
+            this.touch();
 
 
-}
+        }
 
 
 
+        /**
+         * 作廢
+         */
+        cancel() {
 
 
+            this.status =
 
+                CWPSTypes.InvoiceStatus.CANCELLED;
 
 
 
-/*
-----------------------------------------------
+            this.touch();
 
-Generate ID
 
+        }
 
-----------------------------------------------
 
-*/
 
+        /**
+         * 更新時間
+         */
+        touch() {
 
-generateId(){
 
+            this.updatedAt =
 
+                new Date().toISOString();
 
-    return (
 
-        "INV-" +
+        }
 
-        Date.now()
 
-    );
 
+        /**
+         * JSON
+         */
+        toJSON() {
 
 
-}
+            return {
 
 
+                id:
+                    this.id,
 
 
+                projectId:
+                    this.projectId,
 
 
+                supplierId:
+                    this.supplierId,
 
 
+                purchaseId:
+                    this.purchaseId,
 
-/*
-----------------------------------------------
 
-Calculate Tax
+                invoiceNo:
+                    this.invoiceNo,
 
 
-----------------------------------------------
+                invoiceDate:
+                    this.invoiceDate,
 
-*/
 
+                type:
+                    this.type,
 
-calculateTax(){
 
+                subtotal:
+                    this.subtotal,
 
 
-    return Math.round(
+                taxRate:
+                    this.taxRate,
 
 
+                taxAmount:
+                    this.taxAmount,
 
-        this.amount *
 
-        (
+                totalAmount:
+                    this.totalAmount,
 
-            this.taxRate /
 
-            100
+                status:
+                    this.status,
 
-        )
 
+                items:
+                    this.items,
 
 
-    );
+                remark:
+                    this.remark,
 
 
+                createdAt:
+                    this.createdAt,
 
-}
 
+                updatedAt:
+                    this.updatedAt
 
 
 
+            };
 
 
-
-
-
-/*
-----------------------------------------------
-
-Calculate Total
-
-
-----------------------------------------------
-
-*/
-
-
-calculateTotal(){
-
-
-
-    this.tax =
-
-        this.calculateTax();
-
-
-
-
-
-    this.totalAmount =
-
-
-
-        this.amount +
-
-        this.tax;
-
-
-
-
-
-    return this.totalAmount;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Issue Invoice
-
-
-----------------------------------------------
-
-*/
-
-
-issue(){
-
-
-
-    this.status =
-
-        "Issued";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Verify Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-verify(){
-
-
-
-    this.status =
-
-        "Verified";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Approve Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-approve(){
-
-
-
-    this.status =
-
-        "Approved";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Record Payment
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-pay(amount){
-
-
-
-    this.paidAmount +=
-
-
-
-        Number(amount)
-
-        || 0;
-
-
-
-
-
-    if(
-
-        this.paidAmount >=
-
-        this.totalAmount
-
-    ){
-
-
-
-        this.paymentStatus =
-
-            "Paid";
-
-
-
-    }
-
-    else if(
-
-        this.paidAmount > 0
-
-    ){
-
-
-
-        this.paymentStatus =
-
-            "Partial";
+        }
 
 
 
@@ -583,239 +450,8 @@ pay(amount){
 
 
 
+    global.Invoice = Invoice;
 
 
-    this.updateTime();
 
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Close Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-close(){
-
-
-
-    this.status =
-
-        "Closed";
-
-
-
-
-
-    this.updateTime();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remaining Payment
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getRemainingAmount(){
-
-
-
-    return (
-
-
-
-        this.totalAmount -
-
-        this.paidAmount
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Time
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-updateTime(){
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        purchaseId:
-
-            this.purchaseId,
-
-
-
-        shipmentId:
-
-            this.shipmentId,
-
-
-
-        supplierId:
-
-            this.supplierId,
-
-
-
-        supplierName:
-
-            this.supplierName,
-
-
-
-        invoiceNo:
-
-            this.invoiceNo,
-
-
-
-        amount:
-
-            this.amount,
-
-
-
-        tax:
-
-            this.tax,
-
-
-
-        totalAmount:
-
-            this.totalAmount,
-
-
-
-        status:
-
-            this.status,
-
-
-
-        paymentStatus:
-
-            this.paymentStatus,
-
-
-
-        paidAmount:
-
-            this.paidAmount
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.InvoiceModel = InvoiceModel;
+})(window);
