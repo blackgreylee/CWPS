@@ -1,638 +1,953 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Database Core
+ File:
+ src/js/storage/database.js
 
-Sprint:
 
-1.4
+ Sprint:
+ 2.1.1
 
-Build:
 
-0001
+ Build:
+ Enterprise Persistence Layer
 
-Description:
 
-Local persistence database adapter
+ Description:
+ IndexedDB Database Core
+
 
 ==================================================
 */
 
-class CWPSDatabase {
 
-```
-constructor(){
+(function (global) {
 
 
+    "use strict";
 
-    this.databaseName =
 
-        "CWPS_DB";
 
+    class CWPSDatabase {
 
 
 
+        constructor() {
 
-    this.defaultSchema = {
 
+            this.databaseName =
 
+                "CWPS_DATABASE";
 
-        projects: [],
 
 
+            this.version = 2;
 
-        batches: [],
 
 
+            this.db = null;
 
-        bom: [],
 
 
+            this.isReady = false;
 
-        materials: [],
 
 
+            this.stores = {
 
-        suppliers: [],
 
+                meta:
+                    "cwps_meta",
 
 
-        versions: [],
 
+                projects:
+                    "projects",
 
 
-        importHistory: []
 
+                batches:
+                    "batches",
 
 
-    };
 
+                versions:
+                    "versions",
 
 
-}
 
+                bom:
+                    "bom",
 
 
 
+                materials:
+                    "materials",
 
 
 
+                materialUsages:
+                    "materialUsages",
 
 
-/*
-----------------------------------------------
 
-Initialize Database
+                suppliers:
+                    "suppliers",
 
 
-----------------------------------------------
 
-*/
+                requirements:
+                    "requirements",
 
 
-init(){
 
+                quotations:
+                    "quotations",
 
 
-    let db =
 
-        this.load();
+                purchases:
+                    "purchases",
 
 
 
-    if(!db){
+                shipments:
+                    "shipments",
 
 
 
-        this.save(
+                invoices:
+                    "invoices"
 
-            this.defaultSchema
 
-        );
+            };
 
 
+        }
 
-    }
 
 
 
-    return this.load();
+        /*
+        ==============================================
+        
+        Initialize Database
+        
+        ==============================================
+        */
 
 
+        async open() {
 
-}
 
+            if (this.isReady && this.db) {
 
 
+                return this.db;
 
 
+            }
 
 
 
+            return new Promise(
 
-/*
-----------------------------------------------
+                (resolve, reject) => {
 
-Load Database
 
 
-----------------------------------------------
+                    const request =
 
-*/
+                        indexedDB.open(
 
+                            this.databaseName,
 
-load(){
+                            this.version
 
+                        );
 
 
-    let data =
 
 
 
-        localStorage.getItem(
+                    request.onupgradeneeded =
 
-            this.databaseName
+                        event => {
 
-        );
 
 
+                            const db =
 
+                                event.target.result;
 
 
-    if(!data){
 
+                            this.upgradeDatabase(
 
+                                db,
 
-        return null;
+                                event.oldVersion,
 
+                                event.newVersion
 
+                            );
 
-    }
 
 
+                        };
 
 
 
-    return JSON.parse(
 
-        data
 
-    );
+                    request.onsuccess =
 
+                        event => {
 
 
-}
 
+                            this.db =
 
+                                event.target.result;
 
 
 
+                            this.isReady = true;
 
 
 
+                            resolve(this.db);
 
-/*
-----------------------------------------------
 
-Save Database
 
+                        };
 
-----------------------------------------------
 
-*/
 
 
-save(data){
 
+                    request.onerror =
 
+                        event => {
 
-    localStorage.setItem(
 
 
+                            reject(
 
-        this.databaseName,
+                                this.error(
 
+                                    "Database open failed",
 
+                                    event.target.error
 
-        JSON.stringify(
+                                )
 
+                            );
+
+
+
+                        };
+
+
+
+                }
+
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Database Upgrade
+
+        ==============================================
+        */
+
+
+        upgradeDatabase(
+            db,
+            oldVersion,
+            newVersion
+        ) {
+
+
+
+            Object.values(
+
+                this.stores
+
+            ).forEach(
+
+                storeName => {
+
+
+
+                    if (
+
+                        !db.objectStoreNames.contains(
+
+                            storeName
+
+                        )
+
+                    ) {
+
+
+
+                        const store =
+
+                            db.createObjectStore(
+
+                                storeName,
+
+                                {
+
+                                    keyPath:"id"
+
+                                }
+
+                            );
+
+
+
+                        store.createIndex(
+
+                            "createdAt",
+
+                            "createdAt",
+
+                            {
+
+                                unique:false
+
+                            }
+
+                        );
+
+
+
+                    }
+
+
+
+                }
+
+            );
+
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Transaction Helper
+
+        ==============================================
+        */
+
+
+        async transaction(
+            storeNames,
+            mode,
+            callback
+        ) {
+
+
+            const db =
+
+                await this.open();
+
+
+
+            return new Promise(
+
+                (resolve,reject)=> {
+
+
+
+                    const tx =
+
+                        db.transaction(
+
+                            storeNames,
+
+                            mode
+
+                        );
+
+
+
+                    const stores = {};
+
+
+
+                    storeNames.forEach(
+
+                        name => {
+
+
+
+                            stores[name] =
+
+                                tx.objectStore(name);
+
+
+
+                        }
+
+                    );
+
+
+
+                    Promise.resolve(
+
+                        callback(stores)
+
+                    )
+
+                    .then(
+
+                        result => {
+
+
+
+                            tx.oncomplete =
+
+                                ()=>resolve(result);
+
+
+
+                        }
+
+                    )
+
+                    .catch(
+
+                        error => {
+
+
+
+                            tx.abort();
+
+
+
+                            reject(error);
+
+
+
+                        }
+
+                    );
+
+
+
+                    tx.onerror =
+
+                        event => {
+
+
+
+                            reject(
+
+                                event.target.error
+
+                            );
+
+
+                        };
+
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Add
+
+        ==============================================
+        */
+
+
+        async add(
+            storeName,
             data
+        ) {
 
-        )
 
+            return this.transaction(
 
+                [storeName],
 
-    );
+                "readwrite",
 
+                stores => {
 
 
-}
 
+                    stores[storeName].add(data);
 
 
 
+                    return data;
 
 
 
+                }
 
+            );
 
-/*
-----------------------------------------------
 
-Get Collection
+        }
 
 
-Example:
 
 
-db.get("projects")
 
 
-----------------------------------------------
+        /*
+        ==============================================
 
-*/
+        Update
 
+        ==============================================
+        */
 
-get(collection){
 
+        async update(
+            storeName,
+            data
+        ) {
 
 
-    let db =
+            return this.transaction(
 
-        this.load();
+                [storeName],
 
+                "readwrite",
 
+                stores => {
 
 
 
-    if(
+                    stores[storeName].put(data);
 
-        !db[collection]
 
-    ){
 
+                    return data;
 
 
-        return [];
 
+                }
 
+            );
 
-    }
 
+        }
 
 
 
 
-    return db[collection];
 
 
+        /*
+        ==============================================
 
-}
+        Get
 
+        ==============================================
+        */
 
 
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Replace Collection
-
-
-----------------------------------------------
-
-*/
-
-
-set(
-
-    collection,
-
-    data
-
-){
-
-
-
-    let db =
-
-        this.load();
-
-
-
-
-
-    db[collection] =
-
-        data;
-
-
-
-
-
-    this.save(
-
-        db
-
-    );
-
-
-
-    return data;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Insert Record
-
-
-----------------------------------------------
-
-*/
-
-
-insert(
-
-    collection,
-
-    record
-
-){
-
-
-
-    let data =
-
-        this.get(
-
-            collection
-
-        );
-
-
-
-
-
-    data.push(
-
-        record
-
-    );
-
-
-
-
-
-    this.set(
-
-        collection,
-
-        data
-
-    );
-
-
-
-
-
-    return record;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Record
-
-
-----------------------------------------------
-
-*/
-
-
-update(
-
-    collection,
-
-    id,
-
-    record
-
-){
-
-
-
-    let data =
-
-        this.get(
-
-            collection
-
-        );
-
-
-
-
-
-    let index =
-
-        data.findIndex(
-
-
-
-            item =>
-
-            item.id === id
-
-
-
-        );
-
-
-
-
-
-    if(
-
-        index === -1
-
-    ){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    data[index] =
-
-        record;
-
-
-
-
-
-    this.set(
-
-        collection,
-
-        data
-
-    );
-
-
-
-
-
-    return record;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find Record
-
-
-----------------------------------------------
-
-*/
-
-
-findById(
-
-    collection,
-
-    id
-
-){
-
-
-
-    let data =
-
-        this.get(
-
-            collection
-
-        );
-
-
-
-
-
-    return data.find(
-
-
-
-        item =>
-
-        item.id === id
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remove Record
-
-
-注意：
-
-CWPS 不真正刪除資料
-
-
-----------------------------------------------
-
-*/
-
-
-remove(
-
-    collection,
-
-    id
-
-){
-
-
-
-    let record =
-
-        this.findById(
-
-            collection,
-
+        async get(
+            storeName,
             id
-
-        );
-
+        ) {
 
 
+            const db =
 
-
-    if(!record){
+                await this.open();
 
 
 
-        return false;
+            return new Promise(
+
+                (resolve,reject)=> {
+
+
+
+                    const tx =
+
+                        db.transaction(
+
+                            storeName,
+
+                            "readonly"
+
+                        );
+
+
+
+                    const request =
+
+                        tx.objectStore(
+
+                            storeName
+
+                        )
+
+                        .get(id);
+
+
+
+                    request.onsuccess =
+
+                        ()=> {
+
+
+
+                            resolve(
+
+                                request.result || null
+
+                            );
+
+
+
+                        };
+
+
+
+                    request.onerror =
+
+                        event => {
+
+
+
+                            reject(
+
+                                event.target.error
+
+                            );
+
+
+
+                        };
+
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Get All
+
+        ==============================================
+        */
+
+
+        async getAll(
+            storeName
+        ) {
+
+
+            const db =
+
+                await this.open();
+
+
+
+            return new Promise(
+
+                (resolve,reject)=> {
+
+
+
+                    const request =
+
+                        db.transaction(
+
+                            storeName,
+
+                            "readonly"
+
+                        )
+
+                        .objectStore(
+
+                            storeName
+
+                        )
+
+                        .getAll();
+
+
+
+
+                    request.onsuccess =
+
+                        ()=>resolve(
+
+                            request.result
+
+                        );
+
+
+
+                    request.onerror =
+
+                        event=>reject(
+
+                            event.target.error
+
+                        );
+
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Remove
+
+        ==============================================
+        */
+
+
+        async remove(
+            storeName,
+            id
+        ) {
+
+
+            return this.transaction(
+
+                [storeName],
+
+                "readwrite",
+
+                stores=> {
+
+
+
+                    stores[storeName]
+
+                    .delete(id);
+
+
+
+                    return true;
+
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Clear
+
+        ==============================================
+        */
+
+
+        async clear(
+            storeName
+        ) {
+
+
+            return this.transaction(
+
+                [storeName],
+
+                "readwrite",
+
+                stores=> {
+
+
+
+                    stores[storeName]
+
+                    .clear();
+
+
+
+                    return true;
+
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Metadata
+
+        ==============================================
+        */
+
+
+        async saveMeta(data) {
+
+
+            return this.update(
+
+                this.stores.meta,
+
+                {
+
+
+                    id:"database",
+
+
+                    version:this.version,
+
+
+                    updatedAt:
+
+                        new Date()
+
+                        .toISOString(),
+
+
+                    ...data
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        async getMeta() {
+
+
+            return this.get(
+
+                this.stores.meta,
+
+                "database"
+
+            );
+
+
+        }
+
+
+
+
+
+
+        /*
+        ==============================================
+
+        Error Handler
+
+        ==============================================
+        */
+
+
+        error(
+            message,
+            detail
+        ) {
+
+
+            return {
+
+
+                message,
+
+
+                detail,
+
+
+                time:
+
+                    new Date()
+
+                    .toISOString()
+
+
+            };
+
+
+        }
 
 
 
@@ -641,168 +956,10 @@ remove(
 
 
 
+    global.CWPSDatabase =
 
-    record.status =
+        CWPSDatabase;
 
-        "Disabled";
 
 
-
-
-
-    this.update(
-
-        collection,
-
-        id,
-
-        record
-
-    );
-
-
-
-
-
-    return true;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Clear Database
-
-
-僅測試使用
-
-
-----------------------------------------------
-
-*/
-
-
-clear(){
-
-
-
-    localStorage.removeItem(
-
-        this.databaseName
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Export Backup JSON
-
-
-----------------------------------------------
-
-*/
-
-
-backup(){
-
-
-
-    return JSON.stringify(
-
-
-
-        this.load(),
-
-
-
-        null,
-
-        4
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Restore Backup
-
-
-----------------------------------------------
-
-*/
-
-
-restore(json){
-
-
-
-    let data =
-
-
-
-        JSON.parse(
-
-            json
-
-        );
-
-
-
-
-
-    this.save(
-
-        data
-
-    );
-
-
-
-
-
-    return data;
-
-
-
-}
-```
-
-}
-
-window.CWPSDatabase = CWPSDatabase;
+})(window);
