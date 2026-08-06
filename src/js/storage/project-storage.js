@@ -1,518 +1,278 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Project Storage Service
+ Project Storage Service
 
-Sprint:
+ Sprint:
+ 2.1.2
 
-1.4
-
-Build:
-
-0001
-
-Description:
-
-Project persistence management
+ Description:
+ Project Persistence Layer
 
 ==================================================
 */
 
-class ProjectStorage {
 
-```
-constructor(){
+(function (global) {
 
+    "use strict";
 
 
-    this.db =
+    class ProjectStorage {
 
-        new CWPSDatabase();
 
+        constructor() {
 
 
-    this.collection =
+            this.db =
+                new CWPSDatabase();
 
-        "projects";
 
+            this.storeName =
+                "projects";
 
-
-    this.db.init();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Project
-
-
-----------------------------------------------
-
-*/
-
-
-create(data){
-
-
-
-    let project = {
-
-
-
-        id:
-
-            data.id ||
-
-            this.generateId(),
-
-
-
-        projectCode:
-
-            data.projectCode || "",
-
-
-
-        projectName:
-
-            data.projectName || "",
-
-
-
-        customer:
-
-            data.customer || "",
-
-
-
-        batches:
-
-            [],
-
-
-
-        status:
-
-            "Active",
-
-
-
-        remark:
-
-            data.remark || "",
-
-
-
-        createdDate:
-
-            new Date()
-
-            .toISOString(),
-
-
-
-        updatedDate:
-
-            new Date()
-
-            .toISOString()
-
-
-
-    };
-
-
-
-
-
-    return this.db.insert(
-
-
-
-        this.collection,
-
-        project
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Generate ID
-
-
-----------------------------------------------
-
-*/
-
-
-generateId(){
-
-
-
-    return (
-
-        "PRJ-" +
-
-        Date.now()
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get All Projects
-
-
-----------------------------------------------
-
-*/
-
-
-getAll(){
-
-
-
-    return this.db.get(
-
-        this.collection
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Project By ID
-
-
-----------------------------------------------
-
-*/
-
-
-getById(id){
-
-
-
-    return this.db.findById(
-
-
-
-        this.collection,
-
-        id
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Project
-
-
-----------------------------------------------
-
-*/
-
-
-update(
-
-    id,
-
-    changes
-
-){
-
-
-
-    let project =
-
-        this.getById(
-
-            id
-
-        );
-
-
-
-
-
-    if(!project){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    Object.assign(
-
-
-
-        project,
-
-        changes
-
-
-
-    );
-
-
-
-
-
-    project.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-
-
-    return this.db.update(
-
-
-
-        this.collection,
-
-        id,
-
-        project
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Batch Relation
-
-
-----------------------------------------------
-
-*/
-
-
-addBatch(
-
-    projectId,
-
-    batchId
-
-){
-
-
-
-    let project =
-
-        this.getById(
-
-            projectId
-
-        );
-
-
-
-
-
-    if(!project){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    if(
-
-        !project.batches.includes(
-
-            batchId
-
-        )
-
-    ){
-
-
-
-        project.batches.push(
-
-            batchId
-
-        );
-
-
-
-    }
-
-
-
-
-
-    return this.update(
-
-
-
-        projectId,
-
-        {
-
-            batches:
-
-                project.batches
 
         }
 
 
 
-    );
+        /**
+         * 初始化
+         */
+        async init() {
+
+
+            await this.db.open();
+
+
+        }
 
 
 
-}
+        /**
+         * 建立專案
+         */
+        async create(project) {
+
+
+            if (!project) {
+
+
+                throw new Error(
+                    "Project data required"
+                );
+
+
+            }
 
 
 
+            const data =
+
+                project.toJSON
+
+                    ? project.toJSON()
+
+                    : project;
 
 
 
+            return await this.db.add(
+
+                this.storeName,
+
+                data
+
+            );
+
+
+        }
 
 
 
-/*
-----------------------------------------------
-
-Remove Batch Relation
-
-
-不刪除Batch
+        /**
+         * 取得單一專案
+         */
+        async get(projectId) {
 
 
-----------------------------------------------
+            return await this.db.get(
 
-*/
+                this.storeName,
+
+                projectId
+
+            );
 
 
-removeBatch(
-
-    projectId,
-
-    batchId
-
-){
+        }
 
 
 
-    let project =
-
-        this.getById(
-
-            projectId
-
-        );
+        /**
+         * 取得全部專案
+         */
+        async getAll() {
 
 
+            return await this.db.getAll(
+
+                this.storeName
+
+            );
+
+
+        }
 
 
 
-    if(!project){
+        /**
+         * 更新專案
+         */
+        async update(project) {
+
+
+            if (!project) {
+
+
+                throw new Error(
+                    "Project data required"
+                );
+
+
+            }
 
 
 
-        return null;
+            const data =
+
+                project.toJSON
+
+                    ? project.toJSON()
+
+                    : project;
+
+
+
+            return await this.db.update(
+
+                this.storeName,
+
+                data
+
+            );
+
+
+        }
+
+
+
+        /**
+         * 刪除專案
+         */
+        async remove(projectId) {
+
+
+            return await this.db.remove(
+
+                this.storeName,
+
+                projectId
+
+            );
+
+
+        }
+
+
+
+        /**
+         * 檢查專案是否存在
+         */
+        async exists(projectId) {
+
+
+            const project =
+
+                await this.get(projectId);
+
+
+
+            return project !== null;
+
+
+        }
+
+
+
+        /**
+         * 依專案編號查詢
+         */
+        async findByCode(code) {
+
+
+            const projects =
+
+                await this.getAll();
+
+
+
+            return projects.find(
+
+                project =>
+
+                    project.code === code
+
+            ) || null;
+
+
+        }
+
+
+
+        /**
+         * 依狀態查詢
+         */
+        async findByStatus(status) {
+
+
+            const projects =
+
+                await this.getAll();
+
+
+
+            return projects.filter(
+
+                project =>
+
+                    project.status === status
+
+            );
+
+
+        }
+
+
+
+        /**
+         * 清除全部專案
+         *
+         * 測試用
+         */
+        async clearAll() {
+
+
+            return await this.db.clear(
+
+                this.storeName
+
+            );
+
+
+        }
 
 
 
@@ -520,252 +280,9 @@ removeBatch(
 
 
 
+    global.ProjectStorage =
+        ProjectStorage;
 
 
-    project.batches =
 
-
-
-        project.batches.filter(
-
-
-
-            id =>
-
-            id !== batchId
-
-
-
-        );
-
-
-
-
-
-    return this.update(
-
-
-
-        projectId,
-
-        {
-
-            batches:
-
-                project.batches
-
-        }
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Project Batches
-
-
-----------------------------------------------
-
-*/
-
-
-getProjectBatches(
-
-    projectId,
-
-    batchStorage
-
-){
-
-
-
-    let project =
-
-        this.getById(
-
-            projectId
-
-        );
-
-
-
-
-
-    if(!project){
-
-
-
-        return [];
-
-
-
-    }
-
-
-
-
-
-    return project.batches.map(
-
-
-
-        id =>
-
-        batchStorage.getById(
-
-            id
-
-        )
-
-
-
-    )
-
-    .filter(
-
-        item =>
-
-        item
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Disable Project
-
-
-----------------------------------------------
-
-*/
-
-
-disable(id){
-
-
-
-    return this.update(
-
-
-
-        id,
-
-        {
-
-            status:
-
-            "Disabled"
-
-        }
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Search Project
-
-
-----------------------------------------------
-
-*/
-
-
-search(keyword){
-
-
-
-    let projects =
-
-        this.getAll();
-
-
-
-
-
-    keyword =
-
-        keyword.toLowerCase();
-
-
-
-
-
-    return projects.filter(
-
-
-
-        project =>
-
-
-
-        project.projectName
-
-        .toLowerCase()
-
-        .includes(keyword)
-
-
-
-        ||
-
-
-
-        project.projectCode
-
-        .toLowerCase()
-
-        .includes(keyword)
-
-
-
-    );
-
-
-
-}
-```
-
-}
-
-window.ProjectStorage = ProjectStorage;
+})(window);
