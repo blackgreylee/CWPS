@@ -1,300 +1,491 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Supplier Quotation Engine
+ File:
+ src/js/procurement/quotation-engine.js
 
-Sprint:
 
-1.5.2
+ Sprint:
+ 2.3.2
 
-Build:
 
-0001
+ Build:
+ Enterprise Quotation Engine
 
-Description:
 
-Supplier quotation comparison
-and analysis engine
+ Description:
+ Supplier Quotation Management Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class QuotationEngine {
 
-```
-constructor(){
 
 
-
-    this.quotations = [];
-
+    constructor(){
 
 
-}
+        this.storage =
+
+            new QuotationStorage();
 
 
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Quotation
-
-
-----------------------------------------------
-
-*/
-
-
-createQuotation(data){
-
-
-
-    return new QuotationModel(
-
-        data
-
-    );
-
-
-
-}
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(){
+
+
+        if(this.storage.init){
+
+
+            await this.storage.init();
+
+
+        }
+
+
+    }
 
 
 
-/*
-----------------------------------------------
-
-Add Quotation
-
-
-----------------------------------------------
-
-*/
-
-
-addQuotation(
-
-    quotation
-
-){
 
 
 
-    this.quotations.push(
+    /*
+    ==============================================
 
+    Create Quotation
+
+    建立詢價單
+
+    ==============================================
+    */
+
+
+    async create(data){
+
+
+
+        if(!data){
+
+
+            throw new Error(
+
+                "Quotation data required"
+
+            );
+
+
+        }
+
+
+
+
+
+        data.status =
+
+
+            data.status ||
+
+            CWPSTypes.QuotationStatus.DRAFT;
+
+
+
+
+
+        data.createdAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.create(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Generate From Requirement
+
+    Requirement → Quotation
+
+    ==============================================
+    */
+
+
+    async generateFromRequirement(
+        requirement
+    ){
+
+
+
+        if(!requirement){
+
+
+            throw new Error(
+
+                "Requirement required"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            requirementId:
+
+                requirement.id,
+
+
+
+            projectId:
+
+                requirement.projectId,
+
+
+
+            materialCode:
+
+                requirement.materialCode,
+
+
+
+            materialName:
+
+                requirement.materialName,
+
+
+
+            quantity:
+
+                requirement.quantity,
+
+
+
+            unit:
+
+                requirement.unit,
+
+
+
+            status:
+
+                CWPSTypes.QuotationStatus.DRAFT,
+
+
+
+            createdAt:
+
+
+                new Date()
+
+                .toISOString()
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Supplier Quotation
+
+    建立廠商報價
+
+    ==============================================
+    */
+
+
+    async addSupplierQuote(
+        quotationId,
+        supplierQuote
+    ){
+
+
+
+        const quotation =
+
+
+            await this.storage.get(
+
+                quotationId
+
+            );
+
+
+
+
+
+        if(!quotation){
+
+
+            throw new Error(
+
+                "Quotation not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        quotation.quotes =
+
+
+            quotation.quotes || [];
+
+
+
+
+
+        quotation.quotes.push(
+
+
+
+            {
+
+
+                ...supplierQuote,
+
+
+
+                createdAt:
+
+
+                    new Date()
+
+                    .toISOString()
+
+
+
+            }
+
+
+
+        );
+
+
+
+
+
+        quotation.updatedAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.update(
+
+            quotation
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Quotations
+
+    ==============================================
+    */
+
+
+    async getAll(){
+
+
+
+        return await this.storage.getAll();
+
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find By Project
+
+    ==============================================
+    */
+
+
+    async findByProject(
+        projectId
+    ){
+
+
+
+        return await this.storage.findByProject(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find By Requirement
+
+    ==============================================
+    */
+
+
+    async findByRequirement(
+        requirementId
+    ){
+
+
+
+        return await this.storage.findByRequirement(
+
+            requirementId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Compare Supplier Quotes
+
+    比價
+
+    ==============================================
+    */
+
+
+    compareQuotes(
         quotation
-
-    );
-
-
-
-
-
-    return quotation;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Quotations
-
-
-----------------------------------------------
-
-*/
-
-
-getQuotations(){
-
-
-
-    return this.quotations;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Filter By Material
-
-
-----------------------------------------------
-
-*/
-
-
-getByMaterial(
-
-    materialCode
-
-){
-
-
-
-    return this.quotations.filter(
-
-
-
-        item =>
-
-
-
-        item.materialCode === materialCode
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Compare Supplier Quotes
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-compareQuotes(
-
-    materialCode
-
-){
-
-
-
-    let list =
-
-        this.getByMaterial(
-
-            materialCode
-
-        );
-
-
-
-
-
-    return list.sort(
-
-
-
-        (a,b)=>
-
-
-
-        a.unitPrice -
-
-        b.unitPrice
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Lowest Price
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getLowestPrice(
-
-    materialCode
-
-){
-
-
-
-    let list =
-
-        this.compareQuotes(
-
-            materialCode
-
-        );
-
-
-
-
-
-    if(
-
-        list.length === 0
-
     ){
 
 
 
-        return null;
+        if(
 
+            !quotation ||
+
+            !quotation.quotes
+
+        ){
+
+
+            return [];
+
+
+        }
+
+
+
+
+
+        return quotation.quotes.sort(
+
+            (a,b)=>{
+
+
+                return (
+
+                    a.price -
+
+                    b.price
+
+                );
+
+
+            }
+
+        );
 
 
     }
@@ -303,63 +494,87 @@ getLowestPrice(
 
 
 
-    return list[0];
+
+    /*
+    ==============================================
+
+    Select Supplier
+
+    選定廠商
+
+    ==============================================
+    */
 
 
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Average Price
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getAveragePrice(
-
-    materialCode
-
-){
-
-
-
-    let list =
-
-        this.getByMaterial(
-
-            materialCode
-
-        );
-
-
-
-
-
-    if(
-
-        list.length === 0
-
+    async selectSupplier(
+        quotationId,
+        supplierId
     ){
 
 
 
-        return 0;
+        const quotation =
 
+
+            await this.storage.get(
+
+                quotationId
+
+            );
+
+
+
+
+
+        if(!quotation){
+
+
+            throw new Error(
+
+                "Quotation not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        quotation.selectedSupplierId =
+
+            supplierId;
+
+
+
+
+
+        quotation.status =
+
+
+            CWPSTypes.QuotationStatus.APPROVED;
+
+
+
+
+
+        quotation.updatedAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.update(
+
+            quotation
+
+        );
 
 
     }
@@ -368,176 +583,27 @@ getAveragePrice(
 
 
 
-    let total = 0;
 
+    /*
+    ==============================================
 
+    Reject Quotation
 
+    ==============================================
+    */
 
 
-    list.forEach(item=>{
-
-
-
-        total +=
-
-            item.unitPrice;
-
-
-
-    });
-
-
-
-
-
-    return total /
-
-        list.length;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Supplier Ranking
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-rankSuppliers(
-
-    materialCode
-
-){
-
-
-
-    let list =
-
-        this.compareQuotes(
-
-            materialCode
-
-        );
-
-
-
-
-
-    return list.map(
-
-
-
-        (item,index)=>({
-
-
-
-            rank:
-
-                index + 1,
-
-
-
-            supplier:
-
-                item.supplierName,
-
-
-
-            supplierId:
-
-                item.supplierId,
-
-
-
-            unitPrice:
-
-                item.unitPrice,
-
-
-
-            totalAmount:
-
-                item.totalAmount
-
-
-
-        })
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Recommend Supplier
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-recommendSupplier(
-
-    materialCode
-
-){
-
-
-
-    let lowest =
-
-        this.getLowestPrice(
-
-            materialCode
-
-        );
-
-
-
-
-
-    if(
-
-        !lowest
-
+    async reject(
+        quotationId
     ){
 
 
 
-        return null;
+        return await this.storage.reject(
 
+            quotationId
+
+        );
 
 
     }
@@ -546,101 +612,29 @@ recommendSupplier(
 
 
 
-    return {
+
+    /*
+    ==============================================
+
+    Version
+
+    報價版本保存
+
+    ==============================================
+    */
 
 
-
-        supplierId:
-
-            lowest.supplierId,
-
-
-
-        supplierName:
-
-            lowest.supplierName,
-
-
-
-        unitPrice:
-
-            lowest.unitPrice,
-
-
-
-        reason:
-
-            "最低報價"
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Approve Quotation
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-approveQuotation(
-
-    quotationId
-
-){
-
-
-
-    let quotation =
-
-
-
-        this.quotations.find(
-
-
-
-            item =>
-
-
-
-            item.id === quotationId
-
-
-
-        );
-
-
-
-
-
-    if(
-
-        !quotation
-
+    async createVersion(
+        quotation
     ){
 
 
 
-        return null;
+        return await this.storage.createVersion(
 
+            quotation
+
+        );
 
 
     }
@@ -648,17 +642,6 @@ approveQuotation(
 
 
 
-
-    quotation.approve();
-
-
-
-
-
-    return quotation;
-
-
-
 }
 
 
@@ -666,127 +649,10 @@ approveQuotation(
 
 
 
+global.QuotationEngine =
 
+    QuotationEngine;
 
 
-/*
-----------------------------------------------
 
-Price Analysis
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-priceAnalysis(
-
-    materialCode
-
-){
-
-
-
-    let list =
-
-        this.getByMaterial(
-
-            materialCode
-
-        );
-
-
-
-
-
-    if(
-
-        list.length === 0
-
-    ){
-
-
-
-        return null;
-
-
-
-    }
-
-
-
-
-
-    let prices =
-
-
-
-        list.map(
-
-
-
-            item =>
-
-            item.unitPrice
-
-
-
-        );
-
-
-
-
-
-    return {
-
-
-
-        count:
-
-            prices.length,
-
-
-
-        lowest:
-
-            Math.min(
-
-                ...prices
-
-            ),
-
-
-
-        highest:
-
-            Math.max(
-
-                ...prices
-
-            ),
-
-
-
-        average:
-
-            this.getAveragePrice(
-
-                materialCode
-
-            )
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.QuotationEngine = QuotationEngine;
+})(window);
