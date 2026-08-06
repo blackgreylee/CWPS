@@ -1,726 +1,167 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-BOM Node Data Model
+ BOM Node Model
 
-Sprint:
-1.3.2
+ Sprint:
+ 2.0.2
 
-Build:
-0001
+ Description:
+ Enterprise BOM Tree Node
 
 ==================================================
 */
 
-class BOMModel {
+(function (global) {
+    "use strict";
 
-```
-constructor(data = {}) {
+    class BOMNode {
 
+        constructor(data = {}) {
 
+            this.id = data.id || crypto.randomUUID();
 
-    /*
-    Node ID
+            this.parentId = data.parentId || null;
 
-    */
+            this.batchId = data.batchId || null;
 
-    this.id =
+            this.versionId = data.versionId || null;
 
-        data.id ||
+            this.type = data.type || CWPSTypes.NodeType.PART;
 
-        this.generateId();
+            this.code = data.code || "";
 
+            this.name = data.name || "";
 
+            this.quantity = Number(data.quantity || 1);
 
+            this.unit = data.unit || "";
 
+            this.materials = Array.isArray(data.materials)
+                ? data.materials
+                : [];
 
+            this.children = Array.isArray(data.children)
+                ? data.children
+                : [];
 
-    /*
-    Node Code
+            this.attributes = data.attributes || {};
 
+            this.createdAt = data.createdAt || new Date().toISOString();
 
-    Example:
+            this.updatedAt = data.updatedAt || new Date().toISOString();
+        }
 
+        addChild(node) {
 
-    AU001
+            node.parentId = this.id;
 
-    AC001-1
+            this.children.push(node);
 
+            return node;
+        }
 
-    */
+        removeChild(nodeId) {
 
-    this.code =
+            this.children = this.children.filter(n => n.id !== nodeId);
+        }
 
-        data.code ||
+        find(nodeId) {
 
-        "";
+            if (this.id === nodeId) {
 
+                return this;
+            }
 
+            for (const child of this.children) {
 
+                const result = child.find(nodeId);
 
+                if (result) {
 
+                    return result;
+                }
+            }
 
-    /*
-    Node Name
+            return null;
+        }
 
-    */
+        addMaterial(materialUsage) {
 
-    this.name =
+            this.materials.push(materialUsage);
+        }
 
-        data.name ||
+        removeMaterial(materialId) {
 
-        "";
+            this.materials = this.materials.filter(
+                m => m.materialId !== materialId
+            );
+        }
 
+        getTotalChildren() {
 
+            let total = this.children.length;
 
+            this.children.forEach(child => {
 
+                total += child.getTotalChildren();
 
+            });
 
-    /*
-    Node Type
+            return total;
+        }
 
+        traverse(callback) {
 
-    BATCH
+            callback(this);
 
-    AU
+            this.children.forEach(child => {
 
-    AC
+                child.traverse(callback);
 
-    PART
+            });
+        }
 
-    GLASS
+        toJSON() {
 
-    MATERIAL
+            return {
 
+                id: this.id,
 
-    */
+                parentId: this.parentId,
 
-    this.type =
+                batchId: this.batchId,
 
-        data.type ||
+                versionId: this.versionId,
 
-        "PART";
+                type: this.type,
 
+                code: this.code,
 
+                name: this.name,
 
+                quantity: this.quantity,
 
+                unit: this.unit,
 
+                materials: this.materials,
 
-    /*
-    Parent Node ID
+                children: this.children.map(c => c.toJSON()),
 
+                attributes: this.attributes,
 
-    Root = null
+                createdAt: this.createdAt,
 
+                updatedAt: this.updatedAt
 
-    */
-
-    this.parentId =
-
-        data.parentId ||
-
-        null;
-
-
-
-
-
-
-    /*
-    Tree Level
-
-
-    0
-
-    1
-
-    2
-
-
-    */
-
-    this.level =
-
-        data.level ||
-
-        0;
-
-
-
-
-
-
-    /*
-    Children Nodes
-
-    */
-
-
-    this.children =
-
-        data.children ||
-
-        [];
-
-
-
-
-
-
-    /*
-    Quantity
-
-
-    */
-
-    this.quantity =
-
-        data.quantity ||
-
-        0;
-
-
-
-
-
-
-    /*
-    Unit
-
-
-    PCS
-
-    M
-
-    ㎡
-
-    SET
-
-
-    */
-
-    this.unit =
-
-        data.unit ||
-
-        "PCS";
-
-
-
-
-
-
-    /*
-    Material Reference
-
-
-    Link MaterialModel
-
-
-    */
-
-    this.materialId =
-
-        data.materialId ||
-
-        null;
-
-
-
-
-
-
-    /*
-    Remark
-
-    */
-
-    this.remark =
-
-        data.remark ||
-
-        "";
-
-
-
-
-
-
-    /*
-    Status
-
-
-    Active
-
-    Disabled
-
-
-    */
-
-    this.status =
-
-        data.status ||
-
-        "Active";
-
-
-
-
-
-
-    /*
-    Created / Updated
-
-
-    */
-
-    this.createdDate =
-
-        data.createdDate ||
-
-        new Date().toISOString();
-
-
-
-
-    this.updatedDate =
-
-        data.updatedDate ||
-
-        new Date().toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Generate ID
-
-----------------------------------------------
-
-*/
-
-
-generateId(){
-
-
-
-    return (
-
-        "BOM-" +
-
-        Date.now()
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Child Node
-
-
-AU
-
-|
-
-AC
-
-
-----------------------------------------------
-
-*/
-
-
-addChild(node){
-
-
-
-    node.parentId = this.id;
-
-
-
-    node.level =
-
-        this.level + 1;
-
-
-
-
-    this.children.push(node);
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Remove Child
-
-----------------------------------------------
-
-*/
-
-
-removeChild(nodeId){
-
-
-
-    this.children =
-
-        this.children.filter(
-
-
-
-            node =>
-
-            node.id !== nodeId
-
-
-
-        );
-
-
-
-    this.touch();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Find Node
-
-
-Recursive Search
-
-
-----------------------------------------------
-
-*/
-
-
-findNode(nodeId){
-
-
-
-    if(this.id === nodeId){
-
-
-
-        return this;
-
-
-
-    }
-
-
-
-
-    for(
-
-        let child of this.children
-
-    ){
-
-
-
-        let result =
-
-            child.findNode(nodeId);
-
-
-
-        if(result){
-
-
-
-            return result;
-
-
+            };
 
         }
 
-
-
     }
 
+    global.BOMNode = BOMNode;
 
-
-
-
-    return null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Total Quantity
-
-
-Parent Qty
-
-x
-
-Child Qty
-
-
-----------------------------------------------
-
-*/
-
-
-calculateQuantity(parentQty = 1){
-
-
-
-    let result = {
-
-
-
-        code:this.code,
-
-
-        quantity:
-
-            parentQty *
-
-            this.quantity,
-
-
-
-        unit:this.unit
-
-
-
-    };
-
-
-
-    return result;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Timestamp
-
-----------------------------------------------
-
-*/
-
-
-touch(){
-
-
-
-    this.updatedDate =
-
-        new Date().toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:this.id,
-
-
-        code:this.code,
-
-
-        name:this.name,
-
-
-        type:this.type,
-
-
-        parentId:this.parentId,
-
-
-        level:this.level,
-
-
-        children:this.children,
-
-
-        quantity:this.quantity,
-
-
-        unit:this.unit,
-
-
-        materialId:this.materialId,
-
-
-        remark:this.remark,
-
-
-        status:this.status,
-
-
-        createdDate:this.createdDate,
-
-
-        updatedDate:this.updatedDate
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Restore JSON
-
-----------------------------------------------
-
-*/
-
-
-static fromJSON(json){
-
-
-
-    let node =
-
-        new BOMModel(json);
-
-
-
-    node.children =
-
-        (json.children || [])
-
-        .map(
-
-            child =>
-
-            BOMModel.fromJSON(child)
-
-        );
-
-
-
-    return node;
-
-
-
-}
-```
-
-}
-
-window.BOMModel = BOMModel;
+})(window);
