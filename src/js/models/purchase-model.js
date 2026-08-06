@@ -1,770 +1,464 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Purchase Order Model
+ Purchase Model
 
-Sprint:
+ Sprint:
+ 2.0.11
 
-1.5.3
-
-Build:
-
-0001
-
-Description:
-
-Purchase order data model
+ Description:
+ Purchase Order Entity
 
 ==================================================
 */
 
-class PurchaseModel {
+(function (global) {
 
-```
-constructor(data = {}){
+    "use strict";
 
 
+    class Purchase {
 
-    this.id =
 
+        constructor(data = {}) {
 
 
-        data.id ||
+            this.id =
+                data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 專案
+            this.projectId =
+                data.projectId || null;
 
 
 
-    this.quotationId =
+            // 供應商
+            this.supplierId =
+                data.supplierId || null;
 
 
 
-        data.quotationId ||
+            // 採購編號
+            this.code =
+                data.code || "";
 
-        "";
 
 
+            // 關聯需求
+            this.requirementIds =
 
+                Array.isArray(data.requirementIds)
 
+                    ? data.requirementIds
 
-    this.projectId =
+                    : [];
 
 
 
-        data.projectId ||
+            // 關聯報價
+            this.quotationId =
+                data.quotationId || null;
 
-        "";
 
 
+            // 採購日期
+            this.purchaseDate =
 
+                data.purchaseDate ||
 
+                new Date().toISOString();
 
-    this.batchId =
 
 
+            // 預計交期
+            this.expectedDeliveryDate =
 
-        data.batchId ||
+                data.expectedDeliveryDate || null;
 
-        "";
 
 
+            // 狀態
+            this.status =
 
+                data.status ||
 
+                CWPSTypes.PurchaseStatus.DRAFT;
 
-    this.supplierId =
 
 
+            // 明細
+            this.items = [];
 
-        data.supplierId ||
 
-        "";
 
+            if (Array.isArray(data.items)) {
 
 
+                this.items =
 
+                    data.items.map(item => ({
 
-    this.supplierName =
 
+                        materialId:
+                            item.materialId || null,
 
 
-        data.supplierName ||
+                        materialName:
+                            item.materialName || "",
 
-        "";
 
+                        specification:
+                            item.specification || "",
 
 
+                        quantity:
+                            Number(item.quantity ?? 0),
 
 
-    this.items =
+                        unit:
+                            item.unit || "",
 
 
+                        unitPrice:
+                            Number(item.unitPrice ?? 0),
 
-        data.items ||
 
-        [];
+                        amount:
+                            Number(item.amount ?? 0),
 
 
+                        receivedQuantity:
+                            Number(
+                                item.receivedQuantity ?? 0
+                            ),
 
 
+                        remark:
+                            item.remark || ""
 
-    this.totalAmount =
 
+                    }));
 
 
-        this.calculateTotal();
+            }
 
 
 
+            // 總金額
+            this.totalAmount =
 
+                Number(data.totalAmount ?? 0);
 
-    this.currency =
 
 
+            // 備註
+            this.remark =
+                data.remark || "";
 
-        data.currency ||
 
-        "TWD";
 
+            this.createdAt =
 
+                data.createdAt ||
 
+                new Date().toISOString();
 
 
-    this.expectedDate =
 
+            this.updatedAt =
 
+                data.updatedAt ||
 
-        data.expectedDate ||
+                new Date().toISOString();
 
-        "";
 
+        }
 
 
 
+        /**
+         * 新增採購項目
+         */
+        addItem(item) {
 
-    this.status =
 
+            const purchaseItem = {
 
 
-        data.status ||
+                materialId:
+                    item.materialId || null,
 
-        "Draft";
 
+                materialName:
+                    item.materialName || "",
 
 
+                specification:
+                    item.specification || "",
 
 
-    this.remark =
+                quantity:
+                    Number(item.quantity ?? 0),
 
 
+                unit:
+                    item.unit || "",
 
-        data.remark ||
 
-        "";
+                unitPrice:
+                    Number(item.unitPrice ?? 0),
 
 
+                amount:
 
+                    Number(item.quantity ?? 0) *
 
+                    Number(item.unitPrice ?? 0),
 
-    this.createdDate =
 
+                receivedQuantity:
+                    0,
 
 
-        data.createdDate ||
+                remark:
+                    item.remark || ""
 
-        new Date()
 
-        .toISOString();
+            };
 
 
+            this.items.push(purchaseItem);
 
 
+            this.calculateTotal();
 
-    this.updatedDate =
 
+            this.touch();
 
 
-        new Date()
+        }
 
-        .toISOString();
 
 
+        /**
+         * 計算採購金額
+         */
+        calculateTotal() {
 
-}
 
+            this.totalAmount =
 
+                this.items.reduce(
 
+                    (sum, item) =>
 
+                        sum + item.amount,
 
 
+                    0
 
+                );
 
 
-/*
-----------------------------------------------
+            return this.totalAmount;
 
-Generate ID
 
+        }
 
-----------------------------------------------
 
-*/
 
+        /**
+         * 更新收貨數量
+         */
+        updateReceivedQuantity(
+            materialId,
+            quantity
+        ) {
 
-generateId(){
 
+            const item =
 
+                this.items.find(
 
-    return (
+                    item =>
 
-        "PO-" +
+                        item.materialId === materialId
 
-        Date.now()
+                );
 
-    );
 
 
+            if (item) {
 
-}
 
+                item.receivedQuantity =
 
+                    Number(quantity);
 
 
+            }
 
 
 
+            this.touch();
 
 
-/*
-----------------------------------------------
+        }
 
-Add Purchase Item
 
 
-----------------------------------------------
+        /**
+         * 發出採購
+         */
+        issue() {
 
-*/
 
+            this.status =
 
-addItem(item){
+                CWPSTypes.PurchaseStatus.ISSUED;
 
 
+            this.touch();
 
-    let purchaseItem = {
 
+        }
 
 
-        materialCode:
 
-            item.materialCode || "",
+        /**
+         * 完成採購
+         */
+        complete() {
 
 
+            this.status =
 
-        materialName:
+                CWPSTypes.PurchaseStatus.COMPLETED;
 
-            item.materialName || "",
 
+            this.touch();
 
 
-        quantity:
+        }
 
-            Number(
 
-                item.quantity
 
-            ) || 0,
+        /**
+         * 取消
+         */
+        cancel() {
 
 
+            this.status =
 
-        unit:
+                CWPSTypes.PurchaseStatus.CANCELLED;
 
-            item.unit || "PCS",
 
+            this.touch();
 
 
-        unitPrice:
+        }
 
-            Number(
 
-                item.unitPrice
 
-            ) || 0,
+        /**
+         * 更新時間
+         */
+        touch() {
 
 
+            this.updatedAt =
 
-        amount:
+                new Date().toISOString();
 
-            Number(
 
-                item.quantity
+        }
 
-            )
 
-            *
 
-            Number(
+        /**
+         * JSON
+         */
+        toJSON() {
 
-                item.unitPrice
 
-            )
+            return {
 
 
+                id:
+                    this.id,
 
-    };
 
+                projectId:
+                    this.projectId,
 
 
+                supplierId:
+                    this.supplierId,
 
 
-    this.items.push(
+                code:
+                    this.code,
 
-        purchaseItem
 
-    );
+                requirementIds:
+                    this.requirementIds,
 
 
+                quotationId:
+                    this.quotationId,
 
 
+                purchaseDate:
+                    this.purchaseDate,
 
-    this.calculateTotal();
 
+                expectedDeliveryDate:
+                    this.expectedDeliveryDate,
 
 
-}
+                status:
+                    this.status,
 
 
+                items:
+                    this.items,
 
 
+                totalAmount:
+                    this.totalAmount,
 
 
+                remark:
+                    this.remark,
 
 
+                createdAt:
+                    this.createdAt,
 
-/*
-----------------------------------------------
 
-Calculate Total Amount
+                updatedAt:
+                    this.updatedAt
 
 
-----------------------------------------------
 
-*/
+            };
 
 
-calculateTotal(){
+        }
 
 
 
-    let total = 0;
+    }
 
 
 
+    global.Purchase = Purchase;
 
 
-    this.items.forEach(item=>{
 
-
-
-        total +=
-
-
-
-            Number(
-
-                item.amount
-
-            )
-
-            || 0;
-
-
-
-    });
-
-
-
-
-
-    this.totalAmount = total;
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Submit Purchase
-
-
-----------------------------------------------
-
-*/
-
-
-submit(){
-
-
-
-    this.status =
-
-        "Submitted";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Confirm Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-confirm(){
-
-
-
-    this.status =
-
-        "Confirmed";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Start Processing
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-processing(){
-
-
-
-    this.status =
-
-        "Processing";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Complete Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-complete(){
-
-
-
-    this.status =
-
-        "Completed";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Cancel Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-cancel(){
-
-
-
-    this.status =
-
-        "Cancelled";
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Delivery Date
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-updateDeliveryDate(date){
-
-
-
-    this.expectedDate = date;
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        quotationId:
-
-            this.quotationId,
-
-
-
-        projectId:
-
-            this.projectId,
-
-
-
-        batchId:
-
-            this.batchId,
-
-
-
-        supplierId:
-
-            this.supplierId,
-
-
-
-        supplierName:
-
-            this.supplierName,
-
-
-
-        items:
-
-            this.items,
-
-
-
-        totalAmount:
-
-            this.totalAmount,
-
-
-
-        currency:
-
-            this.currency,
-
-
-
-        expectedDate:
-
-            this.expectedDate,
-
-
-
-        status:
-
-            this.status
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.PurchaseModel = PurchaseModel;
+})(window);
