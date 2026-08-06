@@ -1,0 +1,416 @@
+{
+"templateName": "CWPS BOM Import Template",
+
+```
+"version": "1.0",
+
+
+"description": "Curtain Wall Procurement System BOM Excel Import Definition",
+
+
+
+"sheet": {
+
+    "defaultSheetName": "BOM",
+
+    "headerRow": 1,
+
+    "dataStartRow": 2
+
+},
+
+
+
+"columns": {
+
+
+    "code": {
+
+
+        "required": true,
+
+
+        "standardName": "圖號",
+
+
+        "aliases": [
+
+            "圖號",
+
+            "編號",
+
+            "料號",
+
+            "Item",
+
+            "Code"
+
+        ]
+
+    },
+
+
+
+    "name": {
+
+
+        "required": true,
+
+
+        "standardName": "名稱",
+
+
+        "aliases": [
+
+            "名稱",
+
+            "品名",
+
+            "描述",
+
+            "Description",
+
+            "Name"
+
+        ]
+
+    },
+
+
+
+    "type": {
+
+
+        "required": false,
+
+
+        "standardName": "類型",
+
+
+        "aliases": [
+
+            "類型",
+
+            "Type"
+
+        ],
+
+
+        "autoDetect": true
+
+    },
+
+
+
+    "quantity": {
+
+
+        "required": true,
+
+
+        "standardName": "數量",
+
+
+        "aliases": [
+
+            "數量",
+
+            "Qty",
+
+            "Quantity"
+
+        ]
+
+    },
+
+
+
+    "unit": {
+
+
+        "required": false,
+
+
+        "standardName": "單位",
+
+
+        "aliases": [
+
+            "單位",
+
+            "Unit"
+
+        ],
+
+
+        "default": "PCS"
+
+    },
+
+
+
+    "material": {
+
+
+        "required": false,
+
+
+        "standardName": "材料",
+
+
+        "aliases": [
+
+            "材料",
+
+            "材質",
+
+            "Material"
+
+        ]
+
+    },
+
+
+
+    "dimension": {
+
+
+        "required": false,
+
+
+        "standardName": "尺寸",
+
+
+        "aliases": [
+
+            "尺寸",
+
+            "規格",
+
+            "Dimension"
+
+        ]
+
+    },
+
+
+
+    "surfaceTreatment": {
+
+
+        "required": false,
+
+
+        "standardName": "表面處理",
+
+
+        "aliases": [
+
+            "表面處理",
+
+            "Surface"
+
+        ]
+
+    },
+
+
+
+    "remark": {
+
+
+        "required": false,
+
+
+        "standardName": "備註",
+
+
+        "aliases": [
+
+            "備註",
+
+            "Remark"
+
+        ]
+
+    }
+
+
+},
+
+
+
+"bomRules": {
+
+
+
+    "nodeTypes": {
+
+
+
+        "AU": {
+
+
+            "prefix": [
+
+                "AU"
+
+            ],
+
+
+            "description": "組合圖"
+
+        },
+
+
+
+        "AC": {
+
+
+            "prefix": [
+
+                "AC"
+
+            ],
+
+
+            "description": "小組合圖"
+
+        },
+
+
+
+        "GLASS": {
+
+
+            "prefix": [
+
+                "GL"
+
+            ],
+
+
+            "description": "玻璃"
+
+        },
+
+
+
+        "PART": {
+
+
+            "prefix": [],
+
+
+            "description": "加工件"
+
+        }
+
+
+    },
+
+
+
+
+    "parentRules": {
+
+
+
+        "childPattern": {
+
+
+            "enabled": true,
+
+
+            "separator": "-",
+
+
+            "example": {
+
+
+                "child": "AC001-1",
+
+
+                "parent": "AC001"
+
+            }
+
+        }
+
+
+
+    }
+
+
+
+},
+
+
+
+"validation": {
+
+
+
+    "requiredFields": [
+
+        "code",
+
+        "name",
+
+        "quantity"
+
+    ],
+
+
+
+    "quantity": {
+
+
+        "min": 0
+
+    },
+
+
+
+    "duplicateCode": {
+
+
+        "allow": false
+
+    },
+
+
+
+    "missingParent": {
+
+
+        "allow": false
+
+    }
+
+
+
+},
+
+
+
+"versionControl": {
+
+
+
+    "enable": true,
+
+
+    "keepHistory": true,
+
+
+    "overwriteRequireConfirm": true,
+
+
+    "deleteAllowed": false
+
+
+}
+```
+
+}
