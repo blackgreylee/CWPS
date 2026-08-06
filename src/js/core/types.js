@@ -3,13 +3,21 @@
 
  CWPS Enterprise
 
- Core Types
+ File:
+ src/js/core/types.js
+
 
  Sprint:
  2.0.1
 
+
+ Build:
+ Enterprise Core Definition Layer
+
+
  Description:
- Global type definitions for the entire CWPS system.
+ Global Enumeration & Constant Definitions
+
 
 ==================================================
 */
