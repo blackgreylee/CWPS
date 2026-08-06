@@ -1,170 +1,79 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Procurement Controller
+ File:
+ src/js/controllers/procurement-controller.js
 
-Sprint:
 
-1.7.5
+ Sprint:
+ 2.6.2
 
-Build:
 
-0001
+ Build:
+ Enterprise Procurement Controller Layer
 
-Description:
 
-Procurement workflow controller
+ Description:
+ Procurement Workflow Controller
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class ProcurementController {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.service = null;
 
+        this.requirementEngine =
 
+            new RequirementEngine();
 
 
 
-    this.engines = {};
+        this.quotationEngine =
 
+            new QuotationEngine();
 
 
 
+        this.purchaseEngine =
 
-    this.currentProject = null;
+            new PurchaseEngine();
 
 
 
-}
+        this.shipmentEngine =
 
+            new ShipmentEngine();
 
 
 
+        this.invoiceEngine =
 
+            new InvoiceEngine();
 
 
 
+        this.analysis =
 
-/*
-----------------------------------------------
+            new ProcurementAnalysis();
 
-Initialize
 
 
-----------------------------------------------
-
-*/
-
-
-init(
-
-    service,
-
-    engines
-
-){
-
-
-
-    this.service =
-
-        service;
-
-
-
-
-
-    this.engines =
-
-        engines;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Set Project
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-setProject(
-
-    project
-
-){
-
-
-
-    this.currentProject =
-
-        project;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Requirement
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createRequirement(
-
-    data
-
-){
-
-
-
-    if(
-
-        !this.service
-
-    ){
-
-
-
-        return null;
-
+        this.view = null;
 
 
     }
@@ -174,464 +83,394 @@ createRequirement(
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    async init(view){
 
 
 
-    data.projectId =
+        this.view = view;
 
 
 
-        this.currentProject.id;
+        await this.requirementEngine.init();
+
+
+        await this.quotationEngine.init();
+
+
+        await this.purchaseEngine.init();
+
+
+        await this.shipmentEngine.init();
+
+
+        await this.invoiceEngine.init();
+
+
+        await this.analysis.init();
+
+
+
+        await this.load();
+
+
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Load Procurement Dashboard
+
+    ==============================================
+    */
+
+
+    async load(){
 
 
 
-    return this.service
+        const data = {
 
-        .createRequirement(
+
+            requirements:
+
+
+                await this.requirementEngine.getAll(),
+
+
+
+            quotations:
+
+
+                await this.quotationEngine.getAll(),
+
+
+
+            purchases:
+
+
+                await this.purchaseEngine.getAll(),
+
+
+
+            shipments:
+
+
+                await this.shipmentEngine.getAll(),
+
+
+
+            invoices:
+
+
+                await this.invoiceEngine.getAll()
+
+
+
+        };
+
+
+
+
+
+        if(
+
+            this.view &&
+
+            this.view.render
+
+        ){
+
+
+            this.view.render(
+
+                data
+
+            );
+
+
+        }
+
+
+
+
+
+        return data;
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Requirement
+
+    採購需求
+
+    ==============================================
+    */
+
+
+    async createRequirement(
+        data
+    ){
+
+
+
+        const result =
+
+
+            await this.requirementEngine.create(
+
+                data
+
+            );
+
+
+
+
+
+        await this.load();
+
+
+
+
+
+        return result;
+
+
+    }
+
+
+
+
+
+
+    async getRequirements(
+        projectId
+    ){
+
+
+
+        return await this.requirementEngine.findByProject(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Quotation
+
+    詢價
+
+    ==============================================
+    */
+
+
+    async createQuotation(
+        data
+    ){
+
+
+
+        const result =
+
+
+            await this.quotationEngine.create(
+
+                data
+
+            );
+
+
+
+
+
+        await this.load();
+
+
+
+
+
+        return result;
+
+
+    }
+
+
+
+
+
+
+    async submitQuotation(
+        quotationId
+    ){
+
+
+
+        return await this.quotationEngine.submit(
+
+            quotationId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Purchase
+
+    採購單
+
+    ==============================================
+    */
+
+
+    async createPurchase(
+        data
+    ){
+
+
+
+        const result =
+
+
+            await this.purchaseEngine.create(
+
+                data
+
+            );
+
+
+
+
+
+        await this.load();
+
+
+
+
+
+        return result;
+
+
+    }
+
+
+
+
+
+
+    async approvePurchase(
+        purchaseId
+    ){
+
+
+
+        return await this.purchaseEngine.approve(
+
+            purchaseId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Shipment
+
+    出貨
+
+    ==============================================
+    */
+
+
+    async createShipmentFromPurchase(
+        purchase
+    ){
+
+
+
+        const data =
+
+
+            await this.shipmentEngine.generateFromPurchase(
+
+                purchase
+
+            );
+
+
+
+
+
+        return await this.shipmentEngine.create(
 
             data
 
         );
 
 
+    }
 
-}
 
 
 
 
 
-
-
-
-
-/*
-----------------------------------------------
-
-Create Quotation
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createQuotation(
-
-    requirement
-
-){
-
-
-
-    return this.service
-
-        .createQuotation(
-
-
-
-            requirement,
-
-
-
-            this.engines.quotation
-
-
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Approve Quotation
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-approveQuotation(
-
-    quotation
-
-){
-
-
-
-    return this.service
-
-        .approveQuotation(
-
-
-
-            quotation,
-
-
-
-            this.engines.quotation
-
-
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Purchase Order
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createPurchase(
-
-    quotation
-
-){
-
-
-
-    return this.service
-
-        .createPurchase(
-
-
-
-            quotation,
-
-
-
-            this.engines.purchase
-
-
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Shipment
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createShipment(
-
-    purchase
-
-){
-
-
-
-    return this.service
-
-        .createShipment(
-
-
-
-            purchase,
-
-
-
-            this.engines.shipment
-
-
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Create Invoice
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-createInvoice(
-
-    purchase,
-
-    shipment
-
-){
-
-
-
-    return this.service
-
-        .createInvoice(
-
-
-
-            purchase,
-
-            shipment,
-
-
-
-            this.engines.invoice
-
-
-
-        );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Complete Procurement Flow
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-executeFullProcess(
-
-    requirementData
-
-){
-
-
-
-    let requirement =
-
-
-
-        this.createRequirement(
-
-            requirementData
-
-        );
-
-
-
-
-
-    let quotation =
-
-
-
-        this.createQuotation(
-
-            requirement
-
-        );
-
-
-
-
-
-    let purchase =
-
-
-
-        this.createPurchase(
-
-            quotation
-
-        );
-
-
-
-
-
-    let shipment =
-
-
-
-        this.createShipment(
-
-            purchase
-
-        );
-
-
-
-
-
-    let invoice =
-
-
-
-        this.createInvoice(
-
-            purchase,
-
-            shipment
-
-        );
-
-
-
-
-
-
-
-
-
-    return {
-
-
-
-        requirement:
-
-            requirement,
-
-
-
-        quotation:
-
-            quotation,
-
-
-
-        purchase:
-
-            purchase,
-
-
-
-        shipment:
-
-            shipment,
-
-
-
-        invoice:
-
-            invoice
-
-
-
-    };
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Project Procurement Status
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getStatus(){
-
-
-
-    if(
-
-        !this.currentProject
-
+    async receiveShipment(
+        shipmentId
     ){
 
 
 
-        return null;
+        return await this.shipmentEngine.receive(
 
+            shipmentId
+
+        );
 
 
     }
@@ -641,22 +480,151 @@ getStatus(){
 
 
 
+    /*
+    ==============================================
+
+    Invoice
+
+    請款
+
+    ==============================================
+    */
+
+
+    async createInvoiceFromShipment(
+        shipment
+    ){
 
 
 
-    return this.service
-
-        .getProjectStatus(
+        const data =
 
 
+            await this.invoiceEngine.generateFromShipment(
 
-            this.currentProject.id
+                shipment
+
+            );
 
 
+
+
+
+        return await this.invoiceEngine.create(
+
+            data
 
         );
 
 
+    }
+
+
+
+
+
+
+    async approveInvoice(
+        invoiceId
+    ){
+
+
+
+        return await this.invoiceEngine.approve(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    async payInvoice(
+        invoiceId
+    ){
+
+
+
+        return await this.invoiceEngine.pay(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Project Summary
+
+    專案採購分析
+
+    ==============================================
+    */
+
+
+    async projectSummary(
+        projectId
+    ){
+
+
+
+        return await this.analysis.projectSummary(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Procurement Cost
+
+    採購成本
+
+    ==============================================
+    */
+
+
+    async calculateCost(
+        purchases
+    ){
+
+
+
+        return this.analysis.calculatePurchaseAmount(
+
+            purchases
+
+        );
+
+
+    }
+
+
+
+
+
 
 }
 
@@ -665,47 +633,10 @@ getStatus(){
 
 
 
+global.ProcurementController =
+
+    ProcurementController;
 
 
 
-/*
-----------------------------------------------
-
-Validate Process
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-validate(){
-
-
-
-    return this.engines
-
-        .validation
-
-        ?
-
-
-
-        this.engines.validation.result()
-
-
-
-        :
-
-        null;
-
-
-
-}
-```
-
-}
-
-window.ProcurementController = ProcurementController;
+})(window);
