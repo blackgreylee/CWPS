@@ -1,208 +1,256 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-UI Manager
+ File:
+ src/js/views/ui-manager.js
 
-Sprint:
 
-1.8.6
+ Sprint:
+ 2.7.6
 
-Build:
 
-0001
+ Build:
+ Enterprise UI Manager Layer
 
-Description:
 
-Frontend view lifecycle manager
+ Description:
+ View Lifecycle Manager
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class UIManager {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.views = {};
 
+        this.views = {};
 
 
+        this.currentView = null;
 
 
-    this.controllers = {};
+        this.containerId = "app";
 
 
+    }
 
 
 
-    this.currentView =
 
-        null;
 
 
+    /*
+    ==============================================
 
+    Initialize
 
+    ==============================================
+    */
 
-    this.currentPage =
 
-        null;
+    init(
+        containerId = "app"
+    ){
 
 
 
-}
+        this.containerId = containerId;
 
 
 
+    }
 
 
 
 
 
 
-/*
-----------------------------------------------
+    /*
+    ==============================================
 
-Register View
+    Register View
 
+    ==============================================
+    */
 
-----------------------------------------------
 
-*/
+    register(
+        name,
+        view
+    ){
 
 
-register(
 
-    name,
+        if(!name || !view){
 
-    view
 
-){
+            throw new Error(
 
+                "Invalid View"
 
+            );
 
-    this.views[name] =
 
-        view;
+        }
 
 
 
-}
 
 
+        this.views[name] = view;
 
 
+    }
 
 
 
 
 
-/*
-----------------------------------------------
 
-Register Controller
+    /*
+    ==============================================
 
+    Open View
 
-----------------------------------------------
+    ==============================================
+    */
 
-*/
 
+    async open(
+        name,
+        data = null
+    ){
 
-registerController(
 
-    name,
 
-    controller
+        const view =
 
-){
 
+            this.views[name];
 
 
-    this.controllers[name] =
 
-        controller;
 
 
+        if(!view){
 
-}
 
+            console.error(
 
+                "View not found:",
 
+                name
 
+            );
 
 
+            return;
 
 
+        }
 
-/*
-----------------------------------------------
 
-Initialize
 
 
-----------------------------------------------
 
-*/
+        this.showLoading();
 
 
-init(){
 
 
 
-    this.bindEvents();
+        try{
 
 
+            this.currentView = view;
 
-    console.log(
 
-        "UI Manager Ready"
 
-    );
 
 
+            if(
 
-}
+                view.init &&
 
+                !view.initialized
 
+            ){
 
 
+                view.init(
 
+                    view.controller,
 
+                    this.containerId
 
+                );
 
 
-/*
-----------------------------------------------
+                view.initialized = true;
 
-Page Event Listener
 
+            }
 
-----------------------------------------------
 
-*/
 
 
-bindEvents(){
 
 
 
-    document.addEventListener(
+            if(view.render){
 
 
 
-        "cwps-page-loaded",
+                if(data){
 
 
+                    view.render(
 
-        (event)=>{
+                        data
 
+                    );
 
 
-            this.loadPage(
+                }
 
-                event.detail.page
+                else if(view.load){
+
+
+                    await view.load();
+
+
+                }
+
+
+            }
+
+
+
+
+
+        }
+
+        catch(error){
+
+
+
+            this.showError(
+
+                error
 
             );
 
@@ -210,82 +258,300 @@ bindEvents(){
 
         }
 
+        finally{
 
 
-    );
+            this.hideLoading();
 
 
-
-}
-
+        }
 
 
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load View By Page
-
-
-----------------------------------------------
-
-*/
-
-
-loadPage(
-
-    page
-
-){
-
-
-
-    this.currentPage =
-
-        page;
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Refresh Current View
+
+    ==============================================
+    */
+
+
+    async refresh(){
 
 
 
-    let view =
+        if(
+
+            this.currentView &&
+
+            this.currentView.refresh
+
+        ){
+
+
+            await this.currentView.refresh();
+
+
+        }
+
+
+    }
 
 
 
-        this.views[page];
+
+
+
+    /*
+    ==============================================
+
+    Container Clear
+
+    ==============================================
+    */
+
+
+    clear(){
+
+
+
+        const container =
+
+
+            document.getElementById(
+
+                this.containerId
+
+            );
+
+
+
+
+
+        if(container){
+
+
+            container.innerHTML = "";
+
+
+        }
+
+
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Loading
+
+    ==============================================
+    */
+
+
+    showLoading(){
 
 
 
-    if(!view){
+        const container =
+
+
+            document.getElementById(
+
+                this.containerId
+
+            );
 
 
 
-        console.warn(
 
-            "View Missing:",
 
-            page
+        if(!container){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        const loading =
+
+
+            document.createElement(
+
+                "div"
+
+            );
+
+
+
+
+
+        loading.id =
+
+            "cwps-loading";
+
+
+
+
+
+        loading.innerHTML =
+
+
+            "Loading...";
+
+
+
+
+
+        container.appendChild(
+
+            loading
+
+        );
+
+
+    }
+
+
+
+
+
+
+    hideLoading(){
+
+
+
+        const loading =
+
+
+            document.getElementById(
+
+                "cwps-loading"
+
+            );
+
+
+
+
+
+        if(loading){
+
+
+            loading.remove();
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Error Display
+
+    ==============================================
+    */
+
+
+    showError(
+        error
+    ){
+
+
+
+        console.error(
+
+            error
 
         );
 
 
 
-        return;
+
+
+        const container =
+
+
+            document.getElementById(
+
+                this.containerId
+
+            );
+
+
+
+
+
+        if(container){
+
+
+            container.innerHTML = `
+
+
+            <div class="error-message">
+
+
+                ${
+
+                    error.message ||
+
+                    error
+
+                }
+
+
+            </div>
+
+
+            `;
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Current View
+
+    ==============================================
+    */
+
+
+    getCurrent(){
+
+
+
+        return this.currentView;
 
 
 
@@ -296,53 +562,6 @@ loadPage(
 
 
 
-
-
-
-    this.currentView =
-
-        view;
-
-
-
-
-
-
-
-
-
-    if(
-
-        view.load
-
-    ){
-
-
-
-        view.load();
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    console.log(
-
-        "View Loaded:",
-
-        page
-
-    );
-
-
-
 }
 
 
@@ -350,194 +569,10 @@ loadPage(
 
 
 
+global.UIManager =
 
+    UIManager;
 
 
-/*
-----------------------------------------------
 
-Initialize View
-
-
-----------------------------------------------
-
-*/
-
-
-initView(
-
-    name,
-
-    service
-
-){
-
-
-
-    let view =
-
-
-
-        this.views[name];
-
-
-
-
-
-
-
-
-
-    if(
-
-        !view
-
-    ){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    if(
-
-        view.init
-
-    ){
-
-
-
-        view.init(
-
-            service
-
-        );
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Refresh Current View
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    if(
-
-        this.currentView
-
-        &&
-
-        this.currentView.refresh
-
-    ){
-
-
-
-        this.currentView.refresh();
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Current View
-
-
-----------------------------------------------
-
-*/
-
-
-getCurrent(){
-
-
-
-    return this.currentView;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Destroy View
-
-
-----------------------------------------------
-
-*/
-
-
-destroy(){
-
-
-
-    this.currentView =
-
-        null;
-
-
-
-}
-```
-
-}
-
-window.UIManager = UIManager;
+})(window);
