@@ -1,75 +1,200 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Shipment Tracking Engine
+ File:
+ src/js/procurement/shipment-engine.js
 
-Sprint:
 
-1.5.4
+ Sprint:
+ 2.3.4
 
-Build:
 
-0001
+ Build:
+ Enterprise Shipment Engine
 
-Description:
 
-Shipment workflow and delivery tracking engine
+ Description:
+ Shipment Tracking Management Engine
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class ShipmentEngine {
 
-```
-constructor(){
 
 
-
-    this.shipments = [];
-
+    constructor(){
 
 
-}
+        this.storage =
+
+            new ShipmentStorage();
 
 
-
-
+    }
 
 
 
 
 
-/*
-----------------------------------------------
 
-Create Shipment From Purchase Order
+    /*
+    ==============================================
 
+    Initialize
 
-----------------------------------------------
-
-*/
-
-
-createShipment(
-
-    purchase
-
-){
+    ==============================================
+    */
 
 
-
-    let shipment =
-
+    async init(){
 
 
-        new ShipmentModel({
+        if(this.storage.init){
 
+
+            await this.storage.init();
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Shipment
+
+    建立出貨資料
+
+    ==============================================
+    */
+
+
+    async create(data){
+
+
+
+        if(!data){
+
+
+            throw new Error(
+
+                "Shipment data required"
+
+            );
+
+
+        }
+
+
+
+
+
+        data.status =
+
+
+            data.status ||
+
+            CWPSTypes.ShipmentStatus.PENDING;
+
+
+
+
+
+        data.createdAt =
+
+
+            new Date()
+
+            .toISOString();
+
+
+
+
+
+        return await this.storage.create(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Generate From Purchase
+
+    Purchase → Shipment
+
+    ==============================================
+    */
+
+
+    async generateFromPurchase(
+        purchase
+    ){
+
+
+
+        if(!purchase){
+
+
+            throw new Error(
+
+                "Purchase required"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
 
 
             purchaseId:
 
                 purchase.id,
+
+
+
+            quotationId:
+
+                purchase.quotationId,
+
+
+
+            requirementId:
+
+                purchase.requirementId,
 
 
 
@@ -79,304 +204,148 @@ createShipment(
 
 
 
-            batchId:
-
-                purchase.batchId,
-
-
-
             supplierId:
 
                 purchase.supplierId,
 
 
 
-            supplierName:
+            items:
 
-                purchase.supplierName
+                purchase.items || [],
 
 
 
-        });
+            status:
 
+                CWPSTypes.ShipmentStatus.PENDING,
 
 
 
+            createdAt:
 
 
+                new Date()
 
-    purchase.items.forEach(item=>{
+                .toISOString()
 
 
 
-        shipment.addItem({
+        };
 
 
+    }
 
-            materialCode:
 
-                item.materialCode,
 
 
 
-            materialName:
 
-                item.materialName,
+    /*
+    ==============================================
 
+    Start Shipment
 
+    出貨
 
-            quantity:
+    ==============================================
+    */
 
-                item.quantity,
 
+    async start(
+        shipmentId
+    ){
 
 
-            unit:
 
-                item.unit
-
-
-
-        });
-
-
-
-    });
-
-
-
-
-
-    this.shipments.push(
-
-        shipment
-
-    );
-
-
-
-
-
-    return shipment;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Add Shipment
-
-
-----------------------------------------------
-
-*/
-
-
-addShipment(
-
-    shipment
-
-){
-
-
-
-    this.shipments.push(
-
-        shipment
-
-    );
-
-
-
-
-
-    return shipment;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get All Shipments
-
-
-----------------------------------------------
-
-*/
-
-
-getAll(){
-
-
-
-    return this.shipments;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Shipment By ID
-
-
-----------------------------------------------
-
-*/
-
-
-getById(
-
-    id
-
-){
-
-
-
-    return this.shipments.find(
-
-
-
-        item =>
-
-
-
-        item.id === id
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Get Shipments By Purchase
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getByPurchase(
-
-    purchaseId
-
-){
-
-
-
-    return this.shipments.filter(
-
-
-
-        item =>
-
-
-
-        item.purchaseId === purchaseId
-
-
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Shipment Status
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-updateStatus(
-
-    shipmentId,
-
-    status
-
-){
-
-
-
-    let shipment =
-
-
-
-        this.getById(
+        return await this.storage.start(
 
             shipmentId
 
         );
 
 
+    }
 
 
 
-    if(!shipment){
 
 
 
-        return null;
+    /*
+    ==============================================
+
+    Receive Shipment
+
+    收貨確認
+
+    ==============================================
+    */
+
+
+    async receive(
+        shipmentId
+    ){
+
+
+
+        return await this.storage.receive(
+
+            shipmentId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Close Shipment
+
+    ==============================================
+    */
+
+
+    async close(
+        shipmentId
+    ){
+
+
+
+        return await this.storage.close(
+
+            shipmentId
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get All
+
+    ==============================================
+    */
+
+
+    async getAll(){
+
+
+
+        return await this.storage.getAll();
 
 
 
@@ -386,66 +355,27 @@ updateStatus(
 
 
 
-    switch(status){
+
+    /*
+    ==============================================
+
+    Find By Project
+
+    ==============================================
+    */
+
+
+    async findByProject(
+        projectId
+    ){
 
 
 
-        case "Preparing":
+        return await this.storage.findByProject(
 
+            projectId
 
-
-            shipment.prepare();
-
-            break;
-
-
-
-
-
-        case "Shipping":
-
-
-
-            shipment.ship();
-
-            break;
-
-
-
-
-
-        case "Arrived":
-
-
-
-            shipment.arrive();
-
-            break;
-
-
-
-
-
-        case "Checked":
-
-
-
-            shipment.check();
-
-            break;
-
-
-
-
-
-        case "Completed":
-
-
-
-            shipment.complete();
-
-            break;
-
+        );
 
 
     }
@@ -454,325 +384,56 @@ updateStatus(
 
 
 
-    return shipment;
+
+    /*
+    ==============================================
+
+    Find By Purchase
+
+    ==============================================
+    */
+
+
+    async findByPurchase(
+        purchaseId
+    ){
 
 
 
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Delivered Quantity
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getDeliveredQuantity(
-
-    purchaseId,
-
-    materialCode
-
-){
-
-
-
-    let shipments =
-
-
-
-        this.getByPurchase(
+        return await this.storage.findByPurchase(
 
             purchaseId
 
         );
 
 
+    }
 
 
 
-    let total = 0;
 
 
 
+    /*
+    ==============================================
 
+    Find Supplier Shipment
 
-    shipments.forEach(ship=>{
+    ==============================================
+    */
 
 
+    async findBySupplier(
+        supplierId
+    ){
 
-        ship.items.forEach(item=>{
 
 
+        return await this.storage.findBySupplier(
 
-            if(
-
-                item.materialCode === materialCode
-
-            ){
-
-
-
-                if(
-
-                    ship.status === "Arrived"
-
-                    ||
-
-                    ship.status === "Checked"
-
-                    ||
-
-                    ship.status === "Completed"
-
-                ){
-
-
-
-                    total +=
-
-
-
-                        item.quantity;
-
-
-
-                }
-
-
-
-            }
-
-
-
-        });
-
-
-
-    });
-
-
-
-
-
-    return total;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Remaining Quantity
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getRemainingQuantity(
-
-    purchase,
-
-    materialCode
-
-){
-
-
-
-    let purchased = 0;
-
-
-
-
-
-    purchase.items.forEach(item=>{
-
-
-
-        if(
-
-            item.materialCode === materialCode
-
-        ){
-
-
-
-            purchased =
-
-                item.quantity;
-
-
-
-        }
-
-
-
-    });
-
-
-
-
-
-    let delivered =
-
-
-
-        this.getDeliveredQuantity(
-
-
-
-            purchase.id,
-
-
-
-            materialCode
-
-
+            supplierId
 
         );
-
-
-
-
-
-    return purchased - delivered;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Delivery Progress
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getProgress(
-
-    purchase
-
-){
-
-
-
-    let total = 0;
-
-
-
-    let delivered = 0;
-
-
-
-
-
-    purchase.items.forEach(item=>{
-
-
-
-        total +=
-
-            item.quantity;
-
-
-
-
-
-        delivered +=
-
-
-
-            this.getDeliveredQuantity(
-
-
-
-                purchase.id,
-
-
-
-                item.materialCode
-
-
-
-            );
-
-
-
-    });
-
-
-
-
-
-    let percent = 0;
-
-
-
-
-
-    if(total > 0){
-
-
-
-        percent =
-
-
-
-            Math.round(
-
-
-
-                delivered /
-
-                total *
-
-                100
-
-
-
-            );
-
 
 
     }
@@ -781,35 +442,32 @@ getProgress(
 
 
 
-    return {
+
+    /*
+    ==============================================
+
+    Shipment Version
+
+    ==============================================
+    */
+
+
+    async createVersion(
+        shipment
+    ){
 
 
 
-        totalQuantity:
+        return await this.storage.createVersion(
 
-            total,
+            shipment
 
-
-
-        deliveredQuantity:
-
-            delivered,
+        );
 
 
-
-        remainingQuantity:
-
-            total - delivered,
+    }
 
 
-
-        progress:
-
-            percent + "%"
-
-
-
-    };
 
 
 
@@ -820,69 +478,10 @@ getProgress(
 
 
 
+global.ShipmentEngine =
+
+    ShipmentEngine;
 
 
 
-/*
-----------------------------------------------
-
-Shipment Summary
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-summary(){
-
-
-
-    return {
-
-
-
-        shipmentCount:
-
-            this.shipments.length,
-
-
-
-        completed:
-
-            this.shipments.filter(
-
-
-
-                item =>
-
-
-
-                item.status === "Completed"
-
-
-
-            ).length,
-
-
-
-        generatedDate:
-
-            new Date()
-
-            .toISOString()
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.ShipmentEngine = ShipmentEngine;
+})(window);
