@@ -1,114 +1,256 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Page Loader
+ File:
+ src/js/app/page-loader.js
 
-Sprint:
 
-1.7.2
+ Sprint:
+ 2.8.2
 
-Build:
 
-0001
+ Build:
+ Enterprise Page Loader
 
-Description:
 
-SPA page loading controller
+ Description:
+ Dynamic HTML Page Loader
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class PageLoader {
 
-```
-constructor(){
 
 
-
-    this.basePath =
-
-        "src/pages/";
+    constructor(){
 
 
+        this.basePath =
+
+            "pages/";
 
 
+        this.containerId =
 
-    this.currentPage =
-
-        "";
-
+            "app";
 
 
+        this.currentPage = null;
 
 
-    this.containerId =
-
-        "app";
-
-
-
-
-
-    this.history = [];
-
-
-
-}
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Initialize
+
+    ==============================================
+    */
+
+
+    init(
+        containerId = "app"
+    ){
 
 
 
-/*
-----------------------------------------------
-
-Load Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-async load(
-
-    page
-
-){
+        this.containerId = containerId;
 
 
 
-    let url =
-
-
-
-        this.basePath +
-
-        page +
-
-        ".html";
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Load Page
+
+    ==============================================
+    */
+
+
+    async load(
+        page
+    ){
 
 
 
-    try{
+        if(!page){
+
+
+            throw new Error(
+
+                "Page name required"
+
+            );
+
+
+        }
 
 
 
-        let response =
 
+
+        const url =
+
+
+            this.basePath +
+
+            page +
+
+            ".html";
+
+
+
+
+
+        try{
+
+
+            const response =
+
+
+                await fetch(
+
+                    url
+
+                );
+
+
+
+
+
+            if(!response.ok){
+
+
+                throw new Error(
+
+                    "Page load failed: "
+
+                    +
+
+                    page
+
+                );
+
+
+            }
+
+
+
+
+
+            const html =
+
+
+                await response.text();
+
+
+
+
+
+            const container =
+
+
+                document.getElementById(
+
+                    this.containerId
+
+                );
+
+
+
+
+
+            if(container){
+
+
+                container.innerHTML = html;
+
+
+            }
+
+
+
+
+
+            this.currentPage = page;
+
+
+
+
+
+            return html;
+
+
+        }
+
+        catch(error){
+
+
+
+            this.showError(
+
+                error
+
+            );
+
+
+
+
+
+            throw error;
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Load Partial
+
+    ==============================================
+    */
+
+
+    async loadPartial(
+        url
+    ){
+
+
+
+        const response =
 
 
             await fetch(
@@ -121,20 +263,14 @@ async load(
 
 
 
-        if(
-
-            !response.ok
-
-        ){
-
+        if(!response.ok){
 
 
             throw new Error(
 
-                "Page Not Found"
+                "Partial load error"
 
             );
-
 
 
         }
@@ -143,172 +279,75 @@ async load(
 
 
 
-
-
-
-
-        let html =
-
-
-
-            await response.text();
-
-
-
-
-
-        this.render(
-
-            html
-
-        );
-
-
-
-
-
-
-
-
-
-        this.currentPage =
-
-            page;
-
-
-
-
-
-        this.history.push(
-
-            page
-
-        );
-
-
-
-
-
-
-
-
-
-        this.afterLoad(
-
-            page
-
-        );
-
-
-
-
-
-
-
-
-
-        return true;
+        return await response.text();
 
 
 
     }
 
-    catch(error){
-
-
-
-        console.error(
-
-
-
-            "Load Page Error:",
-
-            error
-
-
-
-        );
 
 
 
 
 
-        this.showError(
+    /*
+    ==============================================
 
-            page
+    Replace Container
 
-        );
-
-
-
+    ==============================================
+    */
 
 
-        return false;
+    render(
+        html
+    ){
 
+
+
+        const container =
+
+
+            document.getElementById(
+
+                this.containerId
+
+            );
+
+
+
+
+
+        if(container){
+
+
+            container.innerHTML = html;
+
+
+        }
 
 
     }
 
 
 
-}
 
 
 
+    /*
+    ==============================================
+
+    Current Page
+
+    ==============================================
+    */
+
+
+    getCurrent(){
 
 
 
-
-
-
-/*
-----------------------------------------------
-
-Render Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-render(
-
-    html
-
-){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-    if(!container){
-
-
-
-        console.error(
-
-            "App Container Missing"
-
-        );
-
-
-
-        return;
+        return this.currentPage;
 
 
 
@@ -318,235 +357,78 @@ render(
 
 
 
-    container.innerHTML =
 
-        html;
+    /*
+    ==============================================
 
+    Error
 
-
-}
-
-
-
+    ==============================================
+    */
 
 
-
-
-
-
-/*
-----------------------------------------------
-
-After Page Loaded
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-afterLoad(
-
-    page
-
-){
+    showError(
+        error
+    ){
 
 
 
-    console.log(
+        const container =
 
 
+            document.getElementById(
 
-        "Page Loaded:",
+                this.containerId
 
-        page
-
-
-
-    );
+            );
 
 
 
 
 
+        if(container){
+
+
+            container.innerHTML = `
 
 
 
-
-    let event =
-
+            <div class="page-error">
 
 
-        new CustomEvent(
-
-            "cwps-page-loaded",
-
-            {
+                Unable to load page
 
 
-
-                detail:{
-
+                <br>
 
 
-                    page:
+                ${
 
-                        page
-
-
+                    error.message
 
                 }
-
-
-
-            }
-
-        );
-
-
-
-
-
-    document.dispatchEvent(
-
-        event
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Show Error
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-showError(
-
-    page
-
-){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-    if(container){
-
-
-
-        container.innerHTML = `
-
-
-
-            <div class="error-box">
-
-
-
-                <h3>
-
-                Page Loading Error
-
-                </h3>
-
-
-
-                <p>
-
-                Cannot load:
-
-                ${page}
-
-                </p>
-
 
 
             </div>
 
 
 
-        `;
+            `;
 
 
-
-    }
-
-
-
-}
+        }
 
 
 
 
 
+        console.error(
 
-
-
-
-/*
-----------------------------------------------
-
-Reload Current Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-reload(){
-
-
-
-    if(
-
-        this.currentPage
-
-    ){
-
-
-
-        return this.load(
-
-            this.currentPage
+            error
 
         );
 
 
-
     }
 
 
@@ -558,64 +440,10 @@ reload(){
 
 
 
+global.PageLoader =
+
+    PageLoader;
 
 
 
-/*
-----------------------------------------------
-
-Get Current Page
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getCurrent(){
-
-
-
-    return this.currentPage;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Navigation History
-
-
-----------------------------------------------
-
-----------------------------------------------
-
-*/
-
-
-getHistory(){
-
-
-
-    return this.history;
-
-
-
-}
-```
-
-}
-
-window.PageLoader = PageLoader;
+})(window);
