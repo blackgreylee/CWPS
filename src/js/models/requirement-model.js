@@ -1,622 +1,365 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Material Requirement Model
+ Requirement Model
 
-Sprint:
+ Sprint:
+ 2.0.9
 
-1.5.1
-
-Build:
-
-0001
-
-Description:
-
-Procurement material requirement data model
+ Description:
+ Procurement Requirement Entity
 
 ==================================================
 */
 
-class RequirementModel {
+(function (global) {
 
-```
-constructor(data = {}){
+    "use strict";
 
 
+    class Requirement {
 
-    this.id =
 
+        constructor(data = {}) {
 
 
-        data.id ||
+            this.id = data.id || crypto.randomUUID();
 
-        this.generateId();
 
 
+            // 所屬專案
+            this.projectId =
+                data.projectId || null;
 
 
 
-    this.projectId =
+            // 所屬批次
+            this.batchId =
+                data.batchId || null;
 
 
 
-        data.projectId ||
+            // BOM Node
+            this.nodeId =
+                data.nodeId || null;
 
-        "";
 
 
+            // 材料
+            this.materialId =
+                data.materialId || null;
 
 
 
-    this.batchId =
+            // 需求編號
+            this.code =
+                data.code || "";
 
 
 
-        data.batchId ||
+            // 材料名稱（快照）
+            /*
+                避免 Material 修改後
+                影響歷史需求
+            */
+            this.materialName =
+                data.materialName || "";
 
-        "";
 
 
+            // 規格快照
+            this.specification =
+                data.specification || "";
 
 
 
-    this.materialId =
+            // 需求數量
+            this.quantity =
+                Number(data.quantity ?? 0);
 
 
 
-        data.materialId ||
+            // 單位
+            this.unit =
+                data.unit ||
 
-        "";
+                CWPSTypes.UnitType.PCS;
 
 
 
+            // 重量
+            this.weight =
+                Number(data.weight ?? 0);
 
 
-    this.materialCode =
 
+            // 預估單價
+            this.estimatedUnitPrice =
+                Number(
+                    data.estimatedUnitPrice ?? 0
+                );
 
 
-        data.materialCode ||
 
-        "";
+            // 預估金額
+            this.estimatedAmount =
+                Number(
+                    data.estimatedAmount ?? 0
+                );
 
 
 
+            // 狀態
+            this.status =
+                data.status ||
 
+                CWPSTypes.RequirementStatus.PENDING;
 
-    this.materialName =
 
 
+            // 是否已轉詢價
+            this.isQuoted =
+                data.isQuoted ?? false;
 
-        data.materialName ||
 
-        "";
 
+            // 備註
+            this.remark =
+                data.remark || "";
 
 
 
+            // 擴充資料
+            this.attributes =
+                data.attributes || {};
 
-    this.category =
 
 
+            this.createdAt =
+                data.createdAt ||
 
-        data.category ||
+                new Date().toISOString();
 
-        "";
 
 
+            this.updatedAt =
+                data.updatedAt ||
 
+                new Date().toISOString();
 
 
-    this.quantity =
+        }
 
 
 
-        Number(
+        /**
+         * 計算預估金額
+         */
+        calculateAmount() {
 
-            data.quantity
 
-        )
+            this.estimatedAmount =
 
-        || 0;
+                this.quantity *
 
+                this.estimatedUnitPrice;
 
 
+            this.touch();
 
 
-    this.unit =
+            return this.estimatedAmount;
 
 
+        }
 
-        data.unit ||
 
-        "PCS";
 
+        /**
+         * 更新數量
+         */
+        updateQuantity(quantity) {
 
 
+            this.quantity =
+                Number(quantity);
 
 
-    this.singleWeight =
+            this.calculateAmount();
 
 
+        }
 
-        Number(
 
-            data.singleWeight
 
-        )
+        /**
+         * 設定價格
+         */
+        setUnitPrice(price) {
 
-        || 0;
 
+            this.estimatedUnitPrice =
+                Number(price);
 
 
+            this.calculateAmount();
 
 
-    this.totalWeight =
+        }
 
 
 
-        this.quantity *
+        /**
+         * 標記已詢價
+         */
+        markQuoted() {
 
-        this.singleWeight;
 
+            this.isQuoted = true;
 
 
+            this.status =
 
+                CWPSTypes.RequirementStatus.GENERATED;
 
-    this.source =
 
+            this.touch();
 
 
-        data.source ||
+        }
 
-        "BOM";
 
 
+        /**
+         * 更新狀態
+         */
+        setStatus(status) {
 
 
+            this.status = status;
 
-    this.status =
 
+            this.touch();
 
 
-        data.status ||
+        }
 
-        "Draft";
 
 
+        /**
+         * 更新時間
+         */
+        touch() {
 
 
+            this.updatedAt =
+                new Date().toISOString();
 
-    this.remark =
 
+        }
 
 
-        data.remark ||
 
-        "";
+        /**
+         * JSON
+         */
+        toJSON() {
 
 
+            return {
 
 
+                id: this.id,
 
-    this.createdDate =
 
+                projectId:
+                    this.projectId,
 
 
-        data.createdDate ||
+                batchId:
+                    this.batchId,
 
-        new Date()
 
-        .toISOString();
+                nodeId:
+                    this.nodeId,
 
 
+                materialId:
+                    this.materialId,
 
 
+                code:
+                    this.code,
 
-    this.updatedDate =
 
+                materialName:
+                    this.materialName,
 
 
-        new Date()
+                specification:
+                    this.specification,
 
-        .toISOString();
 
+                quantity:
+                    this.quantity,
 
 
-}
+                unit:
+                    this.unit,
 
 
+                weight:
+                    this.weight,
 
 
+                estimatedUnitPrice:
+                    this.estimatedUnitPrice,
 
 
+                estimatedAmount:
+                    this.estimatedAmount,
 
 
+                status:
+                    this.status,
 
-/*
-----------------------------------------------
 
-Generate ID
+                isQuoted:
+                    this.isQuoted,
 
 
-----------------------------------------------
+                remark:
+                    this.remark,
 
-*/
 
+                attributes:
+                    this.attributes,
 
-generateId(){
 
+                createdAt:
+                    this.createdAt,
 
 
-    return (
+                updatedAt:
+                    this.updatedAt
 
-        "REQ-" +
 
-        Date.now()
 
-    );
+            };
 
 
+        }
 
-}
 
 
+    }
 
 
 
+    global.Requirement = Requirement;
 
 
 
-
-/*
-----------------------------------------------
-
-Confirm Requirement
-
-
-----------------------------------------------
-
-*/
-
-
-confirm(){
-
-
-
-    this.status =
-
-        "Confirmed";
-
-
-
-    this.updatedDate =
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Mark Quoted
-
-
-----------------------------------------------
-
-*/
-
-
-quoted(){
-
-
-
-    this.status =
-
-        "Quoted";
-
-
-
-    this.updatedDate =
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Mark Purchased
-
-
-----------------------------------------------
-
-*/
-
-
-purchased(){
-
-
-
-    this.status =
-
-        "Purchased";
-
-
-
-    this.updatedDate =
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Complete
-
-
-----------------------------------------------
-
-*/
-
-
-complete(){
-
-
-
-    this.status =
-
-        "Completed";
-
-
-
-    this.updatedDate =
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Calculate Weight
-
-
-----------------------------------------------
-
-*/
-
-
-calculateWeight(){
-
-
-
-    this.totalWeight =
-
-
-
-        this.quantity *
-
-        this.singleWeight;
-
-
-
-    return this.totalWeight;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Update Quantity
-
-
-----------------------------------------------
-
-*/
-
-
-updateQuantity(qty){
-
-
-
-    this.quantity =
-
-
-
-        Number(qty)
-
-        || 0;
-
-
-
-
-
-    this.calculateWeight();
-
-
-
-
-
-    this.updatedDate =
-
-
-
-        new Date()
-
-        .toISOString();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Convert JSON
-
-
-----------------------------------------------
-
-*/
-
-
-toJSON(){
-
-
-
-    return {
-
-
-
-        id:
-
-            this.id,
-
-
-
-        projectId:
-
-            this.projectId,
-
-
-
-        batchId:
-
-            this.batchId,
-
-
-
-        materialId:
-
-            this.materialId,
-
-
-
-        materialCode:
-
-            this.materialCode,
-
-
-
-        materialName:
-
-            this.materialName,
-
-
-
-        category:
-
-            this.category,
-
-
-
-        quantity:
-
-            this.quantity,
-
-
-
-        unit:
-
-            this.unit,
-
-
-
-        singleWeight:
-
-            this.singleWeight,
-
-
-
-        totalWeight:
-
-            this.totalWeight,
-
-
-
-        status:
-
-            this.status
-
-
-
-    };
-
-
-
-}
-```
-
-}
-
-window.RequirementModel = RequirementModel;
+})(window);
