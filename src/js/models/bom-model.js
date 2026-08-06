@@ -23,56 +23,133 @@
 
             this.id = data.id || crypto.randomUUID();
 
+            // 上層節點
             this.parentId = data.parentId || null;
 
+            // 所屬 Project
+            this.projectId = data.projectId || null;
+
+            // 所屬 Batch
             this.batchId = data.batchId || null;
 
+            // BOM Version
             this.versionId = data.versionId || null;
 
+            // 節點型別
             this.type = data.type || CWPSTypes.NodeType.PART;
 
+            // 圖號 / 編號
             this.code = data.code || "";
 
+            // 名稱
             this.name = data.name || "";
 
-            this.quantity = Number(data.quantity || 1);
+            // 數量
+            this.quantity = Number(data.quantity ?? 1);
 
+            // 單位
             this.unit = data.unit || "";
 
-            this.materials = Array.isArray(data.materials)
-                ? data.materials
-                : [];
+            // 子節點
+            this.children = [];
 
-            this.children = Array.isArray(data.children)
-                ? data.children
-                : [];
+            if (Array.isArray(data.children)) {
 
+                this.children = data.children.map(item =>
+                    item instanceof BOMNode ? item : new BOMNode(item)
+                );
+
+            }
+
+            // 掛載的材料使用資訊
+            this.materialUsages = [];
+
+            if (Array.isArray(data.materialUsages)) {
+
+                this.materialUsages = data.materialUsages.slice();
+
+            }
+
+            // 自訂屬性
             this.attributes = data.attributes || {};
 
             this.createdAt = data.createdAt || new Date().toISOString();
 
             this.updatedAt = data.updatedAt || new Date().toISOString();
+
         }
 
+        /**
+         * 新增子節點
+         */
         addChild(node) {
+
+            if (!(node instanceof BOMNode)) {
+
+                node = new BOMNode(node);
+
+            }
 
             node.parentId = this.id;
 
             this.children.push(node);
 
+            this.touch();
+
             return node;
+
         }
 
+        /**
+         * 移除子節點
+         */
         removeChild(nodeId) {
 
-            this.children = this.children.filter(n => n.id !== nodeId);
+            this.children = this.children.filter(
+
+                child => child.id !== nodeId
+
+            );
+
+            this.touch();
+
         }
 
+        /**
+         * 新增 MaterialUsage
+         */
+        addMaterialUsage(materialUsage) {
+
+            this.materialUsages.push(materialUsage);
+
+            this.touch();
+
+        }
+
+        /**
+         * 移除 MaterialUsage
+         */
+        removeMaterialUsage(materialUsageId) {
+
+            this.materialUsages = this.materialUsages.filter(
+
+                item => item.id !== materialUsageId
+
+            );
+
+            this.touch();
+
+        }
+
+        /**
+         * 遞迴搜尋節點
+         */
         find(nodeId) {
 
             if (this.id === nodeId) {
 
                 return this;
+
             }
 
             for (const child of this.children) {
@@ -82,24 +159,33 @@
                 if (result) {
 
                     return result;
+
                 }
+
             }
 
             return null;
+
         }
 
-        addMaterial(materialUsage) {
+        /**
+         * 深度優先走訪
+         */
+        traverse(callback) {
 
-            this.materials.push(materialUsage);
+            callback(this);
+
+            this.children.forEach(child => {
+
+                child.traverse(callback);
+
+            });
+
         }
 
-        removeMaterial(materialId) {
-
-            this.materials = this.materials.filter(
-                m => m.materialId !== materialId
-            );
-        }
-
+        /**
+         * 取得全部子節點數
+         */
         getTotalChildren() {
 
             let total = this.children.length;
@@ -111,19 +197,30 @@
             });
 
             return total;
+
         }
 
-        traverse(callback) {
+        /**
+         * 是否為葉節點
+         */
+        isLeaf() {
 
-            callback(this);
+            return this.children.length === 0;
 
-            this.children.forEach(child => {
-
-                child.traverse(callback);
-
-            });
         }
 
+        /**
+         * 更新時間
+         */
+        touch() {
+
+            this.updatedAt = new Date().toISOString();
+
+        }
+
+        /**
+         * JSON
+         */
         toJSON() {
 
             return {
@@ -131,6 +228,8 @@
                 id: this.id,
 
                 parentId: this.parentId,
+
+                projectId: this.projectId,
 
                 batchId: this.batchId,
 
@@ -146,9 +245,13 @@
 
                 unit: this.unit,
 
-                materials: this.materials,
+                materialUsages: this.materialUsages,
 
-                children: this.children.map(c => c.toJSON()),
+                children: this.children.map(
+
+                    child => child.toJSON()
+
+                ),
 
                 attributes: this.attributes,
 
