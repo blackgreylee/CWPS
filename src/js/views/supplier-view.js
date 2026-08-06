@@ -1,757 +1,325 @@
-# /*
+/*
+==================================================
 
-CWPS Enterprise
+ CWPS Enterprise
 
-Supplier View
+ File:
+ src/js/views/supplier-view.js
 
-Sprint:
 
-1.8.5
+ Sprint:
+ 2.7.2
 
-Build:
 
-0001
+ Build:
+ Enterprise Supplier View Layer
 
-Description:
 
-Supplier management UI renderer
+ Description:
+ Supplier Management UI View
+
 
 ==================================================
 */
 
+
+(function(global){
+
+
+"use strict";
+
+
+
 class SupplierView {
 
-```
-constructor(){
 
 
+    constructor(){
 
-    this.containerId =
 
-        "supplier-container";
+        this.controller = null;
 
 
+        this.container = null;
 
 
+    }
 
-    this.controller =
 
-        null;
 
 
 
 
+    /*
+    ==============================================
 
-    this.suppliers = [];
+    Initialize
 
+    ==============================================
+    */
 
 
-
-
-    this.currentSupplier =
-
-        null;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Initialize
-
-
-----------------------------------------------
-
-*/
-
-
-init(
-
-    supplierController
-
-){
-
-
-
-    this.controller =
-
-        supplierController;
-
-
-
-    this.load();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Load Supplier Data
-
-
-----------------------------------------------
-
-*/
-
-
-load(){
-
-
-
-    if(
-
-        !this.controller
-
+    init(
+        controller,
+        containerId = "app"
     ){
 
 
 
-        return;
+        this.controller = controller;
 
 
 
-    }
+        this.container =
 
 
+            document.getElementById(
 
-
-
-
-
-
-
-    this.suppliers =
-
-
-
-        this.controller.getAll();
-
-
-
-
-
-
-
-
-
-    this.render();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Main Page
-
-
-----------------------------------------------
-
-*/
-
-
-render(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            this.containerId
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    container.innerHTML = `
-
-
-
-    <div class="supplier-header">
-
-
-
-        <h2>
-
-        供應商管理
-
-        </h2>
-
-
-
-        <button
-
-        id="btn-add-supplier">
-
-        新增供應商
-
-        </button>
-
-
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="supplier-form">
-
-    </div>
-
-
-
-
-
-    <div
-
-    id="supplier-list">
-
-    </div>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.renderList();
-
-
-
-    this.bindEvents();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Render Supplier List
-
-
-----------------------------------------------
-
-*/
-
-
-renderList(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            "supplier-list"
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-
-
-        return;
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    let html = `
-
-
-
-    <table>
-
-
-
-    <thead>
-
-    <tr>
-
-
-
-    <th>編號</th>
-
-    <th>名稱</th>
-
-    <th>分類</th>
-
-    <th>狀態</th>
-
-    <th>操作</th>
-
-
-
-    </tr>
-
-    </thead>
-
-
-
-    <tbody>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    this.suppliers.forEach(
-
-        supplier=>{
-
-
-
-            html += `
-
-
-
-            <tr>
-
-
-
-            <td>
-
-            ${supplier.supplierNo || ""}
-
-            </td>
-
-
-
-            <td>
-
-            ${supplier.name || ""}
-
-            </td>
-
-
-
-            <td>
-
-            ${supplier.category || ""}
-
-            </td>
-
-
-
-            <td>
-
-            ${supplier.status || ""}
-
-            </td>
-
-
-
-            <td>
-
-
-
-            <button
-
-            class="btn-view-supplier"
-
-            data-id="${supplier.id}">
-
-            查看
-
-            </button>
-
-
-
-            </td>
-
-
-
-            </tr>
-
-
-
-            `;
-
-
-
-        }
-
-    );
-
-
-
-
-
-
-
-
-
-    html += `
-
-
-
-    </tbody>
-
-
-
-    </table>
-
-
-
-    `;
-
-
-
-
-
-
-
-
-
-    container.innerHTML =
-
-        html;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Supplier Form
-
-
-----------------------------------------------
-
-*/
-
-
-renderForm(){
-
-
-
-    let container =
-
-
-
-        document.getElementById(
-
-            "supplier-form"
-
-        );
-
-
-
-
-
-
-
-
-
-    if(!container){
-
-        return;
-
-    }
-
-
-
-
-
-
-
-
-
-    container.innerHTML = `
-
-
-
-    <div class="form-box">
-
-
-
-    <input
-
-    id="supplier-no"
-
-    placeholder="供應商編號">
-
-
-
-    <input
-
-    id="supplier-name"
-
-    placeholder="供應商名稱">
-
-
-
-    <input
-
-    id="supplier-category"
-
-    placeholder="材料分類">
-
-
-
-    <button
-
-    id="save-supplier">
-
-    儲存
-
-    </button>
-
-
-
-    </div>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-/*
-----------------------------------------------
-
-Bind Events
-
-
-----------------------------------------------
-
-*/
-
-
-bindEvents(){
-
-
-
-    let addButton =
-
-
-
-        document.getElementById(
-
-            "btn-add-supplier"
-
-        );
-
-
-
-
-
-
-
-
-
-    if(addButton){
-
-
-
-        addButton.onclick = ()=>{
-
-
-
-            this.renderForm();
-
-
-
-        };
-
-
-
-    }
-
-
-
-
-
-
-
-
-
-    document
-
-    .querySelectorAll(
-
-        ".btn-view-supplier"
-
-    )
-
-    .forEach(button=>{
-
-
-
-        button.onclick = ()=>{
-
-
-
-            this.showDetail(
-
-                button.dataset.id
+                containerId
 
             );
 
 
 
-        };
 
 
-
-    });
-
+        this.bindEvents();
 
 
-}
-
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Render Supplier List
+
+    ==============================================
+    */
 
 
-/*
-----------------------------------------------
-
-Show Supplier Detail
-
-
-----------------------------------------------
-
-*/
-
-
-showDetail(
-
-    id
-
-){
+    render(
+        suppliers
+    ){
 
 
 
-    this.currentSupplier =
+        if(!this.container){
+
+
+            return;
+
+
+        }
 
 
 
-        this.controller.getById(
 
-            id
+
+        let html = `
+
+
+        <div class="supplier-page">
+
+
+            <div class="page-header">
+
+
+                <h2>
+
+                    Supplier Management
+
+                </h2>
+
+
+                <button
+
+                    id="btn-create-supplier"
+
+                    class="btn btn-primary"
+
+                >
+
+                    New Supplier
+
+                </button>
+
+
+                <button
+
+                    id="btn-ranking-supplier"
+
+                    class="btn btn-secondary"
+
+                >
+
+                    Ranking
+
+                </button>
+
+
+            </div>
+
+
+
+
+            <table class="table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Supplier ID
+                        </th>
+
+
+                        <th>
+                            Supplier Name
+                        </th>
+
+
+                        <th>
+                            Contact
+                        </th>
+
+
+                        <th>
+                            Rating
+                        </th>
+
+
+                        <th>
+                            Status
+                        </th>
+
+
+                        <th>
+                            Action
+                        </th>
+
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+        `;
+
+
+
+
+
+        suppliers.forEach(
+
+            supplier=>{
+
+
+                html += `
+
+
+                <tr>
+
+
+                    <td>
+
+                        ${
+
+                            supplier.id || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            supplier.name || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            supplier.contact || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            supplier.averageRating || 0
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+                        ${
+
+                            supplier.status || ""
+
+                        }
+
+                    </td>
+
+
+
+                    <td>
+
+
+                        <button
+
+                            class="btn-detail"
+
+                            data-id="${
+
+                                supplier.id
+
+                            }"
+
+                        >
+
+                            Detail
+
+                        </button>
+
+
+
+                    </td>
+
+
+                </tr>
+
+
+                `;
+
+
+            }
 
         );
 
@@ -759,53 +327,395 @@ showDetail(
 
 
 
+        html += `
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+        `;
 
 
 
 
-    return this.currentSupplier;
+
+        this.container.innerHTML = html;
 
 
 
-}
+        this.bindRowEvents();
+
+
+    }
 
 
 
 
 
 
+    /*
+    ==============================================
+
+    Create Supplier
+
+    ==============================================
+    */
+
+
+    showCreateForm(){
 
 
 
-/*
-----------------------------------------------
-
-Add Supplier
+        const name =
 
 
-----------------------------------------------
+            prompt(
 
-*/
+                "Supplier Name"
 
-
-createSupplier(
-
-    data
-
-){
+            );
 
 
 
-    return this.controller
 
-        .createSupplier(
 
-            data
+        const contact =
+
+
+            prompt(
+
+                "Contact"
+
+            );
+
+
+
+
+
+        if(!name){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        this.controller.create({
+
+
+
+            name:
+
+                name,
+
+
+
+            contact:
+
+                contact
+
+
+
+        });
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Detail
+
+    ==============================================
+    */
+
+
+    async showDetail(
+        supplierId
+    ){
+
+
+
+        const supplier =
+
+
+            await this.controller.detail(
+
+                supplierId
+
+            );
+
+
+
+
+
+        if(!supplier){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        alert(
+
+            JSON.stringify(
+
+                supplier,
+
+                null,
+
+                4
+
+            )
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Ranking
+
+    ==============================================
+    */
+
+
+    async showRanking(){
+
+
+
+        const list =
+
+
+            await this.controller.ranking();
+
+
+
+
+
+        let text =
+
+
+            "Supplier Ranking\n\n";
+
+
+
+
+
+        list.forEach(
+
+            (item,index)=>{
+
+
+                text +=
+
+
+                    (
+
+                        index + 1
+
+                    )
+
+                    +
+
+                    ". "
+
+                    +
+
+                    (
+
+                        item.name || ""
+
+                    )
+
+                    +
+
+                    " : "
+
+                    +
+
+                    (
+
+                        item.performanceScore || 0
+
+                    )
+
+                    +
+
+                    "\n";
+
+
+            }
 
         );
 
 
 
+
+
+        alert(text);
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Events
+
+    ==============================================
+    */
+
+
+    bindEvents(){
+
+
+
+        document.addEventListener(
+
+            "click",
+
+            event=>{
+
+
+                if(
+
+                    event.target.id ===
+
+                    "btn-create-supplier"
+
+                ){
+
+
+                    this.showCreateForm();
+
+
+                }
+
+
+
+
+
+                if(
+
+                    event.target.id ===
+
+                    "btn-ranking-supplier"
+
+                ){
+
+
+                    this.showRanking();
+
+
+                }
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+
+    /*
+    ==============================================
+
+    Detail Events
+
+    ==============================================
+    */
+
+
+    bindRowEvents(){
+
+
+
+        const buttons =
+
+
+            document.querySelectorAll(
+
+                ".btn-detail"
+
+            );
+
+
+
+
+
+        buttons.forEach(
+
+            button=>{
+
+
+                button.addEventListener(
+
+                    "click",
+
+                    ()=>{
+
+
+                        this.showDetail(
+
+                            button.dataset.id
+
+                        );
+
+
+                    }
+
+                );
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
 }
 
 
@@ -813,31 +723,10 @@ createSupplier(
 
 
 
+global.SupplierView =
+
+    SupplierView;
 
 
 
-/*
-----------------------------------------------
-
-Refresh
-
-
-----------------------------------------------
-
-*/
-
-
-refresh(){
-
-
-
-    this.load();
-
-
-
-}
-```
-
-}
-
-window.SupplierView = SupplierView;
+})(window);
