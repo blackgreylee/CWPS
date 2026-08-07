@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.5.3
+ 2.9.25
 
 
  Build:
- Enterprise Procurement Analysis Layer
+ Enterprise Procurement Analysis Engine Layer
 
 
  Description:
- Procurement Performance Analysis Service
+ Procurement Workflow Analysis Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -39,31 +38,28 @@ class ProcurementAnalysis {
 
         this.requirementStorage =
 
-            new RequirementStorage();
-
+            new global.RequirementStorage();
 
 
         this.quotationStorage =
 
-            new QuotationStorage();
-
+            new global.QuotationStorage();
 
 
         this.purchaseStorage =
 
-            new PurchaseStorage();
-
+            new global.PurchaseStorage();
 
 
         this.shipmentStorage =
 
-            new ShipmentStorage();
-
+            new global.ShipmentStorage();
 
 
         this.invoiceStorage =
 
-            new InvoiceStorage();
+            new global.InvoiceStorage();
+
 
 
     }
@@ -72,147 +68,24 @@ class ProcurementAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Requirement Analysis
 
     ==============================================
     */
 
 
-    async init(){
+    analyzeRequirement(){
 
 
 
-        const stores = [
+        const list =
 
+            this.requirementStorage
 
-            this.requirementStorage,
-
-
-            this.quotationStorage,
-
-
-            this.purchaseStorage,
-
-
-            this.shipmentStorage,
-
-
-            this.invoiceStorage
-
-
-        ];
-
-
-
-
-
-        for(
-
-            const store of stores
-
-        ){
-
-
-            if(store.init){
-
-
-                await store.init();
-
-
-            }
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Project Procurement Summary
-
-    專案採購總覽
-
-    ==============================================
-    */
-
-
-    async projectSummary(
-        projectId
-    ){
-
-
-
-        const requirements =
-
-
-            await this.requirementStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const quotations =
-
-
-            await this.quotationStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const purchases =
-
-
-            await this.purchaseStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const shipments =
-
-
-            await this.shipmentStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const invoices =
-
-
-            await this.invoiceStorage.findByProject(
-
-                projectId
-
-            );
+            .getAll();
 
 
 
@@ -221,112 +94,49 @@ class ProcurementAnalysis {
         return {
 
 
-            projectId:
+            count:
+
+                list.length,
 
 
-                projectId,
+            totalQuantity:
+
+                list.reduce(
+
+                    (sum,item)=>{
 
 
+                        return sum +
 
-            requirementCount:
+                        Number(
 
+                            item.quantity || 0
 
-                requirements.length,
-
-
-
-            quotationCount:
+                        );
 
 
-                quotations.length,
-
-
-
-            purchaseCount:
-
-
-                purchases.length,
-
-
-
-            shipmentCount:
-
-
-                shipments.length,
-
-
-
-            invoiceCount:
-
-
-                invoices.length
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Purchase Amount
-
-    採購金額
-
-    ==============================================
-    */
-
-
-    calculatePurchaseAmount(
-        purchases
-    ){
-
-
-
-        if(
-
-            !Array.isArray(purchases)
-
-        ){
-
-
-            return 0;
-
-
-        }
-
-
-
-
-
-        return purchases.reduce(
-
-            (sum,item)=>{
-
-
-                return sum +
-
-                Number(
-
-                    item.totalAmount ||
+                    },
 
                     0
 
-                );
+                ),
 
 
-            },
+            pending:
 
-            0
+                list.filter(
 
-        );
+                    item=>
+
+                    item.status==="Pending"
+
+                )
+
+                .length
+
+
+
+        };
 
 
     }
@@ -335,28 +145,318 @@ class ProcurementAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Calculate Progress
-
-    採購完成率
+    Quotation Analysis
 
     ==============================================
     */
 
 
-    calculateProgress(
-        total,
-        completed
-    ){
+    analyzeQuotation(){
+
+
+
+        const list =
+
+            this.quotationStorage
+
+            .getAll();
+
+
+
+
+
+        return {
+
+
+            count:
+
+                list.length,
+
+
+            approved:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Approved"
+
+                )
+
+                .length,
+
+
+            rejected:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Rejected"
+
+                )
+
+                .length
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Purchase Analysis
+
+    ==============================================
+    */
+
+
+    analyzePurchase(){
+
+
+
+        const list =
+
+            this.purchaseStorage
+
+            .getAll();
+
+
+
+
+
+        return {
+
+
+            count:
+
+                list.length,
+
+
+            totalAmount:
+
+                list.reduce(
+
+                    (sum,item)=>{
+
+
+                        return sum +
+
+                        Number(
+
+                            item.amount || 0
+
+                        );
+
+
+                    },
+
+                    0
+
+                ),
+
+
+            completed:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Completed"
+
+                )
+
+                .length
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Shipment Analysis
+
+    ==============================================
+    */
+
+
+    analyzeShipment(){
+
+
+
+        const list =
+
+            this.shipmentStorage
+
+            .getAll();
+
+
+
+
+
+        return {
+
+
+            count:
+
+                list.length,
+
+
+            shipped:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Shipped"
+
+                )
+
+                .length,
+
+
+            received:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Received"
+
+                )
+
+                .length
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Invoice Analysis
+
+    ==============================================
+    */
+
+
+    analyzeInvoice(){
+
+
+
+        const list =
+
+            this.invoiceStorage
+
+            .getAll();
+
+
+
+
+
+        return {
+
+
+            count:
+
+                list.length,
+
+
+            totalAmount:
+
+                list.reduce(
+
+                    (sum,item)=>{
+
+
+                        return sum +
+
+                        Number(
+
+                            item.amount || 0
+
+                        );
+
+
+                    },
+
+                    0
+
+                ),
+
+
+            paid:
+
+                list.filter(
+
+                    item=>
+
+                    item.status==="Paid"
+
+                )
+
+                .length
+
+
+
+        };
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Procurement Completion Rate
+
+    ==============================================
+    */
+
+
+    completionRate(){
+
+
+
+        const purchase =
+
+            this.analyzePurchase();
+
+
 
 
 
         if(
 
-            Number(total) === 0
+            purchase.count===0
 
         ){
 
@@ -370,21 +470,24 @@ class ProcurementAnalysis {
 
 
 
-        return Number(
+        return Math.round(
 
             (
 
-                completed /
+            purchase.completed
 
-                total *
+            /
 
-                100
+            purchase.count
 
             )
 
-            .toFixed(2)
+            *
+
+            100
 
         );
+
 
 
     }
@@ -393,350 +496,50 @@ class ProcurementAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Procurement Status Summary
-
-    狀態統計
+    Full Dashboard Summary
 
     ==============================================
     */
 
 
-    summarizeStatus(
-        list
-    ){
-
-
-
-        if(
-
-            !Array.isArray(list)
-
-        ){
-
-
-            return {};
-
-        }
-
-
-
-
-
-        const result = {};
-
-
-
-
-
-        list.forEach(
-
-            item=>{
-
-
-                const status =
-
-
-                    item.status ||
-
-                    "UNKNOWN";
-
-
-
-
-
-                if(
-
-                    !result[status]
-
-                ){
-
-
-                    result[status] = 0;
-
-
-                }
-
-
-
-
-
-                result[status]++;
-
-
-            }
-
-        );
-
-
-
-
-
-        return result;
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Quotation Comparison
-
-    報價比較
-
-    ==============================================
-    */
-
-
-    compareQuotation(
-        quotations
-    ){
-
-
-
-        if(
-
-            !Array.isArray(quotations)
-
-        ){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        return quotations.sort(
-
-            (a,b)=>{
-
-
-                return (
-
-                    Number(
-
-                        a.amount || 0
-
-                    )
-
-                    -
-
-                    Number(
-
-                        b.amount || 0
-
-                    )
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Supplier Cost Ranking
-
-    供應商採購排行
-
-    ==============================================
-    */
-
-
-    supplierRanking(
-        purchases
-    ){
-
-
-
-        const map = {};
-
-
-
-
-
-        purchases.forEach(
-
-            item=>{
-
-
-                const supplier =
-
-
-                    item.supplierId ||
-
-                    "UNKNOWN";
-
-
-
-
-
-                if(
-
-                    !map[supplier]
-
-                ){
-
-
-                    map[supplier] = {
-
-
-
-                        supplierId:
-
-                            supplier,
-
-
-
-                        amount:
-
-                            0
-
-
-
-                    };
-
-
-                }
-
-
-
-
-
-                map[supplier].amount +=
-
-
-                    Number(
-
-                        item.totalAmount ||
-
-                        0
-
-                    );
-
-
-            }
-
-        );
-
-
-
-
-
-        return Object.values(
-
-            map
-
-        )
-
-        .sort(
-
-            (a,b)=>{
-
-
-                return (
-
-                    b.amount -
-
-                    a.amount
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Budget Variance
-
-    預算差異
-
-    ==============================================
-    */
-
-
-    compareBudget(
-        budget,
-        actual
-    ){
+    summary(){
 
 
 
         return {
 
 
+            requirement:
 
-            budget:
-
-
-                Number(
-
-                    budget || 0
-
-                ),
+                this.analyzeRequirement(),
 
 
+            quotation:
 
-            actual:
-
-
-                Number(
-
-                    actual || 0
-
-                ),
+                this.analyzeQuotation(),
 
 
+            purchase:
 
-            variance:
+                this.analyzePurchase(),
 
 
-                Number(
+            shipment:
 
-                    actual || 0
+                this.analyzeShipment(),
 
-                )
 
-                -
+            invoice:
 
-                Number(
+                this.analyzeInvoice(),
 
-                    budget || 0
 
-                )
+            completionRate:
+
+                this.completionRate()
 
 
 
@@ -744,14 +547,10 @@ class ProcurementAnalysis {
 
 
     }
-
-
-
 
 
 
 }
-
 
 
 
