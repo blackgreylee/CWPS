@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.6.3
+ 2.9.28
 
 
  Build:
@@ -25,7 +25,6 @@
 
 (function(global){
 
-
 "use strict";
 
 
@@ -37,13 +36,18 @@ class ProjectController {
     constructor(){
 
 
-        this.storage =
+        this.projectStorage =
 
-            new ProjectStorage();
+            new global.ProjectStorage();
+
+
+        this.bomStorage =
+
+            new global.BOMStorage();
 
 
 
-        this.view = null;
+        this.currentProject = null;
 
 
 
@@ -53,29 +57,23 @@ class ProjectController {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Get Project List
 
     ==============================================
     */
 
 
-    async init(view){
+    getProjects(){
 
 
 
-        this.view = view;
+        return this.projectStorage
 
+            .getAll();
 
-
-        await this.storage.init();
-
-
-
-        await this.load();
 
 
     }
@@ -84,41 +82,74 @@ class ProjectController {
 
 
 
-
     /*
     ==============================================
 
-    Load Projects
+    Get Project
 
     ==============================================
     */
 
 
-    async load(){
+    getProject(
+
+        projectId
+
+    ){
 
 
 
-        const projects =
+        return this.projectStorage
+
+            .getById(
+
+                projectId
+
+            );
 
 
-            await this.storage.getAll();
+
+    }
 
 
 
 
 
-        if(
+    /*
+    ==============================================
 
-            this.view &&
+    Open Project
 
-            this.view.render
+    ==============================================
+    */
 
-        ){
+
+    open(
+
+        projectId
+
+    ){
 
 
-            this.view.render(
 
-                projects
+        const project =
+
+            this.getProject(
+
+                projectId
+
+            );
+
+
+
+
+
+        if(!project){
+
+
+            throw new Error(
+
+                "Project not found"
 
             );
 
@@ -129,11 +160,42 @@ class ProjectController {
 
 
 
-        return projects;
+        this.currentProject =
+
+            project;
+
+
+
+
+
+        return project;
+
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Current Project
+
+    ==============================================
+    */
+
+
+    current(){
+
+
+
+        return this.currentProject;
+
+
+
+    }
 
 
 
@@ -144,80 +206,54 @@ class ProjectController {
 
     Create Project
 
-    建立專案
-
     ==============================================
     */
 
 
-    async create(
+    create(
+
         data
+
     ){
 
 
 
-        if(!data){
+        const project = {
 
 
-            throw new Error(
-
-                "Project data required"
-
-            );
+            ...data,
 
 
-        }
+            status:
+
+                "Active",
 
 
+            createDate:
 
+                new Date()
 
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.ProjectStatus.ACTIVE;
+                .toISOString()
 
 
 
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
+        };
 
 
 
 
 
-        const result =
+        return this.projectStorage
 
+            .create(
 
-            await this.storage.create(
-
-                data
+                project
 
             );
 
-
-
-
-
-        await this.load();
-
-
-
-
-
-        return result;
 
 
     }
-
 
 
 
@@ -232,27 +268,21 @@ class ProjectController {
     */
 
 
-    async update(
+    update(
+
+        projectId,
+
         data
+
     ){
 
 
 
-        data.updatedAt =
+        return this.projectStorage
 
+            .update(
 
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        const result =
-
-
-            await this.storage.update(
+                projectId,
 
                 data
 
@@ -260,19 +290,7 @@ class ProjectController {
 
 
 
-
-
-        await this.load();
-
-
-
-
-
-        return result;
-
-
     }
-
 
 
 
@@ -281,23 +299,28 @@ class ProjectController {
     /*
     ==============================================
 
-    Detail
+    Get Project BOM
 
     ==============================================
     */
 
 
-    async detail(
+    getBOMVersions(
+
         projectId
+
     ){
 
 
 
-        return await this.storage.get(
+        return this.bomStorage
 
-            projectId
+            .getByProject(
 
-        );
+                projectId
+
+            );
+
 
 
     }
@@ -306,28 +329,26 @@ class ProjectController {
 
 
 
-
     /*
     ==============================================
 
-    Delete Protection
-
-    僅停用，不刪除
+    Project Summary
 
     ==============================================
     */
 
 
-    async disable(
+    summary(
+
         projectId
+
     ){
 
 
 
         const project =
 
-
-            await this.storage.get(
+            this.getProject(
 
                 projectId
 
@@ -337,239 +358,13 @@ class ProjectController {
 
 
 
-        if(!project){
+        const bomVersions =
 
-
-            throw new Error(
-
-                "Project not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        project.status =
-
-
-            CWPSTypes.ProjectStatus.INACTIVE;
-
-
-
-
-
-        project.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            project
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Search
-
-    ==============================================
-    */
-
-
-    async search(
-        keyword
-    ){
-
-
-
-        const projects =
-
-
-            await this.storage.getAll();
-
-
-
-
-
-        if(!keyword){
-
-
-            return projects;
-
-
-        }
-
-
-
-
-
-        return projects.filter(
-
-            item=>{
-
-
-                return (
-
-
-                    item.name &&
-
-
-                    item.name.includes(
-
-                        keyword
-
-                    )
-
-
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Project Status
-
-    ==============================================
-    */
-
-
-    async changeStatus(
-        projectId,
-        status
-    ){
-
-
-
-        const project =
-
-
-            await this.storage.get(
+            this.getBOMVersions(
 
                 projectId
 
             );
-
-
-
-
-
-        if(!project){
-
-
-            throw new Error(
-
-                "Project not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        project.status = status;
-
-
-
-
-
-        project.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            project
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Summary
-
-    專案摘要
-
-    ==============================================
-    */
-
-
-    async summary(
-        projectId
-    ){
-
-
-
-        const project =
-
-
-            await this.storage.get(
-
-                projectId
-
-            );
-
-
-
-
-
-        if(!project){
-
-
-            return null;
-
-
-        }
 
 
 
@@ -578,38 +373,20 @@ class ProjectController {
         return {
 
 
-
-            id:
-
-                project.id,
+            project,
 
 
+            bomCount:
 
-            name:
-
-                project.name,
-
+                bomVersions.length,
 
 
-            customer:
-
-                project.customer,
-
-
-
-            status:
-
-                project.status,
-
-
-
-            createdAt:
-
-                project.createdAt
+            bomVersions
 
 
 
         };
+
 
 
     }
@@ -618,8 +395,46 @@ class ProjectController {
 
 
 
-}
+    /*
+    ==============================================
 
+    Close Project
+
+    ==============================================
+    */
+
+
+    close(
+
+        projectId
+
+    ){
+
+
+
+        return this.projectStorage
+
+            .update(
+
+                projectId,
+
+                {
+
+                    status:
+
+                        "Closed"
+
+                }
+
+            );
+
+
+
+    }
+
+
+
+}
 
 
 
