@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.5.1
+ 2.9.23
 
 
  Build:
- Enterprise Cost Analysis Layer
+ Enterprise Cost Analysis Engine Layer
 
 
  Description:
- Procurement Cost Analysis Service
+ Procurement Cost Analysis Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,14 +36,15 @@ class CostAnalysis {
     constructor(){
 
 
-        this.purchaseStorage =
+        this.materialStorage =
 
-            new PurchaseStorage();
+            new global.MaterialStorage();
 
 
-        this.invoiceStorage =
+        this.priceHistory =
 
-            new InvoiceStorage();
+            new global.SupplierPriceHistory();
+
 
 
     }
@@ -53,144 +53,31 @@ class CostAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Calculate Material Cost
 
     ==============================================
     */
 
 
-    async init(){
+    calculateMaterialCost(
 
+        quantity,
 
-        if(this.purchaseStorage.init){
+        unitPrice
 
-
-            await this.purchaseStorage.init();
-
-
-        }
-
-
-        if(this.invoiceStorage.init){
-
-
-            await this.invoiceStorage.init();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Purchase Cost
-
-    計算採購成本
-
-    ==============================================
-    */
-
-
-    calculatePurchaseCost(
-        purchase
     ){
 
 
 
-        if(!purchase){
+        return Number(quantity || 0)
 
+        *
 
-            return 0;
+        Number(unitPrice || 0);
 
-
-        }
-
-
-
-
-
-        if(
-
-            purchase.totalAmount
-
-        ){
-
-
-            return Number(
-
-                purchase.totalAmount
-
-            );
-
-
-        }
-
-
-
-
-
-        if(
-
-            !purchase.items
-
-        ){
-
-
-            return 0;
-
-
-        }
-
-
-
-
-
-        return purchase.items.reduce(
-
-            (sum,item)=>{
-
-
-                return (
-
-                    sum +
-
-                    (
-
-                        Number(
-
-                            item.price || 0
-
-                        )
-
-                        *
-
-                        Number(
-
-                            item.quantity || 0
-
-                        )
-
-                    )
-
-                );
-
-
-            },
-
-            0
-
-        );
 
 
     }
@@ -199,150 +86,34 @@ class CostAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Calculate Invoice Cost
+    Analyze Material Cost
 
     ==============================================
     */
 
 
-    calculateInvoiceCost(
-        invoices
+    analyzeMaterial(
+
+        materialId,
+
+        quantity,
+
+        unitPrice
+
     ){
 
 
 
-        if(
+        const material =
 
-            !Array.isArray(invoices)
+            this.materialStorage
 
-        ){
+            .getById(
 
-
-            return 0;
-
-
-        }
-
-
-
-
-
-        return invoices.reduce(
-
-            (sum,item)=>{
-
-
-                return (
-
-                    sum +
-
-                    Number(
-
-                        item.amount || 0
-
-                    )
-
-                );
-
-
-            },
-
-            0
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Project Cost Summary
-
-    專案成本分析
-
-    ==============================================
-    */
-
-
-    async projectSummary(
-        projectId
-    ){
-
-
-
-        const purchases =
-
-
-            await this.purchaseStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const invoices =
-
-
-            await this.invoiceStorage.findByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        const purchaseCost =
-
-
-            purchases.reduce(
-
-                (sum,item)=>{
-
-
-                    return (
-
-                        sum +
-
-                        this.calculatePurchaseCost(
-
-                            item
-
-                        )
-
-                    );
-
-
-                },
-
-                0
-
-            );
-
-
-
-
-
-        const invoiceCost =
-
-
-            this.calculateInvoiceCost(
-
-                invoices
+                materialId
 
             );
 
@@ -353,59 +124,58 @@ class CostAnalysis {
         return {
 
 
-            projectId:
+            materialId,
 
 
-                projectId,
+            materialCode:
+
+                material
+
+                ?
+
+                material.materialCode
+
+                :
+
+                "",
 
 
-
-            purchaseCost:
-
-
-                purchaseCost,
+            quantity,
 
 
+            unit:
 
-            invoiceCost:
+                material
 
+                ?
 
-                invoiceCost,
+                material.unit
 
+                :
 
-
-            totalCost:
-
-
-                Math.max(
-
-                    purchaseCost,
-
-                    invoiceCost
-
-                ),
+                "",
 
 
-
-            purchaseCount:
-
-
-                purchases.length,
+            unitPrice,
 
 
+            amount:
 
-            invoiceCount:
+                this.calculateMaterialCost(
 
+                    quantity,
 
-                invoices.length
+                    unitPrice
+
+                )
 
 
 
         };
 
 
-    }
 
+    }
 
 
 
@@ -414,150 +184,40 @@ class CostAnalysis {
     /*
     ==============================================
 
-    Material Cost Breakdown
-
-    材料成本分析
+    Calculate Total Cost
 
     ==============================================
     */
 
 
-    materialBreakdown(
+    totalCost(
+
         items
+
     ){
 
 
 
-        if(
+        return items.reduce(
 
-            !Array.isArray(items)
+            (sum,item)=>{
 
-        ){
 
+                return sum +
 
-            return [];
+                Number(
 
+                    item.amount || 0
 
-        }
+                );
 
 
+            },
 
-
-
-        const map = {};
-
-
-
-
-
-        items.forEach(
-
-            item=>{
-
-
-                const code =
-
-
-                    item.materialCode ||
-
-                    "UNKNOWN";
-
-
-
-
-
-                if(
-
-                    !map[code]
-
-                ){
-
-
-                    map[code] = {
-
-
-
-                        materialCode:
-
-                            code,
-
-
-
-                        materialName:
-
-                            item.materialName,
-
-
-
-                        quantity:
-
-                            0,
-
-
-
-                        amount:
-
-                            0
-
-
-
-                    };
-
-
-                }
-
-
-
-
-
-                map[code].quantity +=
-
-
-                    Number(
-
-                        item.quantity || 0
-
-                    );
-
-
-
-
-
-                map[code].amount +=
-
-
-                    Number(
-
-                        item.amount ||
-
-                        (
-
-                            item.price *
-
-                            item.quantity
-
-                        )
-
-                        ||
-
-                        0
-
-                    );
-
-
-            }
+            0
 
         );
 
-
-
-
-
-        return Object.values(
-
-            map
-
-        );
 
 
     }
@@ -566,102 +226,99 @@ class CostAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Cost Percentage
-
-    成本比例
+    Compare Supplier Price
 
     ==============================================
     */
 
 
-    calculatePercentage(
-        items
+    compareSupplierPrice(
+
+        materialId,
+
+        suppliers
+
     ){
 
 
 
-        const total =
+        return suppliers.map(
+
+            supplier => {
 
 
-            items.reduce(
 
-                (sum,item)=>{
+                const latest =
 
+                    this.priceHistory
 
-                    return sum +
+                    .latestPrice(
 
-                    Number(
+                        supplier.supplierId,
 
-                        item.amount || 0
+                        materialId
 
                     );
 
 
-                },
 
-                0
-
-            );
-
-
-
-
-
-        return items.map(
-
-            item=>{
 
 
                 return {
 
 
-                    ...item,
+                    supplierId:
+
+                        supplier.supplierId,
 
 
+                    supplierName:
 
-                    percentage:
+                        supplier.name,
 
 
-                        total === 0
+                    unitPrice:
+
+                        latest
 
                         ?
 
-                        0
+                        latest.unitPrice
 
                         :
 
-                        Number(
-
-                            (
-
-                                item.amount /
-
-                                total *
-
-                                100
-
-                            )
-
-                            .toFixed(2)
-
-                        )
+                        0
 
 
 
                 };
 
 
+
+            }
+
+        )
+
+        .sort(
+
+            (a,b)=>{
+
+
+                return a.unitPrice -
+
+                    b.unitPrice;
+
+
             }
 
         );
 
 
-    }
 
+    }
 
 
 
@@ -670,67 +327,63 @@ class CostAnalysis {
     /*
     ==============================================
 
-    Compare Budget
+    Unit Weight Cost
 
-    預算差異分析
+    單重分析
 
     ==============================================
     */
 
 
-    compareBudget(
-        budget,
-        actual
+    analyzeWeightCost(
+
+        quantity,
+
+        unitWeight,
+
+        unitPrice
+
     ){
+
+
+
+        const weight =
+
+
+            Number(quantity || 0)
+
+            *
+
+            Number(unitWeight || 0);
+
+
 
 
 
         return {
 
 
-
-            budget:
-
-
-                Number(
-
-                    budget || 0
-
-                ),
+            quantity,
 
 
-
-            actual:
-
-
-                Number(
-
-                    actual || 0
-
-                ),
+            unitWeight,
 
 
+            totalWeight:
 
-            difference:
+                weight,
 
 
-                Number(
+            cost:
 
-                    actual || 0
+                weight *
 
-                )
-
-                -
-
-                Number(
-
-                    budget || 0
-
-                )
+                Number(unitPrice || 0)
 
 
 
         };
+
 
 
     }
@@ -739,9 +392,131 @@ class CostAnalysis {
 
 
 
+    /*
+    ==============================================
+
+    Cost Difference
+
+    ==============================================
+    */
+
+
+    difference(
+
+        oldCost,
+
+        newCost
+
+    ){
+
+
+
+        return {
+
+
+            difference:
+
+                newCost -
+
+                oldCost,
+
+
+            percentage:
+
+
+                oldCost
+
+                ?
+
+                (
+
+                    (
+
+                    newCost -
+
+                    oldCost
+
+                    )
+
+                    /
+
+                    oldCost
+
+                )
+
+                *
+
+                100
+
+
+                :
+
+                0
+
+
+
+        };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Summary
+
+    ==============================================
+    */
+
+
+    summary(
+
+        items
+
+    ){
+
+
+
+        const total =
+
+            this.totalCost(
+
+                items
+
+            );
+
+
+
+
+
+        return {
+
+
+            itemCount:
+
+                items.length,
+
+
+            totalCost:
+
+                total
+
+
+
+        };
+
+
+
+    }
+
+
 
 }
-
 
 
 
