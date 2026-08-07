@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.6.1
+ 2.9.30
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Supplier UI Controller
+ Supplier Management Controller
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,31 +36,25 @@ class SupplierController {
     constructor(){
 
 
-        this.engine =
+        this.supplierEngine =
 
-            new SupplierEngine();
-
+            new global.SupplierEngine();
 
 
         this.rating =
 
-            new SupplierRating();
-
+            new global.SupplierRating();
 
 
         this.priceHistory =
 
-            new SupplierPriceHistory();
+            new global.SupplierPriceHistory();
 
 
+        this.supplierAnalysis =
 
-        this.analysis =
+            new global.SupplierAnalysis();
 
-            new SupplierAnalysis();
-
-
-
-        this.view = null;
 
 
     }
@@ -70,39 +63,23 @@ class SupplierController {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Supplier List
 
     ==============================================
     */
 
 
-    async init(view){
+    getSuppliers(){
 
 
 
-        this.view = view;
+        return this.supplierEngine
 
+            .getAll();
 
-
-        await this.engine.init();
-
-
-        await this.rating.init();
-
-
-        await this.priceHistory.init();
-
-
-        await this.analysis.init();
-
-
-
-
-        await this.load();
 
 
     }
@@ -111,50 +88,65 @@ class SupplierController {
 
 
 
-
     /*
     ==============================================
 
-    Load Supplier List
+    Supplier Detail
 
     ==============================================
     */
 
 
-    async load(){
+    getSupplier(
+
+        supplierId
+
+    ){
 
 
 
-        const suppliers =
+        return this.supplierEngine
 
+            .getById(
 
-            await this.engine.getAll();
-
-
-
-
-
-        if(this.view && this.view.render){
-
-
-            this.view.render(
-
-                suppliers
+                supplierId
 
             );
 
 
-        }
+    }
 
 
 
 
 
-        return suppliers;
+    /*
+    ==============================================
+
+    Search Supplier
+
+    ==============================================
+    */
+
+
+    search(
+
+        keyword
+
+    ){
+
+
+
+        return this.supplierEngine
+
+            .search(
+
+                keyword
+
+            );
 
 
     }
-
 
 
 
@@ -169,16 +161,19 @@ class SupplierController {
     */
 
 
-    async create(
+    create(
+
         data
+
     ){
 
 
 
-        const result =
+        const validation =
 
+            this.supplierEngine
 
-            await this.engine.create(
+            .validate(
 
                 data
 
@@ -188,17 +183,53 @@ class SupplierController {
 
 
 
-        await this.load();
+        if(!validation.valid){
+
+
+            return {
+
+
+                success:false,
+
+
+                errors:
+
+                    validation.errors
+
+
+
+            };
+
+
+        }
 
 
 
 
 
-        return result;
+        return {
+
+
+            success:true,
+
+
+            data:
+
+                this.supplierEngine
+
+                .create(
+
+                    data
+
+                )
+
+
+
+        };
+
 
 
     }
-
 
 
 
@@ -213,109 +244,28 @@ class SupplierController {
     */
 
 
-    async update(
+    update(
+
+        supplierId,
+
         data
+
     ){
 
 
 
-        const result =
+        return this.supplierEngine
 
+            .update(
 
-            await this.engine.update(
+                supplierId,
 
                 data
 
             );
 
 
-
-
-
-        await this.load();
-
-
-
-
-
-        return result;
-
-
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Disable Supplier
-
-    ==============================================
-    */
-
-
-    async disable(
-        supplierId
-    ){
-
-
-
-        const result =
-
-
-            await this.engine.disable(
-
-                supplierId
-
-            );
-
-
-
-
-
-        await this.load();
-
-
-
-
-
-        return result;
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get Supplier Detail
-
-    ==============================================
-    */
-
-
-    async detail(
-        supplierId
-    ){
-
-
-
-        return await this.engine.get(
-
-            supplierId
-
-        );
-
-
-    }
-
 
 
 
@@ -330,39 +280,47 @@ class SupplierController {
     */
 
 
-    async addRating(
-        supplierId,
+    addRating(
+
         data
+
     ){
 
 
 
-        const result =
+        return this.rating
 
-
-            await this.rating.createEvaluation(
-
-                supplierId,
+            .create(
 
                 data
 
             );
 
 
-
-
-
-        await this.load();
+    }
 
 
 
 
 
-        return result;
+    getRating(
+
+        supplierId
+
+    ){
+
+
+
+        return this.rating
+
+            .getBySupplier(
+
+                supplierId
+
+            );
 
 
     }
-
 
 
 
@@ -377,20 +335,21 @@ class SupplierController {
     */
 
 
-    async addPrice(
-        supplierId,
+    addPriceRecord(
+
         data
+
     ){
 
 
 
-        return await this.priceHistory.addRecord(
+        return this.priceHistory
 
-            supplierId,
+            .create(
 
-            data
+                data
 
-        );
+            );
 
 
     }
@@ -399,22 +358,28 @@ class SupplierController {
 
 
 
+    getPriceHistory(
 
-    async getPriceHistory(
-        supplierId
+        supplierId,
+
+        materialId
+
     ){
 
 
 
-        return await this.priceHistory.getHistory(
+        return this.priceHistory
 
-            supplierId
+            .getHistory(
 
-        );
+                supplierId,
+
+                materialId
+
+            );
 
 
     }
-
 
 
 
@@ -429,16 +394,17 @@ class SupplierController {
     */
 
 
-    async ranking(){
+    ranking(){
 
 
 
-        return await this.analysis.ranking();
+        return this.supplierAnalysis
+
+            .ranking();
 
 
 
     }
-
 
 
 
@@ -447,27 +413,23 @@ class SupplierController {
     /*
     ==============================================
 
-    Recommendation
+    Best Supplier
 
     ==============================================
     */
 
 
-    async recommend(
-        limit = 5
-    ){
+    bestSupplier(){
 
 
 
-        return await this.analysis.recommend(
+        return this.supplierAnalysis
 
-            limit
+            .bestSupplier();
 
-        );
 
 
     }
-
 
 
 
@@ -476,70 +438,27 @@ class SupplierController {
     /*
     ==============================================
 
-    Search
+    Dashboard Summary
 
     ==============================================
     */
 
 
-    async search(
-        keyword
-    ){
+    summary(){
 
 
 
-        const suppliers =
+        return this.supplierAnalysis
 
+            .summary();
 
-            await this.engine.getAll();
-
-
-
-
-
-        if(!keyword){
-
-
-            return suppliers;
-
-
-        }
-
-
-
-
-
-        return suppliers.filter(
-
-            item=>{
-
-
-                return (
-
-                    item.name &&
-
-                    item.name.includes(
-
-                        keyword
-
-                    )
-
-                );
-
-
-            }
-
-        );
 
 
     }
-
-
 
 
 
 }
-
 
 
 
