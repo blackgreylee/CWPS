@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.4.3
+ 2.9.22
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Supplier Historical Price Analysis Service
+ Supplier Material Price Tracking System
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,37 +36,18 @@ class SupplierPriceHistory {
     constructor(){
 
 
-        this.storage =
+        this.database =
 
-            new SupplierStorage();
-
-
-    }
+            global.cwpsDatabase;
 
 
+        this.collection =
 
+            this.database.collection(
 
+                "supplierPriceHistory"
 
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
+            );
 
 
     }
@@ -76,142 +56,145 @@ class SupplierPriceHistory {
 
 
 
-
     /*
     ==============================================
 
-    Add Price Record
-
-    建立價格紀錄
+    Get All Records
 
     ==============================================
     */
 
 
-    async addRecord(
-        supplierId,
-        priceData
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get By Supplier
+
+    ==============================================
+    */
+
+
+    getBySupplier(
+
+        supplierId
+
     ){
 
 
 
-        const supplier =
+        return this.collection.where({
 
+            supplierId
 
-            await this.storage.get(
+        });
 
-                supplierId
 
-            );
+    }
 
 
 
 
 
-        if(!supplier){
+    /*
+    ==============================================
 
+    Get By Material
 
-            throw new Error(
+    ==============================================
+    */
 
-                "Supplier not found"
 
-            );
+    getByMaterial(
 
+        materialId
 
-        }
+    ){
 
 
 
+        return this.collection.where({
 
+            materialId
 
-        supplier.priceHistory =
+        });
 
 
-            supplier.priceHistory || [];
+    }
 
 
 
 
 
-        const record = {
+    /*
+    ==============================================
 
+    Get Supplier Material History
 
+    ==============================================
+    */
 
-            supplierId:
 
+    getHistory(
 
+        supplierId,
 
-                supplierId,
+        materialId
 
+    ){
 
 
-            materialCode:
 
+        return this.collection.where({
 
+            supplierId,
 
-                priceData.materialCode,
+            materialId
 
+        });
 
 
-            materialName:
+    }
 
 
 
-                priceData.materialName,
 
 
+    /*
+    ==============================================
 
-            unit:
+    Create Price Record
 
+    ==============================================
+    */
 
 
-                priceData.unit,
+    create(
 
+        record
 
+    ){
 
-            price:
 
 
+        const data = {
 
-                Number(
 
-                    priceData.price || 0
+            ...record,
 
-                ),
 
-
-
-            currency:
-
-
-
-                priceData.currency || "TWD",
-
-
-
-            source:
-
-
-
-                priceData.source || "quotation",
-
-
-
-            date:
-
-
-
-                priceData.date ||
-
-                new Date()
-
-                .toISOString(),
-
-
-
-            createdAt:
-
-
+            createDate:
 
                 new Date()
 
@@ -225,19 +208,9 @@ class SupplierPriceHistory {
 
 
 
-        supplier.priceHistory.push(
+        return this.collection.insert(
 
-            record
-
-        );
-
-
-
-
-
-        return await this.storage.update(
-
-            supplier
+            data
 
         );
 
@@ -248,138 +221,32 @@ class SupplierPriceHistory {
 
 
 
-
     /*
     ==============================================
 
-    Get Price History
-
-    查詢價格紀錄
+    Latest Price
 
     ==============================================
     */
 
 
-    async getHistory(
-        supplierId
-    ){
+    latestPrice(
 
-
-
-        const supplier =
-
-
-            await this.storage.get(
-
-                supplierId
-
-            );
-
-
-
-
-
-        if(!supplier){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        return supplier.priceHistory || [];
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find Material Price
-
-    查詢指定材料價格
-
-    ==============================================
-    */
-
-
-    async findMaterialPrice(
         supplierId,
-        materialCode
-    ){
 
+        materialId
 
-
-        const history =
-
-
-            await this.getHistory(
-
-                supplierId
-
-            );
-
-
-
-
-
-        return history.filter(
-
-            item =>
-
-
-                item.materialCode ===
-
-                materialCode
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get Latest Price
-
-    最新價格
-
-    ==============================================
-    */
-
-
-    async getLatestPrice(
-        supplierId,
-        materialCode
     ){
 
 
 
         const list =
 
-
-            await this.findMaterialPrice(
+            this.getHistory(
 
                 supplierId,
 
-                materialCode
+                materialId
 
             );
 
@@ -387,11 +254,7 @@ class SupplierPriceHistory {
 
 
 
-        if(
-
-            list.length === 0
-
-        ){
+        if(!list.length){
 
 
             return null;
@@ -403,14 +266,14 @@ class SupplierPriceHistory {
 
 
 
-        list.sort(
+        return list.sort(
 
             (a,b)=>{
 
 
                 return new Date(
 
-                    b.date
+                    b.createDate
 
                 )
 
@@ -418,24 +281,18 @@ class SupplierPriceHistory {
 
                 new Date(
 
-                    a.date
+                    a.createDate
 
                 );
 
 
             }
 
-        );
+        )[0];
 
-
-
-
-
-        return list[0];
 
 
     }
-
 
 
 
@@ -446,27 +303,27 @@ class SupplierPriceHistory {
 
     Average Price
 
-    平均價格
-
     ==============================================
     */
 
 
-    async getAveragePrice(
+    averagePrice(
+
         supplierId,
-        materialCode
+
+        materialId
+
     ){
 
 
 
         const list =
 
-
-            await this.findMaterialPrice(
+            this.getHistory(
 
                 supplierId,
 
-                materialCode
+                materialId
 
             );
 
@@ -474,11 +331,7 @@ class SupplierPriceHistory {
 
 
 
-        if(
-
-            list.length === 0
-
-        ){
+        if(!list.length){
 
 
             return 0;
@@ -490,8 +343,7 @@ class SupplierPriceHistory {
 
 
 
-        const total =
-
+        return (
 
             list.reduce(
 
@@ -502,7 +354,7 @@ class SupplierPriceHistory {
 
                     Number(
 
-                        item.price || 0
+                        item.unitPrice || 0
 
                     );
 
@@ -511,29 +363,17 @@ class SupplierPriceHistory {
 
                 0
 
-            );
-
-
-
-
-
-        return Number(
-
-            (
-
-                total /
-
-                list.length
-
             )
 
-            .toFixed(2)
+            /
+
+            list.length
 
         );
 
 
-    }
 
+    }
 
 
 
@@ -544,191 +384,78 @@ class SupplierPriceHistory {
 
     Price Trend
 
-    價格趨勢分析
-
     ==============================================
     */
 
 
-    async analyzeTrend(
+    trend(
+
         supplierId,
-        materialCode
+
+        materialId
+
     ){
 
 
 
         const list =
 
-
-            await this.findMaterialPrice(
+            this.getHistory(
 
                 supplierId,
 
-                materialCode
-
-            );
-
-
-
-
-
-        if(
-
-            list.length < 2
-
-        ){
-
-
-            return {
-
-
-                trend:
-
-                    "INSUFFICIENT_DATA",
-
-
-                change:
-
-                    0
-
-
-            };
-
-
-        }
-
-
-
-
-
-        list.sort(
-
-            (a,b)=>{
-
-
-                return new Date(
-
-                    a.date
-
-                )
-
-                -
-
-                new Date(
-
-                    b.date
-
-                );
-
-
-            }
-
-        );
-
-
-
-
-
-        const first =
-
-
-            Number(
-
-                list[0].price
-
-            );
-
-
-
-
-
-        const last =
-
-
-            Number(
-
-                list[
-
-                    list.length - 1
-
-                ].price
-
-            );
-
-
-
-
-
-        const change =
-
-
-
-            (
-
-                (
-
-                    last -
-
-                    first
-
-                )
-
-                /
-
-                first
+                materialId
 
             )
 
-            *
+            .sort(
 
-            100;
-
-
+                (a,b)=>{
 
 
+                    return new Date(
 
-        return {
+                        a.createDate
+
+                    )
+
+                    -
+
+                    new Date(
+
+                        b.createDate
+
+                    );
 
 
+                }
 
-            trend:
-
-
-
-                change > 0
-
-                ?
-
-                "UP"
-
-                :
-
-                change < 0
-
-                ?
-
-                "DOWN"
-
-                :
-
-                "STABLE",
+            );
 
 
 
 
-            change:
+
+        return list.map(
+
+            item => ({
+
+
+                date:
+
+                    item.createDate,
+
+
+                price:
+
+                    item.unitPrice
 
 
 
-                Number(
+            })
 
-                    change.toFixed(2)
+        );
 
-                )
-
-
-
-        };
 
 
     }
@@ -737,9 +464,130 @@ class SupplierPriceHistory {
 
 
 
+    /*
+    ==============================================
+
+    Highest / Lowest
+
+    ==============================================
+    */
+
+
+    range(
+
+        supplierId,
+
+        materialId
+
+    ){
+
+
+
+        const list =
+
+            this.getHistory(
+
+                supplierId,
+
+                materialId
+
+            );
+
+
+
+
+
+        if(!list.length){
+
+
+            return null;
+
+
+        }
+
+
+
+
+
+        const prices =
+
+            list.map(
+
+                item =>
+
+                Number(
+
+                    item.unitPrice || 0
+
+                )
+
+            );
+
+
+
+
+
+        return {
+
+
+            min:
+
+                Math.min(
+
+                    ...prices
+
+                ),
+
+
+            max:
+
+                Math.max(
+
+                    ...prices
+
+                )
+
+
+
+        };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete Record
+
+    ==============================================
+    */
+
+
+    delete(
+
+        id
+
+    ){
+
+
+
+        return this.collection.delete(
+
+            id
+
+        );
+
+
+    }
+
+
 
 }
-
 
 
 
