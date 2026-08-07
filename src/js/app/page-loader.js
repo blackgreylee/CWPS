@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.8.2
+ 2.9.39
 
 
  Build:
- Enterprise Page Loader
+ Enterprise Page Loader Layer
 
 
  Description:
- Dynamic HTML Page Loader
+ Dynamic Page Navigation Loader
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,21 +36,66 @@ class PageLoader {
     constructor(){
 
 
-        this.basePath =
+        this.uiManager =
 
-            "pages/";
-
-
-        this.containerId =
-
-            "app";
+            null;
 
 
-        this.currentPage = null;
+        this.menuController =
+
+            null;
+
+
+        this.currentPage =
+
+            null;
+
+
+        this.routes = {
+
+
+
+            dashboard:
+
+                "dashboard",
+
+
+
+            project:
+
+                "project",
+
+
+
+            bom:
+
+                "bom",
+
+
+
+            procurement:
+
+                "procurement",
+
+
+
+            supplier:
+
+                "supplier",
+
+
+
+            analysis:
+
+                "analysis"
+
+
+
+        };
+
 
 
     }
-
 
 
 
@@ -66,18 +110,23 @@ class PageLoader {
     */
 
 
-    init(
-        containerId = "app"
-    ){
+    init(){
 
 
 
-        this.containerId = containerId;
+        this.uiManager =
+
+            global.uiManager;
+
+
+
+        this.menuController =
+
+            global.menuController;
 
 
 
     }
-
 
 
 
@@ -92,18 +141,25 @@ class PageLoader {
     */
 
 
-    async load(
+    load(
+
         page
+
     ){
 
 
 
-        if(!page){
+        if(!this.routes[page]){
+
 
 
             throw new Error(
 
-                "Page name required"
+                "Page route not found: "
+
+                +
+
+                page
 
             );
 
@@ -114,221 +170,69 @@ class PageLoader {
 
 
 
-        const url =
-
-
-            this.basePath +
-
-            page +
-
-            ".html";
+        if(this.menuController){
 
 
 
+            this.menuController
 
-
-        try{
-
-
-            const response =
-
-
-                await fetch(
-
-                    url
-
-                );
-
-
-
-
-
-            if(!response.ok){
-
-
-                throw new Error(
-
-                    "Page load failed: "
-
-                    +
+                .navigate(
 
                     page
 
                 );
 
 
-            }
+
+        }
 
 
 
 
 
-            const html =
-
-
-                await response.text();
+        if(this.uiManager){
 
 
 
+            this.uiManager
 
+                .open(
 
-            const container =
-
-
-                document.getElementById(
-
-                    this.containerId
+                    page
 
                 );
 
 
 
-
-
-            if(container){
-
-
-                container.innerHTML = html;
-
-
-            }
-
-
-
-
-
-            this.currentPage = page;
-
-
-
-
-
-            return html;
-
-
-        }
-
-        catch(error){
-
-
-
-            this.showError(
-
-                error
-
-            );
-
-
-
-
-
-            throw error;
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Load Partial
-
-    ==============================================
-    */
-
-
-    async loadPartial(
-        url
-    ){
-
-
-
-        const response =
-
-
-            await fetch(
-
-                url
-
-            );
-
-
-
-
-
-        if(!response.ok){
-
-
-            throw new Error(
-
-                "Partial load error"
-
-            );
-
-
         }
 
 
 
 
 
-        return await response.text();
+        this.currentPage =
+
+            page;
+
+
+
+
+
+        return {
+
+
+            success:true,
+
+
+            page
+
+
+
+        };
 
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Replace Container
-
-    ==============================================
-    */
-
-
-    render(
-        html
-    ){
-
-
-
-        const container =
-
-
-            document.getElementById(
-
-                this.containerId
-
-            );
-
-
-
-
-
-        if(container){
-
-
-            container.innerHTML = html;
-
-
-        }
-
-
-    }
-
 
 
 
@@ -343,7 +247,7 @@ class PageLoader {
     */
 
 
-    getCurrent(){
+    current(){
 
 
 
@@ -357,76 +261,139 @@ class PageLoader {
 
 
 
-
     /*
     ==============================================
 
-    Error
+    Register Route
 
     ==============================================
     */
 
 
-    showError(
-        error
+    register(
+
+        name,
+
+        viewName
+
     ){
 
 
 
-        const container =
+        this.routes[name] =
 
-
-            document.getElementById(
-
-                this.containerId
-
-            );
+            viewName;
 
 
 
-
-
-        if(container){
-
-
-            container.innerHTML = `
+    }
 
 
 
-            <div class="page-error">
 
 
-                Unable to load page
+    /*
+    ==============================================
+
+    Remove Route
+
+    ==============================================
+    */
 
 
-                <br>
+    remove(
 
+        name
 
-                ${
-
-                    error.message
-
-                }
-
-
-            </div>
+    ){
 
 
 
-            `;
+        delete this.routes[name];
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Refresh
+
+    ==============================================
+    */
+
+
+    refresh(){
+
+
+
+        if(this.uiManager){
+
+
+
+            this.uiManager
+
+                .refresh();
+
 
 
         }
 
 
 
+    }
 
 
-        console.error(
 
-            error
+
+
+    /*
+    ==============================================
+
+    Go Home
+
+    ==============================================
+    */
+
+
+    home(){
+
+
+
+        return this.load(
+
+            "dashboard"
 
         );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Routes
+
+    ==============================================
+    */
+
+
+    getRoutes(){
+
+
+
+        return this.routes;
+
 
 
     }
@@ -434,7 +401,6 @@ class PageLoader {
 
 
 }
-
 
 
 
