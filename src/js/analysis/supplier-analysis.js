@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.5.4
+ 2.9.26
 
 
  Build:
- Enterprise Supplier Analysis Layer
+ Enterprise Supplier Analysis Engine Layer
 
 
  Description:
- Supplier Performance Analysis Service
+ Supplier Performance Analysis Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,21 +36,25 @@ class SupplierAnalysis {
     constructor(){
 
 
-        this.supplierStorage =
+        this.supplierEngine =
 
-            new SupplierStorage();
+            new global.SupplierEngine();
 
 
+        this.rating =
 
-        this.purchaseStorage =
+            new global.SupplierRating();
 
-            new PurchaseStorage();
 
+        this.priceHistory =
+
+            new global.SupplierPriceHistory();
 
 
         this.quotationStorage =
 
-            new QuotationStorage();
+            new global.QuotationStorage();
+
 
 
     }
@@ -60,126 +63,24 @@ class SupplierAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Supplier Overview
 
     ==============================================
     */
 
 
-    async init(){
+    overview(){
 
 
-        const stores = [
 
+        const suppliers =
 
-            this.supplierStorage,
+            this.supplierEngine
 
-
-            this.purchaseStorage,
-
-
-            this.quotationStorage
-
-
-        ];
-
-
-
-
-
-        for(
-
-            const store of stores
-
-        ){
-
-
-            if(store.init){
-
-
-                await store.init();
-
-
-            }
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Supplier Summary
-
-    供應商總覽
-
-    ==============================================
-    */
-
-
-    async summary(
-        supplierId
-    ){
-
-
-
-        const supplier =
-
-
-            await this.supplierStorage.get(
-
-                supplierId
-
-            );
-
-
-
-
-
-        if(!supplier){
-
-
-            return null;
-
-
-        }
-
-
-
-
-
-        const purchases =
-
-
-            await this.purchaseStorage.findBySupplier(
-
-                supplierId
-
-            );
-
-
-
-
-
-        const quotations =
-
-
-            await this.quotationStorage.findBySupplier(
-
-                supplierId
-
-            );
+            .getAll();
 
 
 
@@ -188,39 +89,22 @@ class SupplierAnalysis {
         return {
 
 
+            total:
 
-            supplierId:
-
-
-                supplierId,
+                suppliers.length,
 
 
+            active:
 
-            supplierName:
+                suppliers.filter(
 
+                    item=>
 
-                supplier.name,
+                    item.status==="Active"
 
+                )
 
-
-            purchaseCount:
-
-
-                purchases.length,
-
-
-
-            quotationCount:
-
-
-                quotations.length,
-
-
-
-            rating:
-
-
-                supplier.averageRating || 0
+                .length
 
 
 
@@ -233,432 +117,24 @@ class SupplierAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Purchase Ranking
-
-    採購金額排行
+    Supplier Rating Analysis
 
     ==============================================
     */
 
 
-    supplierPurchaseRanking(
-        purchases
-    ){
-
-
-
-        const map = {};
-
-
-
-
-
-        if(
-
-            !Array.isArray(purchases)
-
-        ){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        purchases.forEach(
-
-            item=>{
-
-
-                const id =
-
-
-                    item.supplierId ||
-
-                    "UNKNOWN";
-
-
-
-
-
-                if(!map[id]){
-
-
-                    map[id] = {
-
-
-
-                        supplierId:
-
-
-                            id,
-
-
-
-                        amount:
-
-
-                            0,
-
-
-
-                        count:
-
-
-                            0
-
-
-
-                    };
-
-
-                }
-
-
-
-
-
-                map[id].amount +=
-
-
-                    Number(
-
-                        item.totalAmount || 0
-
-                    );
-
-
-
-
-
-                map[id].count++;
-
-
-
-
-
-            }
-
-        );
-
-
-
-
-
-        return Object.values(
-
-            map
-
-        )
-
-        .sort(
-
-            (a,b)=>{
-
-
-                return (
-
-                    b.amount -
-
-                    a.amount
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Price Performance
-
-    價格分析
-
-    ==============================================
-    */
-
-
-    calculatePricePerformance(
-        quotations
-    ){
-
-
-
-        if(
-
-            !Array.isArray(quotations)
-
-        ){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        const map = {};
-
-
-
-
-
-        quotations.forEach(
-
-            item=>{
-
-
-                const id =
-
-
-                    item.supplierId ||
-
-                    "UNKNOWN";
-
-
-
-
-
-                if(!map[id]){
-
-
-                    map[id] = {
-
-
-
-                        supplierId:
-
-
-                            id,
-
-
-
-                        total:
-
-
-                            0,
-
-
-
-                        count:
-
-
-                            0
-
-
-
-                    };
-
-
-                }
-
-
-
-
-
-                map[id].total +=
-
-
-                    Number(
-
-                        item.amount || 0
-
-                    );
-
-
-
-
-
-                map[id].count++;
-
-
-
-
-
-            }
-
-        );
-
-
-
-
-
-        return Object.values(
-
-            map
-
-        )
-
-        .map(
-
-            item=>{
-
-
-                return {
-
-
-
-                    supplierId:
-
-
-                        item.supplierId,
-
-
-
-                    averagePrice:
-
-
-                        Number(
-
-                            (
-
-                                item.total /
-
-                                item.count
-
-                            )
-
-                            .toFixed(2)
-
-                        )
-
-
-
-                };
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Performance Score
-
-    綜合評估
-
-    ==============================================
-    */
-
-
-    calculatePerformance(
-        supplier
-    ){
-
-
-
-        const rating =
-
-
-            Number(
-
-                supplier.averageRating || 0
-
-            );
-
-
-
-
-
-        const purchaseScore =
-
-
-            Number(
-
-                supplier.purchaseScore || 0
-
-            );
-
-
-
-
-
-        const deliveryScore =
-
-
-            Number(
-
-                supplier.deliveryScore || 0
-
-            );
-
-
-
-
-
-        return Number(
-
-            (
-
-                rating * 0.5 +
-
-                purchaseScore * 0.3 +
-
-                deliveryScore * 0.2
-
-            )
-
-            .toFixed(2)
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Ranking
-
-    供應商排名
-
-    ==============================================
-    */
-
-
-    async ranking(){
+    ratingAnalysis(){
 
 
 
         const suppliers =
 
+            this.supplierEngine
 
-            await this.supplierStorage.getAll();
+            .getAll();
 
 
 
@@ -672,19 +148,52 @@ class SupplierAnalysis {
                 return {
 
 
+                    supplierId:
 
-                    ...supplier,
-
-
-
-                    performanceScore:
+                        supplier.id,
 
 
-                        this.calculatePerformance(
+                    supplierName:
 
-                            supplier
+                        supplier.name,
+
+
+                    score:
+
+                        this.rating
+
+                        .average(
+
+                            supplier.id
+
+                        ),
+
+
+                    grade:
+
+                        this.rating
+
+                        .latest(
+
+                            supplier.id
 
                         )
+
+                        ?
+
+                        this.rating
+
+                        .latest(
+
+                            supplier.id
+
+                        )
+
+                        .grade
+
+                        :
+
+                        "N/A"
 
 
 
@@ -700,13 +209,9 @@ class SupplierAnalysis {
             (a,b)=>{
 
 
-                return (
+                return b.score -
 
-                    b.performanceScore -
-
-                    a.performanceScore
-
-                );
+                    a.score;
 
 
             }
@@ -714,8 +219,8 @@ class SupplierAnalysis {
         );
 
 
-    }
 
+    }
 
 
 
@@ -724,36 +229,99 @@ class SupplierAnalysis {
     /*
     ==============================================
 
-    Recommend Supplier
-
-    推薦供應商
+    Price Competitiveness
 
     ==============================================
     */
 
 
-    async recommend(
-        limit = 5
+    priceAnalysis(
+
+        materialId
+
     ){
 
 
 
-        const list =
+        const suppliers =
+
+            this.supplierEngine
+
+            .getActive();
 
 
-            await this.ranking();
+
+
+
+        return suppliers.map(
+
+            supplier=>{
+
+
+                const price =
+
+                    this.priceHistory
+
+                    .latestPrice(
+
+                        supplier.id,
+
+                        materialId
+
+                    );
 
 
 
 
 
-        return list.slice(
+                return {
 
-            0,
 
-            limit
+                    supplierId:
+
+                        supplier.id,
+
+
+                    supplierName:
+
+                        supplier.name,
+
+
+                    unitPrice:
+
+                        price
+
+                        ?
+
+                        price.unitPrice
+
+                        :
+
+                        0
+
+
+
+                };
+
+
+            }
+
+        )
+
+        .sort(
+
+            (a,b)=>{
+
+
+                return a.unitPrice -
+
+                    b.unitPrice;
+
+
+            }
 
         );
+
 
 
     }
@@ -762,9 +330,201 @@ class SupplierAnalysis {
 
 
 
+    /*
+    ==============================================
+
+    Quotation Analysis
+
+    ==============================================
+    */
+
+
+    quotationAnalysis(){
+
+
+
+        const quotations =
+
+            this.quotationStorage
+
+            .getAll();
+
+
+
+
+
+        const result = {};
+
+
+
+
+
+        quotations.forEach(
+
+            item=>{
+
+
+                if(!result[item.supplierId]){
+
+
+                    result[item.supplierId] = {
+
+
+                        count:0,
+
+
+                        totalAmount:0
+
+
+
+                    };
+
+
+                }
+
+
+
+
+
+                result[item.supplierId]
+
+                .count++;
+
+
+
+
+
+                result[item.supplierId]
+
+                .totalAmount +=
+
+                    Number(
+
+                        item.amount || 0
+
+                    );
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return result;
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Supplier Ranking
+
+    ==============================================
+    */
+
+
+    ranking(){
+
+
+
+        return this.ratingAnalysis();
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Best Supplier
+
+    ==============================================
+    */
+
+
+    bestSupplier(){
+
+
+
+        const list =
+
+            this.ranking();
+
+
+
+
+
+        return list.length
+
+            ?
+
+            list[0]
+
+            :
+
+            null;
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Dashboard Summary
+
+    ==============================================
+    */
+
+
+    summary(){
+
+
+
+        return {
+
+
+            supplier:
+
+                this.overview(),
+
+
+            ranking:
+
+                this.ranking(),
+
+
+            best:
+
+                this.bestSupplier()
+
+
+
+        };
+
+
+    }
+
+
 
 }
-
 
 
 
