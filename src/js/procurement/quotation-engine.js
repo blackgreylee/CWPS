@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.3.2
+ 2.9.16
 
 
  Build:
- Enterprise Quotation Engine
+ Enterprise Procurement Quotation Engine Layer
 
 
  Description:
- Supplier Quotation Management Engine
+ Supplier Quotation Processing Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,9 +36,15 @@ class QuotationEngine {
     constructor(){
 
 
-        this.storage =
+        this.requirementStorage =
 
-            new QuotationStorage();
+            new global.RequirementStorage();
+
+
+        this.quotationStorage =
+
+            new global.QuotationStorage();
+
 
 
     }
@@ -48,116 +53,36 @@ class QuotationEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Create Quotation Request
 
     ==============================================
     */
 
 
-    async init(){
+    createRequest(
 
+        requirementId,
 
-        if(this.storage.init){
+        supplierId
 
-
-            await this.storage.init();
-
-
-        }
-
-
-    }
+    ){
 
 
 
+        const requirement =
 
+            this.requirementStorage
 
+            .getById(
 
-    /*
-    ==============================================
-
-    Create Quotation
-
-    建立詢價單
-
-    ==============================================
-    */
-
-
-    async create(data){
-
-
-
-        if(!data){
-
-
-            throw new Error(
-
-                "Quotation data required"
+                requirementId
 
             );
 
 
-        }
-
-
-
-
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.QuotationStatus.DRAFT;
-
-
-
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.create(
-
-            data
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Generate From Requirement
-
-    Requirement → Quotation
-
-    ==============================================
-    */
-
-
-    async generateFromRequirement(
-        requirement
-    ){
 
 
 
@@ -166,7 +91,7 @@ class QuotationEngine {
 
             throw new Error(
 
-                "Requirement required"
+                "Requirement not found"
 
             );
 
@@ -180,28 +105,15 @@ class QuotationEngine {
         return {
 
 
-            requirementId:
-
-                requirement.id,
+            requirementId,
 
 
-
-            projectId:
-
-                requirement.projectId,
+            supplierId,
 
 
+            materialId:
 
-            materialCode:
-
-                requirement.materialCode,
-
-
-
-            materialName:
-
-                requirement.materialName,
-
+                requirement.materialId,
 
 
             quantity:
@@ -209,25 +121,14 @@ class QuotationEngine {
                 requirement.quantity,
 
 
-
             unit:
 
                 requirement.unit,
 
 
-
             status:
 
-                CWPSTypes.QuotationStatus.DRAFT,
-
-
-
-            createdAt:
-
-
-                new Date()
-
-                .toISOString()
+                "Draft"
 
 
 
@@ -240,113 +141,64 @@ class QuotationEngine {
 
 
 
-
     /*
     ==============================================
 
-    Create Supplier Quotation
-
-    建立廠商報價
+    Save Quotation
 
     ==============================================
     */
 
 
-    async addSupplierQuote(
-        quotationId,
-        supplierQuote
+    createQuotation(
+
+        data
+
     ){
 
 
+        return this.quotationStorage
 
-        const quotation =
+            .create(
 
-
-            await this.storage.get(
-
-                quotationId
+                data
 
             );
 
 
+    }
 
 
 
-        if(!quotation){
 
 
-            throw new Error(
+    /*
+    ==============================================
 
-                "Quotation not found"
+    Get Supplier Quotations
+
+    ==============================================
+    */
+
+
+    getSupplierQuotes(
+
+        supplierId
+
+    ){
+
+
+
+        return this.quotationStorage
+
+            .getBySupplier(
+
+                supplierId
 
             );
 
 
-        }
-
-
-
-
-
-        quotation.quotes =
-
-
-            quotation.quotes || [];
-
-
-
-
-
-        quotation.quotes.push(
-
-
-
-            {
-
-
-                ...supplierQuote,
-
-
-
-                createdAt:
-
-
-                    new Date()
-
-                    .toISOString()
-
-
-
-            }
-
-
-
-        );
-
-
-
-
-
-        quotation.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            quotation
-
-        );
-
-
     }
-
 
 
 
@@ -355,130 +207,36 @@ class QuotationEngine {
     /*
     ==============================================
 
-    Get Quotations
+    Compare Price
 
     ==============================================
     */
 
 
-    async getAll(){
+    comparePrice(
 
+        quotations
 
-
-        return await this.storage.getAll();
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
     ){
 
 
 
-        return await this.storage.findByProject(
-
-            projectId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Requirement
-
-    ==============================================
-    */
-
-
-    async findByRequirement(
-        requirementId
-    ){
-
-
-
-        return await this.storage.findByRequirement(
-
-            requirementId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Compare Supplier Quotes
-
-    比價
-
-    ==============================================
-    */
-
-
-    compareQuotes(
-        quotation
-    ){
-
-
-
-        if(
-
-            !quotation ||
-
-            !quotation.quotes
-
-        ){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        return quotation.quotes.sort(
+        return quotations.sort(
 
             (a,b)=>{
 
 
-                return (
+                return Number(
 
-                    a.price -
+                    a.unitPrice || 0
 
-                    b.price
+                )
+
+                -
+
+                Number(
+
+                    b.unitPrice || 0
 
                 );
 
@@ -494,91 +252,79 @@ class QuotationEngine {
 
 
 
-
     /*
     ==============================================
 
-    Select Supplier
-
-    選定廠商
+    Find Lowest Price
 
     ==============================================
     */
 
 
-    async selectSupplier(
-        quotationId,
-        supplierId
+    findLowest(
+
+        quotations
+
     ){
 
 
 
-        const quotation =
+        const list =
+
+            this.comparePrice(
+
+                quotations
+
+            );
 
 
-            await this.storage.get(
+
+
+
+        return list.length
+
+            ?
+
+            list[0]
+
+            :
+
+            null;
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Approve Quotation
+
+    ==============================================
+    */
+
+
+    approve(
+
+        quotationId
+
+    ){
+
+
+
+        return this.quotationStorage
+
+            .approve(
 
                 quotationId
 
             );
 
 
-
-
-
-        if(!quotation){
-
-
-            throw new Error(
-
-                "Quotation not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        quotation.selectedSupplierId =
-
-            supplierId;
-
-
-
-
-
-        quotation.status =
-
-
-            CWPSTypes.QuotationStatus.APPROVED;
-
-
-
-
-
-        quotation.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            quotation
-
-        );
-
-
     }
-
 
 
 
@@ -593,21 +339,24 @@ class QuotationEngine {
     */
 
 
-    async reject(
+    reject(
+
         quotationId
+
     ){
 
 
 
-        return await this.storage.reject(
+        return this.quotationStorage
 
-            quotationId
+            .reject(
 
-        );
+                quotationId
+
+            );
 
 
     }
-
 
 
 
@@ -616,25 +365,98 @@ class QuotationEngine {
     /*
     ==============================================
 
-    Version
-
-    報價版本保存
+    Validate Quotation
 
     ==============================================
     */
 
 
-    async createVersion(
+    validate(
+
         quotation
+
     ){
 
 
 
-        return await this.storage.createVersion(
+        const errors = [];
 
-            quotation
 
-        );
+
+
+
+        if(!quotation.supplierId){
+
+
+            errors.push(
+
+                "Supplier missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(!quotation.materialId){
+
+
+            errors.push(
+
+                "Material missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(
+
+            Number(
+
+                quotation.unitPrice || 0
+
+            )
+
+            <=0
+
+        ){
+
+
+            errors.push(
+
+                "Price invalid"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length===0,
+
+
+            errors
+
+
+
+        };
+
 
 
     }
@@ -642,8 +464,45 @@ class QuotationEngine {
 
 
 
-}
 
+    /*
+    ==============================================
+
+    Calculate Amount
+
+    ==============================================
+    */
+
+
+    calculateAmount(
+
+        quotation
+
+    ){
+
+
+
+        return Number(
+
+            quotation.quantity || 0
+
+        )
+
+        *
+
+        Number(
+
+            quotation.unitPrice || 0
+
+        );
+
+
+
+    }
+
+
+
+}
 
 
 
