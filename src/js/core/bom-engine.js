@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.2.1
+ 2.9.12
 
 
  Build:
- Enterprise BOM Engine Layer
+ Enterprise BOM Processing Engine Layer
 
 
  Description:
- BOM Tree Processing Engine
+ BOM Business Logic Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -39,140 +38,10 @@ class BOMEngine {
 
         this.storage =
 
-            new BOMStorage();
-
-
-
-    }
-
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.storage.init();
+            new global.BOMStorage();
 
 
     }
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create BOM Node
-
-    ==============================================
-    */
-
-
-    async createNode(node){
-
-
-        if(!node){
-
-
-            throw new Error(
-
-                "BOM Node required"
-
-            );
-
-
-        }
-
-
-
-        return await this.storage.create(
-
-            node
-
-        );
-
-
-    }
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Add Child Node
-
-    ==============================================
-    */
-
-
-    async addChild(
-        parentId,
-        childNode
-    ){
-
-
-
-        const parent =
-
-            await this.storage.get(
-
-                parentId
-
-            );
-
-
-
-
-        if(!parent){
-
-
-            throw new Error(
-
-                "Parent BOM Node not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        childNode.parentId =
-
-            parentId;
-
-
-
-
-        return await this.storage.create(
-
-            childNode
-
-        );
-
-
-    }
-
-
 
 
 
@@ -187,10 +56,14 @@ class BOMEngine {
     */
 
 
-    async getTree(versionId){
+    getTree(
+
+        versionId
+
+    ){
 
 
-        return await this.storage.getTree(
+        return this.storage.getTree(
 
             versionId
 
@@ -203,84 +76,30 @@ class BOMEngine {
 
 
 
-
-
     /*
     ==============================================
 
-    Flatten Tree
-
-    樹狀轉列表
+    Get Nodes
 
     ==============================================
     */
 
 
-    flatten(nodes){
+    getNodes(
+
+        versionId
+
+    ){
 
 
+        return this.storage.getByVersion(
 
-        let result=[];
-
-
-
-
-        nodes.forEach(
-
-            node=>{
-
-
-
-                result.push(
-
-                    node
-
-                );
-
-
-
-
-                if(
-
-                    node.children &&
-
-                    node.children.length
-
-                ){
-
-
-
-                    result =
-
-                        result.concat(
-
-                            this.flatten(
-
-                                node.children
-
-                            )
-
-                        );
-
-
-                }
-
-
-
-            }
+            versionId
 
         );
 
 
-
-
-        return result;
-
-
     }
-
-
-
 
 
 
@@ -295,12 +114,14 @@ class BOMEngine {
     */
 
 
-    async findNode(
+    findNode(
+
         nodeId
+
     ){
 
 
-        return await this.storage.get(
+        return this.storage.getById(
 
             nodeId
 
@@ -313,27 +134,167 @@ class BOMEngine {
 
 
 
-
-
     /*
     ==============================================
 
-    Find Nodes By Type
+    Get Children
 
     ==============================================
     */
 
 
-    async findByType(
-        versionId,
-        type
+    children(
+
+        nodeId
+
+    ){
+
+
+        return this.storage.getChildren(
+
+            nodeId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Expand Tree
+
+    ==============================================
+    */
+
+
+    expand(
+
+        nodeId
+
+    ){
+
+
+
+        const node =
+
+            this.findNode(
+
+                nodeId
+
+            );
+
+
+
+
+
+        if(!node){
+
+
+            return null;
+
+
+        }
+
+
+
+
+
+        const children =
+
+            this.children(
+
+                nodeId
+
+            );
+
+
+
+
+
+        return {
+
+
+            ...node,
+
+
+            children:
+
+                children.map(
+
+                    child =>
+
+                        this.expand(
+
+                            child.nodeId
+
+                        )
+
+                )
+
+
+        };
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Leaf Nodes
+
+    ==============================================
+    */
+
+
+    getLeafNodes(
+
+        versionId
+
+    ){
+
+
+        return this.storage.getLeafNodes(
+
+            versionId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Validate BOM
+
+    ==============================================
+    */
+
+
+    validate(
+
+        versionId
+
     ){
 
 
 
         const nodes =
 
-            await this.storage.findByVersion(
+            this.getNodes(
 
                 versionId
 
@@ -342,115 +303,99 @@ class BOMEngine {
 
 
 
-        return nodes.filter(
 
-            node =>
-
-
-                node.type === type
-
-
-        );
-
-
-    }
+        const errors = [];
 
 
 
 
 
+        nodes.forEach(
 
-
-    /*
-    ==============================================
-
-    Get Material Nodes
-
-    ==============================================
-    */
-
-
-    async getMaterialNodes(
-        versionId
-    ){
+            node => {
 
 
 
-        return await this.findByType(
-
-            versionId,
-
-            CWPSTypes.BOMNodeType.MATERIAL
-
-        );
+                if(!node.nodeCode){
 
 
-    }
+                    errors.push({
+
+                        nodeId:
+
+                            node.nodeId,
 
 
+                        message:
+
+                            "NodeCode missing"
 
 
-
-
-
-    /*
-    ==============================================
-
-    Calculate Node Count
-
-    基礎數量累加
-
-    ==============================================
-    */
-
-
-    calculateNodeCount(node){
-
-
-
-        let count =
-
-
-            node.quantity || 1;
-
-
-
-
-        if(
-
-            node.children &&
-
-            node.children.length
-
-        ){
-
-
-
-            node.children.forEach(
-
-                child=>{
-
-
-                    count *=
-
-                        this.calculateNodeCount(
-
-                            child
-
-                        );
+                    });
 
 
                 }
 
-            );
-
-
-        }
 
 
 
 
-        return count;
+                if(
+
+                    node.parentNodeId
+
+                    &&
+
+                    !this.findNode(
+
+                        node.parentNodeId
+
+                    )
+
+                ){
+
+
+
+                    errors.push({
+
+                        nodeId:
+
+                            node.nodeId,
+
+
+                        message:
+
+                            "Parent node not found"
+
+
+                    });
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length === 0,
+
+
+            errors
+
+
+
+        };
 
 
     }
@@ -459,43 +404,22 @@ class BOMEngine {
 
 
 
-
-
     /*
     ==============================================
 
-    Compare BOM Version
+    Compare Versions
 
     ==============================================
     */
 
 
-    async compareVersion(
-        oldVersionId,
-        newVersionId
+    compare(
+
+        oldNodes,
+
+        newNodes
+
     ){
-
-
-
-        const oldNodes =
-
-            await this.storage.findByVersion(
-
-                oldVersionId
-
-            );
-
-
-
-
-        const newNodes =
-
-            await this.storage.findByVersion(
-
-                newVersionId
-
-            );
-
 
 
 
@@ -508,7 +432,8 @@ class BOMEngine {
             removed:[],
 
 
-            modified:[]
+            changed:[]
+
 
 
         };
@@ -516,38 +441,32 @@ class BOMEngine {
 
 
 
-        const oldMap={};
 
+        const oldMap = {};
 
-        const newMap={};
+        const newMap = {};
+
 
 
 
 
         oldNodes.forEach(
 
-            node=>{
+            item =>
 
-
-                oldMap[node.code]=node;
-
-
-            }
+                oldMap[item.nodeCode] = item
 
         );
 
 
 
 
+
         newNodes.forEach(
 
-            node=>{
+            item =>
 
-
-                newMap[node.code]=node;
-
-
-            }
+                newMap[item.nodeCode] = item
 
         );
 
@@ -559,7 +478,8 @@ class BOMEngine {
 
         .forEach(
 
-            code=>{
+            code => {
+
 
 
                 if(!oldMap[code]){
@@ -593,24 +513,19 @@ class BOMEngine {
                 ){
 
 
+                    result.changed.push({
 
-                    result.modified.push(
+                        old:
 
-                        {
-
-                            old:
-
-                                oldMap[code],
+                            oldMap[code],
 
 
-                            new:
+                        new:
 
-                                newMap[code]
+                            newMap[code]
 
 
-                        }
-
-                    );
+                    });
 
 
                 }
@@ -629,7 +544,8 @@ class BOMEngine {
 
         .forEach(
 
-            code=>{
+            code => {
+
 
 
                 if(!newMap[code]){
@@ -656,9 +572,8 @@ class BOMEngine {
         return result;
 
 
+
     }
-
-
 
 
 
@@ -667,31 +582,73 @@ class BOMEngine {
     /*
     ==============================================
 
-    Create Snapshot
+    Count Structure
 
     ==============================================
     */
 
 
-    async snapshot(
+    statistics(
+
         versionId
+
     ){
 
 
-        return await this.storage.createSnapshot(
 
-            versionId
+        const nodes =
 
-        );
+            this.getNodes(
+
+                versionId
+
+            );
+
+
+
+
+
+        return {
+
+
+            total:
+
+                nodes.length,
+
+
+            roots:
+
+                this.storage
+
+                .getRoots(
+
+                    versionId
+
+                )
+
+                .length,
+
+
+            leaves:
+
+                this.getLeafNodes(
+
+                    versionId
+
+                )
+
+                .length
+
+
+
+        };
 
 
     }
 
 
 
-
 }
-
 
 
 
