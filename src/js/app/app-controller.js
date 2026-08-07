@@ -8,11 +8,11 @@
 
 
  Sprint:
- 2.8.1
+ 2.9.38
 
 
  Build:
- Enterprise Application Controller
+ Enterprise Application Controller Layer
 
 
  Description:
@@ -25,7 +25,6 @@
 
 (function(global){
 
-
 "use strict";
 
 
@@ -37,35 +36,16 @@ class AppController {
     constructor(){
 
 
-
-        this.database =
-
-            new Database();
+        this.started = false;
 
 
-
-        this.router =
-
-            new Router();
+        this.database = null;
 
 
-
-        this.uiManager =
-
-            new UIManager();
+        this.uiManager = null;
 
 
-
-        this.controllers = {};
-
-
-
-        this.views = {};
-
-
-
-        this.initialized = false;
-
+        this.menuController = null;
 
 
     }
@@ -74,21 +54,20 @@ class AppController {
 
 
 
-
     /*
     ==============================================
 
-    Application Initialize
+    Application Start
 
     ==============================================
     */
 
 
-    async init(){
+    async start(){
 
 
 
-        if(this.initialized){
+        if(this.started){
 
 
             return;
@@ -110,29 +89,19 @@ class AppController {
 
 
 
-        await this.initDatabase();
-
+        this.initDatabase();
 
 
         this.initUI();
 
 
-
-        this.initControllers();
-
+        this.initMenu();
 
 
-        this.initViews();
+        this.registerViews();
 
 
-
-        this.initRouter();
-
-
-
-
-
-        this.initialized = true;
+        this.started = true;
 
 
 
@@ -140,14 +109,13 @@ class AppController {
 
         console.log(
 
-            "CWPS Enterprise Ready"
+            "CWPS Enterprise Started"
 
         );
 
 
 
     }
-
 
 
 
@@ -162,16 +130,34 @@ class AppController {
     */
 
 
-    async initDatabase(){
+    initDatabase(){
 
 
 
-        await this.database.init();
+        if(
+
+            global.DatabaseInit
+
+        ){
+
+
+
+            this.database =
+
+                new global.DatabaseInit();
+
+
+
+            this.database
+
+                .initialize();
+
+
+        }
 
 
 
     }
-
 
 
 
@@ -190,56 +176,15 @@ class AppController {
 
 
 
-        this.uiManager.init(
+        this.uiManager =
 
-            "app"
-
-        );
+            new global.UIManager();
 
 
 
-    }
+        global.uiManager =
 
-
-
-
-
-
-    /*
-    ==============================================
-
-    Controllers
-
-    ==============================================
-    */
-
-
-    initControllers(){
-
-
-
-        this.controllers.project =
-
-
-            new ProjectController();
-
-
-
-
-
-        this.controllers.supplier =
-
-
-            new SupplierController();
-
-
-
-
-
-        this.controllers.procurement =
-
-
-            new ProcurementController();
+            this.uiManager;
 
 
 
@@ -249,198 +194,28 @@ class AppController {
 
 
 
-
     /*
     ==============================================
 
-    Views
+    Menu
 
     ==============================================
     */
 
 
-    initViews(){
+    initMenu(){
 
 
 
-        /*
-        Project
-        */
+        this.menuController =
 
+            new global.MenuController();
 
-        this.views.project =
 
 
-            new ProjectView();
+        global.menuController =
 
-
-
-
-
-        this.views.project.controller =
-
-
-            this.controllers.project;
-
-
-
-
-
-        this.uiManager.register(
-
-            "project",
-
-            this.views.project
-
-        );
-
-
-
-
-
-
-
-        /*
-        Supplier
-        */
-
-
-        this.views.supplier =
-
-
-            new SupplierView();
-
-
-
-
-
-        this.views.supplier.controller =
-
-
-            this.controllers.supplier;
-
-
-
-
-
-        this.uiManager.register(
-
-            "supplier",
-
-            this.views.supplier
-
-        );
-
-
-
-
-
-
-
-        /*
-        Procurement
-        */
-
-
-        this.views.procurement =
-
-
-            new ProcurementView();
-
-
-
-
-
-        this.views.procurement.controller =
-
-
-            this.controllers.procurement;
-
-
-
-
-
-        this.uiManager.register(
-
-            "procurement",
-
-            this.views.procurement
-
-        );
-
-
-
-
-
-
-
-        /*
-        Dashboard
-        */
-
-
-        this.views.dashboard =
-
-
-            new DashboardView();
-
-
-
-
-
-        this.views.dashboard.service =
-
-
-            new DashboardService();
-
-
-
-
-
-        this.uiManager.register(
-
-            "dashboard",
-
-            this.views.dashboard
-
-        );
-
-
-
-
-
-
-
-        /*
-        BOM
-
-        */
-
-        this.views.bom =
-
-
-            new BOMView();
-
-
-
-
-
-        this.views.bom.controller =
-
-
-            new BOMController();
-
-
-
-
-
-        this.uiManager.register(
-
-            "bom",
-
-            this.views.bom
-
-        );
+            this.menuController;
 
 
 
@@ -450,24 +225,199 @@ class AppController {
 
 
 
-
     /*
     ==============================================
 
-    Router
+    Register Views
 
     ==============================================
     */
 
 
-    initRouter(){
+    registerViews(){
 
 
 
-        this.router.init(
+        if(!this.uiManager){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+        if(global.DashboardView){
+
+
 
             this.uiManager
 
+            .register(
+
+                "dashboard",
+
+                new global.DashboardView()
+
+            );
+
+
+        }
+
+
+
+
+
+        if(global.ProjectView){
+
+
+
+            this.uiManager
+
+            .register(
+
+                "project",
+
+                new global.ProjectView()
+
+            );
+
+
+        }
+
+
+
+
+
+        if(global.BOMView){
+
+
+
+            this.uiManager
+
+            .register(
+
+                "bom",
+
+                new global.BOMView()
+
+            );
+
+
+        }
+
+
+
+
+
+        if(global.ProcurementView){
+
+
+
+            this.uiManager
+
+            .register(
+
+                "procurement",
+
+                new global.ProcurementView()
+
+            );
+
+
+        }
+
+
+
+
+
+        if(global.SupplierView){
+
+
+
+            this.uiManager
+
+            .register(
+
+                "supplier",
+
+                new global.SupplierView()
+
+            );
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Open Default Page
+
+    ==============================================
+    */
+
+
+    openDefault(){
+
+
+
+        if(this.uiManager){
+
+
+
+            this.uiManager
+
+            .open(
+
+                "dashboard"
+
+            );
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Shutdown
+
+    ==============================================
+    */
+
+
+    shutdown(){
+
+
+
+        this.started = false;
+
+
+        this.database = null;
+
+
+        console.log(
+
+            "CWPS Shutdown"
+
         );
 
 
@@ -478,81 +428,39 @@ class AppController {
 
 
 
-
     /*
     ==============================================
 
-    Start Default Page
+    Status
 
     ==============================================
     */
 
 
-    async start(){
+    status(){
 
 
 
-        await this.init();
+        return {
+
+
+            started:
+
+                this.started,
+
+
+            database:
+
+                !!this.database,
+
+
+            ui:
+
+                !!this.uiManager
 
 
 
-        await this.router.navigate(
-
-            "dashboard"
-
-        );
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get Controller
-
-    ==============================================
-    */
-
-
-    getController(
-        name
-    ){
-
-
-
-        return this.controllers[name];
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get View
-
-    ==============================================
-    */
-
-
-    getView(
-        name
-    ){
-
-
-
-        return this.views[name];
+        };
 
 
 
@@ -561,7 +469,6 @@ class AppController {
 
 
 }
-
 
 
 
