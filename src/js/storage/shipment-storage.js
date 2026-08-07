@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.1.9
+ 2.9.10
 
 
  Build:
- Enterprise Procurement Storage
+ Enterprise Shipment Storage Layer
 
 
  Description:
- Shipment Repository Service
+ Shipment Data Access Layer
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,82 +36,66 @@ class ShipmentStorage {
     constructor(){
 
 
-        this.db =
+        this.database =
 
-            new CWPSDatabase();
-
-
-
-        this.storeName =
-
-            "shipments";
+            global.cwpsDatabase;
 
 
-    }
+        this.collection =
 
+            this.database.collection(
 
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.db.open();
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create
-
-    ==============================================
-    */
-
-
-    async create(
-        shipment
-    ){
-
-
-
-        if(!shipment){
-
-
-            throw new Error(
-
-                "Shipment required"
+                "shipments"
 
             );
 
 
-        }
+    }
 
 
 
 
 
-        return await this.db.add(
+    /*
+    ==============================================
 
-            this.storeName,
+    Get All Shipments
 
-            shipment
+    ==============================================
+    */
+
+
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Shipment By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        shipmentId
+
+    ){
+
+
+        return this.collection.getById(
+
+            shipmentId
 
         );
 
@@ -123,60 +106,37 @@ class ShipmentStorage {
 
 
 
-
     /*
     ==============================================
 
-    Update
+    Get By Shipment No
 
     ==============================================
     */
 
 
-    async update(
-        shipment
+    getByNo(
+
+        shipmentNo
+
     ){
 
 
 
-        return await this.db.update(
-
-            this.storeName,
-
-            shipment
-
-        );
+        const result =
 
 
-    }
+            this.collection.where({
+
+                shipmentNo
+
+            });
 
 
 
 
 
-
-    /*
-    ==============================================
-
-    Get
-
-    ==============================================
-    */
-
-
-    async get(
-        id
-    ){
-
-
-
-        return await this.db.get(
-
-            this.storeName,
-
-            id
-
-        );
+        return result[0] || null;
 
 
     }
@@ -185,111 +145,27 @@ class ShipmentStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get All
+    Get By Purchase
 
     ==============================================
     */
 
 
-    async getAll(){
+    getByPurchase(
 
-
-
-        return await this.db.getAll(
-
-            this.storeName
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Purchase
-
-    ==============================================
-    */
-
-
-    async findByPurchase(
         purchaseId
+
     ){
 
 
+        return this.collection.where({
 
-        const list =
+            purchaseId
 
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.purchaseId === purchaseId
-
-
-
-        );
+        });
 
 
     }
@@ -298,84 +174,27 @@ class ShipmentStorage {
 
 
 
-
     /*
     ==============================================
 
-    Find By Supplier
+    Get By Status
 
     ==============================================
     */
 
 
-    async findBySupplier(
-        supplierId
-    ){
+    getByStatus(
 
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.supplierId === supplierId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Status
-
-    ==============================================
-    */
-
-
-    async findByStatus(
         status
+
     ){
 
 
+        return this.collection.where({
 
-        const list =
+            status
 
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.status === status
-
-
-
-        );
+        });
 
 
     }
@@ -384,276 +203,68 @@ class ShipmentStorage {
 
 
 
-
     /*
     ==============================================
 
-    Start Shipment
+    Create Shipment
 
     ==============================================
     */
 
 
-    async start(
-        id
-    ){
+    create(
 
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Shipment not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.ShipmentStatus.SHIPPING;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Receive Shipment
-
-    ==============================================
-    */
-
-
-    async receive(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Shipment not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.ShipmentStatus.RECEIVED;
-
-
-
-
-
-        item.receivedDate =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Close Shipment
-
-    ==============================================
-    */
-
-
-    async close(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Shipment not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.ShipmentStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Version History
-
-    ==============================================
-    */
-
-
-    async createVersion(
         shipment
+
     ){
 
 
 
-        const version = {
+        const exists =
 
+
+            this.getByNo(
+
+                shipment.shipmentNo
+
+            );
+
+
+
+
+
+        if(exists){
+
+
+            throw new Error(
+
+                "Shipment No already exists"
+
+            );
+
+
+        }
+
+
+
+
+
+        const data = {
 
 
             ...shipment,
 
 
+            status:
 
-            version:
+                shipment.status
 
+                ||
 
-
-                (shipment.version || 0)
-
-                + 1,
-
+                "Preparing",
 
 
-            createdAt:
-
-
+            createDate:
 
                 new Date()
 
@@ -667,15 +278,14 @@ class ShipmentStorage {
 
 
 
-        return await this.create(
+        return this.collection.insert(
 
-            version
+            data
 
         );
 
 
     }
-
 
 
 
@@ -684,74 +294,41 @@ class ShipmentStorage {
     /*
     ==============================================
 
-    Remove
-
-    Enterprise:
-
-    不刪除，只關閉
+    Update Shipment
 
     ==============================================
     */
 
 
-    async remove(
-        id
+    update(
+
+        shipmentId,
+
+        data
+
     ){
 
 
 
-        const item =
+        return this.collection.update(
+
+            shipmentId,
+
+            {
+
+                ...data,
 
 
-            await this.get(id);
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
 
 
-
-
-
-        if(!item){
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.ShipmentStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        await this.update(
-
-            item
+            }
 
         );
-
-
-
-
-
-        return true;
 
 
     }
@@ -759,8 +336,155 @@ class ShipmentStorage {
 
 
 
-}
 
+    /*
+    ==============================================
+
+    Ship
+
+    ==============================================
+    */
+
+
+    ship(
+
+        shipmentId
+
+    ){
+
+
+
+        return this.update(
+
+            shipmentId,
+
+            {
+
+                status:"Shipped",
+
+                shipmentDate:
+
+                    new Date()
+
+                    .toISOString()
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Receive
+
+    ==============================================
+    */
+
+
+    receive(
+
+        shipmentId
+
+    ){
+
+
+
+        return this.update(
+
+            shipmentId,
+
+            {
+
+                status:"Received",
+
+                receiveDate:
+
+                    new Date()
+
+                    .toISOString()
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cancel
+
+    ==============================================
+    */
+
+
+    cancel(
+
+        shipmentId
+
+    ){
+
+
+
+        return this.update(
+
+            shipmentId,
+
+            {
+
+                status:"Cancelled"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete
+
+    ==============================================
+    */
+
+
+    delete(
+
+        shipmentId
+
+    ){
+
+
+        return this.collection.delete(
+
+            shipmentId
+
+        );
+
+
+    }
+
+
+
+}
 
 
 
