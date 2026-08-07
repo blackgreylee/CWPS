@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.7.3
+ 2.9.34
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Procurement Workflow UI View
+ Procurement Workflow User Interface View
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,14 +36,18 @@ class ProcurementView {
     constructor(){
 
 
-        this.controller = null;
+        this.controller =
+
+            new global.ProcurementController();
 
 
-        this.container = null;
+        this.container =
+
+            null;
+
 
 
     }
-
 
 
 
@@ -60,17 +63,14 @@ class ProcurementView {
 
 
     init(
-        controller,
-        containerId = "app"
+
+        containerId
+
     ){
-
-
-        this.controller = controller;
 
 
 
         this.container =
-
 
             document.getElementById(
 
@@ -82,7 +82,8 @@ class ProcurementView {
 
 
 
-        this.bindEvents();
+        this.render();
+
 
 
     }
@@ -91,19 +92,16 @@ class ProcurementView {
 
 
 
-
     /*
     ==============================================
 
-    Render Procurement Dashboard
+    Render Main
 
     ==============================================
     */
 
 
-    render(
-        data
-    ){
+    render(){
 
 
 
@@ -119,231 +117,65 @@ class ProcurementView {
 
 
 
-        const requirements =
+        const summary =
 
-            data.requirements || [];
+            this.controller
 
-
-
-        const quotations =
-
-            data.quotations || [];
-
-
-
-        const purchases =
-
-            data.purchases || [];
-
-
-
-        const shipments =
-
-            data.shipments || [];
-
-
-
-        const invoices =
-
-            data.invoices || [];
+            .summary();
 
 
 
 
 
+        this.container.innerHTML =
 
-        this.container.innerHTML = `
+        `
 
-
-
-        <div class="procurement-page">
-
-
-            <div class="page-header">
+        <div class="procurement-view">
 
 
-                <h2>
+            <h2>
 
-                    Procurement Management
+                Procurement Management
 
-                </h2>
+            </h2>
+
+
+
+            <div class="procurement-summary">
+
+
+                <p>
+
+                Project:
+
+                ${
+
+                summary.project || ""
+
+                }
+
+                </p>
 
 
             </div>
 
 
 
-
-
-            <div class="summary-card">
-
-
-                <div>
-
-                    Requirement
-
-                    <br>
-
-                    <b>
-
-                    ${requirements.length}
-
-                    </b>
-
-                </div>
-
-
-
-                <div>
-
-                    Quotation
-
-                    <br>
-
-                    <b>
-
-                    ${quotations.length}
-
-                    </b>
-
-                </div>
-
-
-
-                <div>
-
-                    Purchase
-
-                    <br>
-
-                    <b>
-
-                    ${purchases.length}
-
-                    </b>
-
-                </div>
-
-
-
-                <div>
-
-                    Shipment
-
-                    <br>
-
-                    <b>
-
-                    ${shipments.length}
-
-                    </b>
-
-                </div>
-
-
-
-                <div>
-
-                    Invoice
-
-                    <br>
-
-                    <b>
-
-                    ${invoices.length}
-
-                    </b>
-
-                </div>
+            <div id="requirement-area">
 
 
             </div>
-
-
-
-
-
-            <hr>
-
-
-
-
-
-            <h3>
-
-                Purchase Orders
-
-            </h3>
-
-
-
-            <table class="table">
-
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-
-                        Purchase ID
-
-                        </th>
-
-
-                        <th>
-
-                        Supplier
-
-                        </th>
-
-
-                        <th>
-
-                        Amount
-
-                        </th>
-
-
-                        <th>
-
-                        Status
-
-                        </th>
-
-
-                    </tr>
-
-
-                </thead>
-
-
-
-                <tbody>
-
-
-                    ${
-
-                        this.renderPurchases(
-
-                            purchases
-
-                        )
-
-                    }
-
-
-                </tbody>
-
-
-            </table>
 
 
         </div>
 
-
-
         `;
+
+
+
+        this.renderRequirements();
+
 
 
     }
@@ -352,45 +184,44 @@ class ProcurementView {
 
 
 
-
     /*
     ==============================================
 
-    Render Purchase Rows
+    Requirement List
 
     ==============================================
     */
 
 
-    renderPurchases(
-        purchases
-    ){
+    renderRequirements(){
 
 
 
-        if(
+        const list =
 
-            purchases.length === 0
+            this.controller
 
-        ){
-
-
-            return `
+            .getRequirements();
 
 
-            <tr>
-
-                <td colspan="4">
-
-                    No Data
-
-                </td>
-
-            </tr>
 
 
-            `;
 
+        const area =
+
+            document.getElementById(
+
+                "requirement-area"
+
+            );
+
+
+
+
+
+        if(!area){
+
+            return;
 
         }
 
@@ -398,72 +229,189 @@ class ProcurementView {
 
 
 
-
-        return purchases.map(
-
-            item=>{
+        area.innerHTML =
 
 
-                return `
+        `
 
+        <h3>
 
-                <tr>
+        Procurement Requirement
 
-
-                    <td>
-
-                        ${
-
-                            item.id || ""
-
-                        }
-
-                    </td>
+        </h3>
 
 
 
-                    <td>
+        ${
 
-                        ${
+        list.map(
 
-                            item.supplierName || ""
-
-                        }
-
-                    </td>
+            item =>
 
 
+            `
 
-                    <td>
-
-                        ${
-
-                            item.totalAmount || 0
-
-                        }
-
-                    </td>
+            <div class="requirement-card">
 
 
+                <p>
 
-                    <td>
+                Material:
 
-                        ${
+                ${item.materialName || ""}
 
-                            item.status || ""
-
-                        }
-
-                    </td>
+                </p>
 
 
-                </tr>
+                <p>
+
+                Quantity:
+
+                ${item.quantity || 0}
+
+                </p>
 
 
-                `;
+                <p>
+
+                Status:
+
+                ${item.status || ""}
+
+                </p>
 
 
-            }
+
+                <button
+
+                onclick="procurementView.quote('${item.id}')">
+
+                Request Quote
+
+                </button>
+
+
+
+            </div>
+
+
+            `
+
+
+        )
+
+        .join("")
+
+
+        }
+
+        `;
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Quotation
+
+    ==============================================
+    */
+
+
+    quote(
+
+        requirementId
+
+    ){
+
+
+
+        return this.controller
+
+            .createQuotationRequest(
+
+                requirementId
+
+            );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Purchase List
+
+    ==============================================
+    */
+
+
+    showPurchaseList(){
+
+
+
+        const data =
+
+            this.controller
+
+            .purchaseEngine
+
+            .getAll();
+
+
+
+
+
+        this.container.innerHTML =
+
+        data.map(
+
+            item =>
+
+
+            `
+
+            <div class="purchase-card">
+
+
+                Purchase No:
+
+                ${item.number}
+
+
+                <br>
+
+
+                Amount:
+
+                ${item.amount}
+
+
+                <br>
+
+
+                Status:
+
+                ${item.status}
+
+
+
+            </div>
+
+
+            `
+
 
         )
 
@@ -477,48 +425,64 @@ class ProcurementView {
 
 
 
-
     /*
     ==============================================
 
-    Project Summary
+    Shipment Status
 
     ==============================================
     */
 
 
-    async showProjectSummary(
-        projectId
-    ){
+    showShipmentStatus(){
 
 
 
-        const summary =
+        const data =
 
+            this.controller
 
-            await this.controller.projectSummary(
+            .shipmentEngine
 
-                projectId
-
-            );
+            .getAll();
 
 
 
 
 
-        alert(
+        this.container.innerHTML =
 
-            JSON.stringify(
+        data.map(
 
-                summary,
+            item =>
 
-                null,
 
-                4
+            `
 
-            )
+            <div>
 
-        );
+
+            Shipment:
+
+            ${item.id}
+
+
+            Status:
+
+            ${item.status}
+
+
+
+            </div>
+
+
+            `
+
+
+        )
+
+        .join("");
+
 
 
     }
@@ -527,79 +491,72 @@ class ProcurementView {
 
 
 
-
     /*
     ==============================================
 
-    Create Requirement
+    Invoice Status
 
     ==============================================
     */
 
 
-    showRequirementForm(){
+    showInvoiceStatus(){
 
 
 
-        const material =
+        const data =
 
+            this.controller
 
-            prompt(
+            .invoiceEngine
 
-                "Material Name"
-
-            );
-
-
-
-
-
-        const quantity =
-
-
-            prompt(
-
-                "Quantity"
-
-            );
+            .getAll();
 
 
 
 
 
-        if(!material){
+        this.container.innerHTML =
+
+        data.map(
+
+            item =>
 
 
-            return;
+            `
+
+            <div>
 
 
-        }
+            Invoice:
+
+            ${item.number}
 
 
+            Amount:
+
+            ${item.amount}
 
 
+            Status:
 
-        this.controller.createRequirement({
-
-
-
-            materialName:
-
-                material,
-
-
-
-            quantity:
-
-                Number(quantity || 0)
+            ${item.status}
 
 
 
-        });
+            </div>
+
+
+            `
+
+
+        )
+
+        .join("");
+
 
 
     }
-
 
 
 
@@ -614,69 +571,19 @@ class ProcurementView {
     */
 
 
-    async refresh(){
+    refresh(){
 
 
 
-        await this.controller.load();
+        this.render();
 
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Events
-
-    ==============================================
-    */
-
-
-    bindEvents(){
-
-
-
-        document.addEventListener(
-
-            "click",
-
-            event=>{
-
-
-                if(
-
-                    event.target.id ===
-
-                    "btn-create-requirement"
-
-                ){
-
-
-                    this.showRequirementForm();
-
-
-                }
-
-
-            }
-
-        );
-
-
-    }
-
-
 
 
 
 }
-
 
 
 
