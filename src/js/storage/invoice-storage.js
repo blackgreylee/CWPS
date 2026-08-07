@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.1.10
+ 2.9.11
 
 
  Build:
- Enterprise Procurement Storage
+ Enterprise Invoice Storage Layer
 
 
  Description:
- Invoice Repository Service
+ Invoice Data Access Layer
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,82 +36,66 @@ class InvoiceStorage {
     constructor(){
 
 
-        this.db =
+        this.database =
 
-            new CWPSDatabase();
-
-
-
-        this.storeName =
-
-            "invoices";
+            global.cwpsDatabase;
 
 
-    }
+        this.collection =
 
+            this.database.collection(
 
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.db.open();
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create
-
-    ==============================================
-    */
-
-
-    async create(
-        invoice
-    ){
-
-
-
-        if(!invoice){
-
-
-            throw new Error(
-
-                "Invoice required"
+                "invoices"
 
             );
 
 
-        }
+    }
 
 
 
 
 
-        return await this.db.add(
+    /*
+    ==============================================
 
-            this.storeName,
+    Get All Invoices
 
-            invoice
+    ==============================================
+    */
+
+
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Invoice By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        invoiceId
+
+    ){
+
+
+        return this.collection.getById(
+
+            invoiceId
 
         );
 
@@ -123,29 +106,37 @@ class InvoiceStorage {
 
 
 
-
     /*
     ==============================================
 
-    Update
+    Get By Invoice No
 
     ==============================================
     */
 
 
-    async update(
-        invoice
+    getByNo(
+
+        invoiceNo
+
     ){
 
 
 
-        return await this.db.update(
+        const result =
 
-            this.storeName,
 
-            invoice
+            this.collection.where({
 
-        );
+                invoiceNo
+
+            });
+
+
+
+
+
+        return result[0] || null;
 
 
     }
@@ -154,29 +145,28 @@ class InvoiceStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get
+    Get By Shipment
 
     ==============================================
     */
 
 
-    async get(
-        id
+    getByShipment(
+
+        shipmentId
+
     ){
 
 
 
-        return await this.db.get(
+        return this.collection.where({
 
-            this.storeName,
+            shipmentId
 
-            id
-
-        );
+        });
 
 
     }
@@ -185,197 +175,28 @@ class InvoiceStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get All
+    Get By Status
 
     ==============================================
     */
 
 
-    async getAll(){
+    getByStatus(
 
-
-
-        return await this.db.getAll(
-
-            this.storeName
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Purchase
-
-    ==============================================
-    */
-
-
-    async findByPurchase(
-        purchaseId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.purchaseId === purchaseId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Supplier
-
-    ==============================================
-    */
-
-
-    async findBySupplier(
-        supplierId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.supplierId === supplierId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Status
-
-    ==============================================
-    */
-
-
-    async findByStatus(
         status
+
     ){
 
 
 
-        const list =
+        return this.collection.where({
 
+            status
 
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.status === status
-
-
-
-        );
+        });
 
 
     }
@@ -384,367 +205,68 @@ class InvoiceStorage {
 
 
 
-
     /*
     ==============================================
 
-    Submit Invoice
-
-    提交請款
+    Create Invoice
 
     ==============================================
     */
 
 
-    async submit(
-        id
-    ){
+    create(
 
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Invoice not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.InvoiceStatus.SUBMITTED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Approve Invoice
-
-    核准請款
-
-    ==============================================
-    */
-
-
-    async approve(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Invoice not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.InvoiceStatus.APPROVED;
-
-
-
-
-
-        item.approvedDate =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Pay Invoice
-
-    付款完成
-
-    ==============================================
-    */
-
-
-    async pay(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Invoice not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.InvoiceStatus.PAID;
-
-
-
-
-
-        item.paidDate =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Close Invoice
-
-    ==============================================
-    */
-
-
-    async close(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Invoice not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.InvoiceStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Version History
-
-    ==============================================
-    */
-
-
-    async createVersion(
         invoice
+
     ){
 
 
 
-        const version = {
+        const exists =
 
+
+            this.getByNo(
+
+                invoice.invoiceNo
+
+            );
+
+
+
+
+
+        if(exists){
+
+
+            throw new Error(
+
+                "Invoice No already exists"
+
+            );
+
+
+        }
+
+
+
+
+
+        const data = {
 
 
             ...invoice,
 
 
+            status:
 
-            version:
+                invoice.status
 
+                ||
 
-
-                (invoice.version || 0)
-
-                + 1,
-
+                "Draft",
 
 
-            createdAt:
-
-
+            createDate:
 
                 new Date()
 
@@ -758,15 +280,14 @@ class InvoiceStorage {
 
 
 
-        return await this.create(
+        return this.collection.insert(
 
-            version
+            data
 
         );
 
 
     }
-
 
 
 
@@ -775,74 +296,41 @@ class InvoiceStorage {
     /*
     ==============================================
 
-    Remove
-
-    Enterprise:
-
-    不刪除資料
+    Update Invoice
 
     ==============================================
     */
 
 
-    async remove(
-        id
+    update(
+
+        invoiceId,
+
+        data
+
     ){
 
 
 
-        const item =
+        return this.collection.update(
+
+            invoiceId,
+
+            {
+
+                ...data,
 
 
-            await this.get(id);
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
 
 
-
-
-
-        if(!item){
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.InvoiceStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        await this.update(
-
-            item
+            }
 
         );
-
-
-
-
-
-        return true;
 
 
     }
@@ -850,8 +338,197 @@ class InvoiceStorage {
 
 
 
-}
 
+    /*
+    ==============================================
+
+    Issue Invoice
+
+    ==============================================
+    */
+
+
+    issue(
+
+        invoiceId
+
+    ){
+
+
+
+        return this.update(
+
+            invoiceId,
+
+            {
+
+                status:"Issued",
+
+                issueDate:
+
+                    new Date()
+
+                    .toISOString()
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Pay Invoice
+
+    ==============================================
+    */
+
+
+    paid(
+
+        invoiceId
+
+    ){
+
+
+
+        return this.update(
+
+            invoiceId,
+
+            {
+
+                status:"Paid",
+
+                paidDate:
+
+                    new Date()
+
+                    .toISOString()
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cancel Invoice
+
+    ==============================================
+    */
+
+
+    cancel(
+
+        invoiceId
+
+    ){
+
+
+
+        return this.update(
+
+            invoiceId,
+
+            {
+
+                status:"Cancelled"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Total Amount
+
+    ==============================================
+    */
+
+
+    totalAmount(){
+
+
+
+        return this.getAll()
+
+        .reduce(
+
+            (sum,item)=>{
+
+
+                return sum +
+
+                Number(
+
+                    item.amount || 0
+
+                );
+
+
+            },
+
+            0
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete
+
+    ==============================================
+    */
+
+
+    delete(
+
+        invoiceId
+
+    ){
+
+
+        return this.collection.delete(
+
+            invoiceId
+
+        );
+
+
+    }
+
+
+
+}
 
 
 
