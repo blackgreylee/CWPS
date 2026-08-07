@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.7.1
+ 2.9.32
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Project Management UI View
+ Project User Interface View
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -39,12 +38,14 @@ class ProjectView {
 
         this.controller =
 
-            null;
+            new global.ProjectController();
+
 
 
         this.container =
 
             null;
+
 
 
     }
@@ -53,31 +54,24 @@ class ProjectView {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Initialize View
 
     ==============================================
     */
 
 
     init(
-        controller,
-        containerId = "app"
+
+        containerId
+
     ){
 
 
 
-        this.controller =
-
-            controller;
-
-
-
         this.container =
-
 
             document.getElementById(
 
@@ -89,7 +83,7 @@ class ProjectView {
 
 
 
-        this.bindEvents();
+        this.render();
 
 
 
@@ -99,27 +93,22 @@ class ProjectView {
 
 
 
-
     /*
     ==============================================
 
-    Render Project List
+    Render
 
     ==============================================
     */
 
 
-    render(
-        projects
-    ){
+    render(){
 
 
 
         if(!this.container){
 
-
             return;
-
 
         }
 
@@ -127,190 +116,227 @@ class ProjectView {
 
 
 
-        let html = `
+        const projects =
+
+            this.controller
+
+            .getProjects();
 
 
-        <div class="project-page">
 
 
-            <div class="page-header">
+
+        this.container.innerHTML =
+
+            `
+
+            <div class="project-view">
 
 
                 <h2>
-
                     Project Management
-
                 </h2>
 
 
-                <button
+                <div id="project-list">
 
-                    id="btn-create-project"
 
-                    class="btn btn-primary"
+                    ${
 
-                >
+                    projects.map(
 
-                    New Project
+                        project =>
 
-                </button>
+                        this.renderProject(
+
+                            project
+
+                        )
+
+                    )
+
+                    .join("")
+
+                    }
+
+
+                </div>
 
 
             </div>
 
+            `;
 
 
 
-            <table class="table">
+    }
 
 
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Project No
-                        </th>
 
 
-                        <th>
-                            Project Name
-                        </th>
+
+    /*
+    ==============================================
+
+    Render Project Item
+
+    ==============================================
+    */
 
 
-                        <th>
-                            Customer
-                        </th>
+    renderProject(
+
+        project
+
+    ){
 
 
-                        <th>
-                            Status
-                        </th>
+
+        return `
+
+        <div class="project-card"
+
+             data-id="${project.id}">
 
 
-                        <th>
-                            Action
-                        </th>
+            <h3>
 
-                    </tr>
+                ${project.name}
 
-
-                </thead>
+            </h3>
 
 
-                <tbody>
+            <p>
 
+                Code:
+
+                ${project.code || ""}
+
+            </p>
+
+
+            <p>
+
+                Status:
+
+                ${project.status || ""}
+
+            </p>
+
+
+            <button
+
+            onclick="projectView.open('${project.id}')">
+
+                Open
+
+            </button>
+
+
+        </div>
 
         `;
 
 
+    }
 
 
 
-        projects.forEach(
-
-            project=>{
 
 
-                html += `
+    /*
+    ==============================================
+
+    Open Project
+
+    ==============================================
+    */
 
 
-                <tr>
+    open(
 
+        projectId
 
-                    <td>
-
-                        ${
-
-                            project.id || ""
-
-                        }
-
-                    </td>
+    ){
 
 
 
-                    <td>
+        const project =
 
-                        ${
+            this.controller
 
-                            project.name || ""
+            .open(
 
-                        }
+                projectId
 
-                    </td>
-
-
-
-                    <td>
-
-                        ${
-
-                            project.customer || ""
-
-                        }
-
-                    </td>
+            );
 
 
 
-                    <td>
-
-                        ${
-
-                            project.status || ""
-
-                        }
-
-                    </td>
 
 
+        this.showDetail(
 
-                    <td>
-
-
-                        <button
-
-                            data-id="${
-
-                                project.id
-
-                            }"
-
-                            class="btn-detail"
-
-                        >
-
-                            Detail
-
-                        </button>
-
-
-                    </td>
-
-
-
-                </tr>
-
-
-                `;
-
-
-            }
+            project
 
         );
 
 
 
+    }
 
 
-        html += `
 
 
-                </tbody>
+
+    /*
+    ==============================================
+
+    Show Detail
+
+    ==============================================
+    */
 
 
-            </table>
+    showDetail(
+
+        project
+
+    ){
+
+
+
+        this.container.innerHTML =
+
+        `
+
+
+        <div class="project-detail">
+
+
+            <h2>
+
+                ${project.name}
+
+            </h2>
+
+
+            <p>
+
+            Project Code:
+
+            ${project.code || ""}
+
+            </p>
+
+
+            <p>
+
+            Status:
+
+            ${project.status}
+
+            </p>
 
 
         </div>
@@ -320,20 +346,7 @@ class ProjectView {
 
 
 
-
-
-        this.container.innerHTML = html;
-
-
-
-
-
-        this.bindRowEvents();
-
-
-
     }
-
 
 
 
@@ -342,256 +355,25 @@ class ProjectView {
     /*
     ==============================================
 
-    Create Project Form
+    Refresh
 
     ==============================================
     */
 
 
-    showCreateForm(){
+    refresh(){
 
 
 
-        const name =
+        this.render();
 
-
-            prompt(
-
-                "Project Name"
-
-            );
-
-
-
-
-
-        const customer =
-
-
-            prompt(
-
-                "Customer"
-
-            );
-
-
-
-
-
-        if(
-
-            !name
-
-        ){
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        this.controller.create({
-
-
-
-            name:
-
-                name,
-
-
-
-            customer:
-
-                customer
-
-
-
-        });
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Detail
-
-    ==============================================
-    */
-
-
-    async showDetail(
-        id
-    ){
-
-
-
-        const project =
-
-
-            await this.controller.detail(
-
-                id
-
-            );
-
-
-
-
-
-        if(!project){
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        alert(
-
-            JSON.stringify(
-
-                project,
-
-                null,
-
-                4
-
-            )
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Bind Events
-
-    ==============================================
-    */
-
-
-    bindEvents(){
-
-
-        document.addEventListener(
-
-            "click",
-
-            event=>{
-
-
-                if(
-
-                    event.target.id ===
-
-                    "btn-create-project"
-
-                ){
-
-
-                    this.showCreateForm();
-
-
-                }
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Row Events
-
-    ==============================================
-    */
-
-
-    bindRowEvents(){
-
-
-
-        const buttons =
-
-
-            document.querySelectorAll(
-
-                ".btn-detail"
-
-            );
-
-
-
-
-
-        buttons.forEach(
-
-            btn=>{
-
-
-                btn.addEventListener(
-
-                    "click",
-
-                    ()=>{
-
-
-                        this.showDetail(
-
-                            btn.dataset.id
-
-                        );
-
-
-                    }
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
 
 
 
 }
-
 
 
 
