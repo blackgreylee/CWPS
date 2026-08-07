@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.3.3
+ 2.9.17
 
 
  Build:
- Enterprise Purchase Engine
+ Enterprise Procurement Purchase Engine Layer
 
 
  Description:
- Purchase Order Management Engine
+ Purchase Order Processing Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,9 +36,15 @@ class PurchaseEngine {
     constructor(){
 
 
-        this.storage =
+        this.quotationStorage =
 
-            new PurchaseStorage();
+            new global.QuotationStorage();
+
+
+        this.purchaseStorage =
+
+            new global.PurchaseStorage();
+
 
 
     }
@@ -48,116 +53,34 @@ class PurchaseEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Create Purchase From Quotation
 
     ==============================================
     */
 
 
-    async init(){
+    createFromQuotation(
 
+        quotationId
 
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
-
-
-    }
+    ){
 
 
 
+        const quotation =
 
+            this.quotationStorage
 
+            .getById(
 
-    /*
-    ==============================================
-
-    Create Purchase Order
-
-    建立採購單
-
-    ==============================================
-    */
-
-
-    async create(data){
-
-
-
-        if(!data){
-
-
-            throw new Error(
-
-                "Purchase data required"
+                quotationId
 
             );
 
 
-        }
-
-
-
-
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.PurchaseStatus.DRAFT;
-
-
-
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.create(
-
-            data
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Generate From Quotation
-
-    Quotation → Purchase
-
-    ==============================================
-    */
-
-
-    async generateFromQuotation(
-        quotation
-    ){
 
 
 
@@ -166,27 +89,7 @@ class PurchaseEngine {
 
             throw new Error(
 
-                "Quotation required"
-
-            );
-
-
-        }
-
-
-
-
-
-        if(
-
-            !quotation.selectedSupplierId
-
-        ){
-
-
-            throw new Error(
-
-                "Supplier not selected"
+                "Quotation not found"
 
             );
 
@@ -200,10 +103,12 @@ class PurchaseEngine {
         return {
 
 
-            quotationId:
+            quotationId,
 
-                quotation.id,
 
+            supplierId:
+
+                quotation.supplierId,
 
 
             requirementId:
@@ -211,29 +116,9 @@ class PurchaseEngine {
                 quotation.requirementId,
 
 
+            materialId:
 
-            projectId:
-
-                quotation.projectId,
-
-
-
-            supplierId:
-
-                quotation.selectedSupplierId,
-
-
-
-            materialCode:
-
-                quotation.materialCode,
-
-
-
-            materialName:
-
-                quotation.materialName,
-
+                quotation.materialId,
 
 
             quantity:
@@ -241,25 +126,28 @@ class PurchaseEngine {
                 quotation.quantity,
 
 
-
             unit:
 
                 quotation.unit,
 
 
+            unitPrice:
+
+                quotation.unitPrice,
+
+
+            amount:
+
+                this.calculateAmount(
+
+                    quotation
+
+                ),
+
 
             status:
 
-                CWPSTypes.PurchaseStatus.DRAFT,
-
-
-
-            createdAt:
-
-
-                new Date()
-
-                .toISOString()
+                "Draft"
 
 
 
@@ -272,44 +160,202 @@ class PurchaseEngine {
 
 
 
-
     /*
     ==============================================
 
-    Add Purchase Item
-
-    加入採購明細
+    Save Purchase
 
     ==============================================
     */
 
 
-    async addItem(
-        purchaseId,
-        item
+    createPurchase(
+
+        data
+
     ){
 
 
 
-        const purchase =
+        return this.purchaseStorage
+
+            .create(
+
+                data
+
+            );
 
 
-            await this.storage.get(
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Calculate Amount
+
+    ==============================================
+    */
+
+
+    calculateAmount(
+
+        data
+
+    ){
+
+
+
+        return Number(
+
+            data.quantity || 0
+
+        )
+
+        *
+
+        Number(
+
+            data.unitPrice || 0
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Confirm Purchase
+
+    ==============================================
+    */
+
+
+    confirm(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.purchaseStorage
+
+            .confirm(
 
                 purchaseId
 
             );
 
 
+    }
 
 
 
-        if(!purchase){
 
 
-            throw new Error(
+    /*
+    ==============================================
 
-                "Purchase not found"
+    Complete Purchase
+
+    ==============================================
+    */
+
+
+    complete(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.purchaseStorage
+
+            .complete(
+
+                purchaseId
+
+            );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cancel Purchase
+
+    ==============================================
+    */
+
+
+    cancel(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.purchaseStorage
+
+            .cancel(
+
+                purchaseId
+
+            );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Validate Purchase
+
+    ==============================================
+    */
+
+
+    validate(
+
+        purchase
+
+    ){
+
+
+
+        const errors = [];
+
+
+
+
+
+        if(!purchase.supplierId){
+
+
+            errors.push(
+
+                "Supplier missing"
 
             );
 
@@ -320,59 +366,87 @@ class PurchaseEngine {
 
 
 
-        purchase.items =
+        if(!purchase.materialId){
 
 
-            purchase.items || [];
+            errors.push(
+
+                "Material missing"
+
+            );
 
 
-
-
-
-        purchase.items.push(
-
-
-            {
-
-
-                ...item,
-
-
-
-                createdAt:
-
-
-                    new Date()
-
-                    .toISOString()
-
-
-
-            }
-
-
-        );
+        }
 
 
 
 
 
-        purchase.updatedAt =
+        if(
+
+            Number(
+
+                purchase.quantity || 0
+
+            )
+
+            <=0
+
+        ){
 
 
-            new Date()
+            errors.push(
 
-            .toISOString();
+                "Quantity invalid"
+
+            );
+
+
+        }
 
 
 
 
 
-        return await this.storage.update(
+        if(
 
-            purchase
+            Number(
 
-        );
+                purchase.unitPrice || 0
+
+            )
+
+            <=0
+
+        ){
+
+
+            errors.push(
+
+                "Price invalid"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length===0,
+
+
+            errors
+
+
+
+        };
 
 
     }
@@ -381,239 +455,50 @@ class PurchaseEngine {
 
 
 
-
     /*
     ==============================================
 
-    Get Purchase List
+    Total Purchase Amount
 
     ==============================================
     */
 
 
-    async getAll(){
+    totalAmount(
 
+        purchases
 
-
-        return await this.storage.getAll();
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
     ){
 
 
 
-        return await this.storage.findByProject(
+        return purchases.reduce(
 
-            projectId
-
-        );
+            (sum,item)=>{
 
 
-    }
+                return sum +
+
+                Number(
+
+                    item.amount || 0
+
+                );
 
 
+            },
 
-
-
-
-    /*
-    ==============================================
-
-    Find Supplier Orders
-
-    ==============================================
-    */
-
-
-    async findBySupplier(
-        supplierId
-    ){
-
-
-
-        return await this.storage.findBySupplier(
-
-            supplierId
+            0
 
         );
 
 
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Approve Purchase
-
-    ==============================================
-    */
-
-
-    async approve(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.approve(
-
-            purchaseId
-
-        );
-
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Send Order
-
-    發出採購
-
-    ==============================================
-    */
-
-
-    async order(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.order(
-
-            purchaseId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Receive
-
-    收料完成
-
-    ==============================================
-    */
-
-
-    async receive(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.receive(
-
-            purchaseId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Close
-
-    ==============================================
-    */
-
-
-    async close(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.close(
-
-            purchaseId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Version Management
-
-    ==============================================
-    */
-
-
-    async createVersion(
-        purchase
-    ){
-
-
-
-        return await this.storage.createVersion(
-
-            purchase
-
-        );
-
-
-    }
-
-
 
 
 
 }
-
 
 
 
