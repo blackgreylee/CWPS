@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.7.5
+ 2.9.36
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Dashboard UI View
+ System Dashboard User Interface View
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,14 +36,34 @@ class DashboardView {
     constructor(){
 
 
-        this.service = null;
+        this.costAnalysis =
+
+            new global.CostAnalysis();
 
 
-        this.container = null;
+        this.materialAnalysis =
+
+            new global.MaterialAnalysis();
+
+
+        this.procurementAnalysis =
+
+            new global.ProcurementAnalysis();
+
+
+        this.supplierAnalysis =
+
+            new global.SupplierAnalysis();
+
+
+
+        this.container =
+
+            null;
+
 
 
     }
-
 
 
 
@@ -60,18 +79,14 @@ class DashboardView {
 
 
     init(
-        service,
-        containerId = "app"
+
+        containerId
+
     ){
 
 
 
-        this.service = service;
-
-
-
         this.container =
-
 
             document.getElementById(
 
@@ -81,50 +96,13 @@ class DashboardView {
 
 
 
-    }
 
 
+        this.render();
 
-
-
-
-    /*
-    ==============================================
-
-    Load Dashboard
-
-    ==============================================
-    */
-
-
-    async load(){
-
-
-
-        const data =
-
-
-            await this.service.getDashboard();
-
-
-
-
-
-        this.render(
-
-            data
-
-        );
-
-
-
-
-
-        return data;
 
 
     }
-
 
 
 
@@ -139,9 +117,7 @@ class DashboardView {
     */
 
 
-    render(
-        data
-    ){
+    render(){
 
 
 
@@ -157,53 +133,27 @@ class DashboardView {
 
 
 
-        const project =
+        const data =
 
-            data.project || {};
-
-
-
-        const procurement =
-
-            data.procurement || {};
-
-
-
-        const supplier =
-
-            data.supplier || {};
-
-
-
-        const material =
-
-            data.material || {};
+            this.getDashboardData();
 
 
 
 
 
-
-        this.container.innerHTML = `
-
+        this.container.innerHTML =
 
 
-        <div class="dashboard-page">
+        `
+
+        <div class="dashboard-view">
 
 
-            <div class="page-header">
+            <h2>
 
+            CWPS Dashboard
 
-                <h2>
-
-                    CWPS Dashboard
-
-                </h2>
-
-
-            </div>
-
-
+            </h2>
 
 
 
@@ -212,27 +162,13 @@ class DashboardView {
 
                 ${
 
-                    this.card(
+                this.card(
 
-                        "Projects",
+                    "Material",
 
-                        project.count || 0
+                    data.material.total
 
-                    )
-
-                }
-
-
-
-                ${
-
-                    this.card(
-
-                        "Materials",
-
-                        material.count || 0
-
-                    )
+                )
 
                 }
 
@@ -240,13 +176,13 @@ class DashboardView {
 
                 ${
 
-                    this.card(
+                this.card(
 
-                        "Purchase Amount",
+                    "Purchase Amount",
 
-                        procurement.amount || 0
+                    data.cost.total
 
-                    )
+                )
 
                 }
 
@@ -254,71 +190,39 @@ class DashboardView {
 
                 ${
 
-                    this.card(
+                this.card(
 
-                        "Suppliers",
+                    "Procurement Complete",
 
-                        supplier.count || 0
+                    data.procurement.completionRate
 
-                    )
+                    +"%"
+
+                )
 
                 }
+
+
+
+                ${
+
+                this.card(
+
+                    "Supplier",
+
+                    data.supplier.total
+
+                )
+
+                }
+
 
 
             </div>
 
 
 
-
-
-            <div class="dashboard-section">
-
-
-                <h3>
-
-                    Procurement Progress
-
-                </h3>
-
-
-
-                ${
-
-                    this.renderProgress(
-
-                        procurement
-
-                    )
-
-                }
-
-
-            </div>
-
-
-
-
-
-            <div class="dashboard-section">
-
-
-                <h3>
-
-                    Supplier Ranking
-
-                </h3>
-
-
-
-                ${
-
-                    this.renderSupplier(
-
-                        supplier.ranking
-
-                    )
-
-                }
+            <div id="supplier-ranking">
 
 
             </div>
@@ -328,8 +232,18 @@ class DashboardView {
         </div>
 
 
-
         `;
+
+
+
+
+
+        this.renderSupplierRanking(
+
+            data.supplierRanking
+
+        );
+
 
 
     }
@@ -338,41 +252,108 @@ class DashboardView {
 
 
 
+    /*
+    ==============================================
+
+    Dashboard Data
+
+    ==============================================
+    */
+
+
+    getDashboardData(){
+
+
+
+        return {
+
+
+            cost:
+
+                this.costAnalysis
+
+                .summary(),
+
+
+
+            material:
+
+                this.materialAnalysis
+
+                .summary(),
+
+
+
+            procurement:
+
+                this.procurementAnalysis
+
+                .summary(),
+
+
+
+            supplier:
+
+                this.supplierAnalysis
+
+                .overview(),
+
+
+
+            supplierRanking:
+
+                this.supplierAnalysis
+
+                .ranking()
+
+
+
+        };
+
+
+
+    }
+
+
+
+
 
     /*
     ==============================================
 
-    Card Component
+    KPI Card
 
     ==============================================
     */
 
 
     card(
+
         title,
+
         value
+
     ){
 
 
 
         return `
-
 
 
         <div class="dashboard-card">
 
 
-            <div class="card-title">
+            <h3>
 
-                ${title}
+            ${title}
 
-            </div>
+            </h3>
 
 
 
-            <div class="card-value">
+            <div class="value">
 
-                ${value}
+            ${value}
 
             </div>
 
@@ -383,95 +364,8 @@ class DashboardView {
         `;
 
 
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Procurement Progress
-
-    ==============================================
-    */
-
-
-    renderProgress(
-        data
-    ){
-
-
-
-        return `
-
-
-
-        <div class="progress-box">
-
-
-            Requirement:
-
-            ${
-
-                data.requirementProgress || 0
-
-            }%
-
-
-
-            <br>
-
-
-
-            Purchase:
-
-            ${
-
-                data.purchaseProgress || 0
-
-            }%
-
-
-
-            <br>
-
-
-
-            Shipment:
-
-            ${
-
-                data.shipmentProgress || 0
-
-            }%
-
-
-
-            <br>
-
-
-
-            Invoice:
-
-            ${
-
-                data.invoiceProgress || 0
-
-            }%
-
-
-
-        </div>
-
-
-        `;
-
 
     }
-
 
 
 
@@ -486,21 +380,29 @@ class DashboardView {
     */
 
 
-    renderSupplier(
+    renderSupplierRanking(
+
         list
+
     ){
 
 
 
-        if(
+        const area =
 
-            !Array.isArray(list)
+            document.getElementById(
 
-        ){
+                "supplier-ranking"
+
+            );
 
 
-            return "No Data";
 
+
+
+        if(!area){
+
+            return;
 
         }
 
@@ -508,67 +410,64 @@ class DashboardView {
 
 
 
-        return `
+        area.innerHTML =
+
+
+        `
+
+
+        <h3>
+
+        Supplier Ranking
+
+        </h3>
 
 
 
-        <ol>
+        ${
+
+        list.map(
+
+            (item,index)=>
 
 
-            ${
+            `
 
-                list.map(
-
-                    item=>{
+            <div>
 
 
-                        return `
+            ${index+1}.
 
 
-                        <li>
+            ${item.supplierName}
 
 
-                            ${
 
-                                item.name || ""
+            Score:
 
-                            }
-
-
-                            -
-
-                            Score:
-
-                            ${
-
-                                item.performanceScore || 0
-
-                            }
+            ${item.score}
 
 
-                        </li>
+
+            </div>
 
 
-                        `;
+            `
 
 
-                    }
+        )
 
-                )
+        .join("")
 
-                .join("")
+        }
 
-            }
-
-
-        </ol>
 
 
         `;
 
 
-    }
 
+    }
 
 
 
@@ -583,11 +482,11 @@ class DashboardView {
     */
 
 
-    async refresh(){
+    refresh(){
 
 
 
-        return await this.load();
+        this.render();
 
 
 
@@ -595,10 +494,7 @@ class DashboardView {
 
 
 
-
-
 }
-
 
 
 
