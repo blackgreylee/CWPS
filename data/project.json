@@ -1,0 +1,91 @@
+{
+    "projects": [
+
+        {
+            "id": "P001",
+
+            "code": "YC-PROJ-001",
+
+            "name": "台中商辦外牆工程",
+
+            "customer": "YC建設",
+
+            "location": "台中市",
+
+            "status": "Active",
+
+            "startDate": "2026-01-15",
+
+            "endDate": "2027-06-30",
+
+            "manager": "採購部",
+
+            "description": "CWPS Integration Test Project",
+
+            "batches": [
+
+                {
+                    "id": "Z05",
+
+                    "name": "Z05批次",
+
+                    "bomVersion": "Z05-V001"
+                },
+
+                {
+                    "id": "Z06",
+
+                    "name": "Z06批次",
+
+                    "bomVersion": "Z06-V001"
+                }
+
+            ],
+
+            "createdAt": "2026-08-07T10:00:00"
+
+
+        },
+
+
+        {
+            "id": "P002",
+
+            "code": "YC-PROJ-002",
+
+            "name": "高雄住宅帷幕工程",
+
+            "customer": "KH建設",
+
+            "location": "高雄市",
+
+            "status": "Planning",
+
+            "startDate": "2026-09-01",
+
+            "endDate": "2028-03-31",
+
+            "manager": "採購部",
+
+            "description": "Second Test Project",
+
+            "batches": [
+
+                {
+                    "id": "A01",
+
+                    "name": "A01批次",
+
+                    "bomVersion": "A01-V001"
+                }
+
+            ],
+
+            "createdAt": "2026-08-07T10:05:00"
+
+
+        }
+
+    ]
+
+}
