@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.7.6
+ 2.9.37
 
 
  Build:
- Enterprise UI Manager Layer
+ Enterprise UI Management Layer
 
 
  Description:
- View Lifecycle Manager
+ Frontend UI Controller Manager
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -43,37 +42,11 @@ class UIManager {
         this.currentView = null;
 
 
-        this.containerId = "app";
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    init(
-        containerId = "app"
-    ){
-
-
-
-        this.containerId = containerId;
+        this.loading = false;
 
 
 
     }
-
 
 
 
@@ -84,38 +57,29 @@ class UIManager {
 
     Register View
 
+    註冊 View
+
     ==============================================
     */
 
 
     register(
+
         name,
+
         view
+
     ){
 
 
 
-        if(!name || !view){
+        this.views[name] =
 
+            view;
 
-            throw new Error(
-
-                "Invalid View"
-
-            );
-
-
-        }
-
-
-
-
-
-        this.views[name] = view;
 
 
     }
-
 
 
 
@@ -126,19 +90,21 @@ class UIManager {
 
     Open View
 
+    開啟畫面
+
     ==============================================
     */
 
 
-    async open(
-        name,
-        data = null
+    open(
+
+        name
+
     ){
 
 
 
         const view =
-
 
             this.views[name];
 
@@ -149,16 +115,35 @@ class UIManager {
         if(!view){
 
 
-            console.error(
+            throw new Error(
 
-                "View not found:",
+                "View not found: "
+
+                +
 
                 name
 
             );
 
 
-            return;
+        }
+
+
+
+
+
+        this.currentView =
+
+            view;
+
+
+
+
+
+        if(view.render){
+
+
+            view.render();
 
 
         }
@@ -167,372 +152,11 @@ class UIManager {
 
 
 
-        this.showLoading();
+        return view;
 
-
-
-
-
-        try{
-
-
-            this.currentView = view;
-
-
-
-
-
-            if(
-
-                view.init &&
-
-                !view.initialized
-
-            ){
-
-
-                view.init(
-
-                    view.controller,
-
-                    this.containerId
-
-                );
-
-
-                view.initialized = true;
-
-
-            }
-
-
-
-
-
-
-
-            if(view.render){
-
-
-
-                if(data){
-
-
-                    view.render(
-
-                        data
-
-                    );
-
-
-                }
-
-                else if(view.load){
-
-
-                    await view.load();
-
-
-                }
-
-
-            }
-
-
-
-
-
-        }
-
-        catch(error){
-
-
-
-            this.showError(
-
-                error
-
-            );
-
-
-
-        }
-
-        finally{
-
-
-            this.hideLoading();
-
-
-        }
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Refresh Current View
-
-    ==============================================
-    */
-
-
-    async refresh(){
-
-
-
-        if(
-
-            this.currentView &&
-
-            this.currentView.refresh
-
-        ){
-
-
-            await this.currentView.refresh();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Container Clear
-
-    ==============================================
-    */
-
-
-    clear(){
-
-
-
-        const container =
-
-
-            document.getElementById(
-
-                this.containerId
-
-            );
-
-
-
-
-
-        if(container){
-
-
-            container.innerHTML = "";
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Loading
-
-    ==============================================
-    */
-
-
-    showLoading(){
-
-
-
-        const container =
-
-
-            document.getElementById(
-
-                this.containerId
-
-            );
-
-
-
-
-
-        if(!container){
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        const loading =
-
-
-            document.createElement(
-
-                "div"
-
-            );
-
-
-
-
-
-        loading.id =
-
-            "cwps-loading";
-
-
-
-
-
-        loading.innerHTML =
-
-
-            "Loading...";
-
-
-
-
-
-        container.appendChild(
-
-            loading
-
-        );
-
-
-    }
-
-
-
-
-
-
-    hideLoading(){
-
-
-
-        const loading =
-
-
-            document.getElementById(
-
-                "cwps-loading"
-
-            );
-
-
-
-
-
-        if(loading){
-
-
-            loading.remove();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Error Display
-
-    ==============================================
-    */
-
-
-    showError(
-        error
-    ){
-
-
-
-        console.error(
-
-            error
-
-        );
-
-
-
-
-
-        const container =
-
-
-            document.getElementById(
-
-                this.containerId
-
-            );
-
-
-
-
-
-        if(container){
-
-
-            container.innerHTML = `
-
-
-            <div class="error-message">
-
-
-                ${
-
-                    error.message ||
-
-                    error
-
-                }
-
-
-            </div>
-
-
-            `;
-
-
-        }
-
-
-    }
-
 
 
 
@@ -561,9 +185,432 @@ class UIManager {
 
 
 
+    /*
+    ==============================================
+
+    Loading
+
+    ==============================================
+    */
+
+
+    showLoading(){
+
+
+
+        this.loading = true;
+
+
+
+
+
+        const element =
+
+            document.getElementById(
+
+                "loading"
+
+            );
+
+
+
+
+
+        if(element){
+
+
+            element.style.display =
+
+                "block";
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    hideLoading(){
+
+
+
+        this.loading = false;
+
+
+
+
+
+        const element =
+
+            document.getElementById(
+
+                "loading"
+
+            );
+
+
+
+
+
+        if(element){
+
+
+            element.style.display =
+
+                "none";
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Message
+
+    ==============================================
+    */
+
+
+    message(
+
+        text,
+
+        type="info"
+
+    ){
+
+
+
+        const box =
+
+            document.createElement(
+
+                "div"
+
+            );
+
+
+
+
+
+        box.className =
+
+            "cwps-message "
+
+            +
+
+            type;
+
+
+
+
+
+        box.innerHTML =
+
+            text;
+
+
+
+
+
+        document.body
+
+            .appendChild(
+
+                box
+
+            );
+
+
+
+
+
+        setTimeout(
+
+            ()=>{
+
+
+                box.remove();
+
+
+            },
+
+
+            3000
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Confirm
+
+    ==============================================
+    */
+
+
+    confirm(
+
+        text
+
+    ){
+
+
+
+        return window.confirm(
+
+            text
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Modal
+
+    ==============================================
+    */
+
+
+    openModal(
+
+        title,
+
+        content
+
+    ){
+
+
+
+        let modal =
+
+            document.getElementById(
+
+                "cwps-modal"
+
+            );
+
+
+
+
+
+        if(!modal){
+
+
+
+            modal =
+
+            document.createElement(
+
+                "div"
+
+            );
+
+
+
+            modal.id =
+
+                "cwps-modal";
+
+
+
+
+
+            document.body
+
+                .appendChild(
+
+                    modal
+
+                );
+
+
+        }
+
+
+
+
+
+        modal.innerHTML =
+
+
+        `
+
+        <div class="modal-box">
+
+
+            <h3>
+
+            ${title}
+
+            </h3>
+
+
+            <div>
+
+            ${content}
+
+            </div>
+
+
+
+            <button
+
+            onclick="uiManager.closeModal()">
+
+
+            Close
+
+
+            </button>
+
+
+        </div>
+
+
+        `;
+
+
+
+
+
+        modal.style.display =
+
+            "block";
+
+
+
+    }
+
+
+
+
+
+    closeModal(){
+
+
+
+        const modal =
+
+            document.getElementById(
+
+                "cwps-modal"
+
+            );
+
+
+
+
+
+        if(modal){
+
+
+            modal.style.display =
+
+                "none";
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Refresh Current View
+
+    ==============================================
+    */
+
+
+    refresh(){
+
+
+
+        if(
+
+            this.currentView
+
+            &&
+
+            this.currentView.refresh
+
+        ){
+
+
+
+            this.currentView.refresh();
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Clear
+
+    ==============================================
+    */
+
+
+    clear(){
+
+
+
+        this.views = {};
+
+
+        this.currentView = null;
+
+
+
+    }
+
+
 
 }
-
 
 
 
