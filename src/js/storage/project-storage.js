@@ -3,276 +3,74 @@
 
  CWPS Enterprise
 
- Project Storage Service
+ File:
+ src/js/storage/project-storage.js
+
 
  Sprint:
- 2.1.2
+ 2.9.3
+
+
+ Build:
+ Enterprise Project Storage Layer
+
 
  Description:
- Project Persistence Layer
+ Project Data Access Layer
+
 
 ==================================================
 */
 
 
-(function (global) {
-
-    "use strict";
+(function(global){
 
 
-    class ProjectStorage {
-
-
-        constructor() {
-
-
-            this.db =
-                new CWPSDatabase();
-
-
-            this.storeName =
-                "projects";
-
-
-        }
+"use strict";
 
 
 
-        /**
-         * 初始化
-         */
-        async init() {
-
-
-            await this.db.open();
-
-
-        }
+class ProjectStorage {
 
 
 
-        /**
-         * 建立專案
-         */
-        async create(project) {
+    constructor(){
 
 
-            if (!project) {
+        this.database =
+
+            global.cwpsDatabase;
 
 
-                throw new Error(
-                    "Project data required"
-                );
+        this.collection =
 
+            this.database.collection(
 
-            }
-
-
-
-            const data =
-
-                project.toJSON
-
-                    ? project.toJSON()
-
-                    : project;
-
-
-
-            return await this.db.add(
-
-                this.storeName,
-
-                data
+                "projects"
 
             );
 
 
-        }
+    }
 
 
 
-        /**
-         * 取得單一專案
-         */
-        async get(projectId) {
 
 
-            return await this.db.get(
+    /*
+    ==============================================
 
-                this.storeName,
+    Get All Projects
 
-                projectId
+    ==============================================
+    */
 
-            );
 
+    getAll(){
 
-        }
 
 
-
-        /**
-         * 取得全部專案
-         */
-        async getAll() {
-
-
-            return await this.db.getAll(
-
-                this.storeName
-
-            );
-
-
-        }
-
-
-
-        /**
-         * 更新專案
-         */
-        async update(project) {
-
-
-            if (!project) {
-
-
-                throw new Error(
-                    "Project data required"
-                );
-
-
-            }
-
-
-
-            const data =
-
-                project.toJSON
-
-                    ? project.toJSON()
-
-                    : project;
-
-
-
-            return await this.db.update(
-
-                this.storeName,
-
-                data
-
-            );
-
-
-        }
-
-
-
-        /**
-         * 刪除專案
-         */
-        async remove(projectId) {
-
-
-            return await this.db.remove(
-
-                this.storeName,
-
-                projectId
-
-            );
-
-
-        }
-
-
-
-        /**
-         * 檢查專案是否存在
-         */
-        async exists(projectId) {
-
-
-            const project =
-
-                await this.get(projectId);
-
-
-
-            return project !== null;
-
-
-        }
-
-
-
-        /**
-         * 依專案編號查詢
-         */
-        async findByCode(code) {
-
-
-            const projects =
-
-                await this.getAll();
-
-
-
-            return projects.find(
-
-                project =>
-
-                    project.code === code
-
-            ) || null;
-
-
-        }
-
-
-
-        /**
-         * 依狀態查詢
-         */
-        async findByStatus(status) {
-
-
-            const projects =
-
-                await this.getAll();
-
-
-
-            return projects.filter(
-
-                project =>
-
-                    project.status === status
-
-            );
-
-
-        }
-
-
-
-        /**
-         * 清除全部專案
-         *
-         * 測試用
-         */
-        async clearAll() {
-
-
-            return await this.db.clear(
-
-                this.storeName
-
-            );
-
-
-        }
+        return this.collection.getAll();
 
 
 
@@ -280,8 +78,239 @@
 
 
 
-    global.ProjectStorage =
-        ProjectStorage;
+
+
+    /*
+    ==============================================
+
+    Get Project By ID
+
+    ==============================================
+    */
+
+
+    getById(
+        projectId
+    ){
+
+
+
+        return this.collection.getById(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Find By Code
+
+    ==============================================
+    */
+
+
+    getByCode(
+        projectCode
+    ){
+
+
+
+        const result =
+
+
+            this.collection.where({
+
+                projectCode
+
+            });
+
+
+
+
+
+        return result[0] || null;
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Project
+
+    ==============================================
+    */
+
+
+    save(
+        project
+    ){
+
+
+
+        return this.collection.insert(
+
+            project
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Update Project
+
+    ==============================================
+    */
+
+
+    update(
+        projectId,
+
+        data
+    ){
+
+
+
+        return this.collection.update(
+
+            projectId,
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete Project
+
+    ==============================================
+    */
+
+
+    delete(
+        projectId
+    ){
+
+
+
+        return this.collection.delete(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Exists
+
+    ==============================================
+    */
+
+
+    exists(
+        projectId
+    ){
+
+
+
+        return !!this.getById(
+
+            projectId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Change Status
+
+    ==============================================
+    */
+
+
+    changeStatus(
+        projectId,
+
+        status
+    ){
+
+
+
+        return this.update(
+
+            projectId,
+
+            {
+
+                status,
+
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
+
+            }
+
+        );
+
+
+    }
+
+
+
+}
+
+
+
+
+
+global.ProjectStorage =
+
+    ProjectStorage;
 
 
 
