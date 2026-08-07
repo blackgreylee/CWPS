@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.4.1
+ 2.9.20
 
 
  Build:
- Enterprise Supplier Management Layer
+ Enterprise Supplier Management Engine Layer
 
 
  Description:
- Supplier Management Engine
+ Supplier Business Logic Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,13 +36,22 @@ class SupplierEngine {
     constructor(){
 
 
-        this.storage =
+        this.database =
 
-            new SupplierStorage();
+            global.cwpsDatabase;
+
+
+
+        this.collection =
+
+            this.database.collection(
+
+                "suppliers"
+
+            );
 
 
     }
-
 
 
 
@@ -52,26 +60,123 @@ class SupplierEngine {
     /*
     ==============================================
 
-    Initialize
+    Get All Suppliers
 
     ==============================================
     */
 
 
-    async init(){
+    getAll(){
 
 
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
+        return this.collection.getAll();
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Get Supplier By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        supplierId
+
+    ){
+
+
+        return this.collection.getById(
+
+            supplierId
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Search Supplier
+
+    ==============================================
+    */
+
+
+    search(
+
+        keyword
+
+    ){
+
+
+
+        keyword =
+
+            keyword.toLowerCase();
+
+
+
+
+
+        return this.getAll()
+
+        .filter(
+
+            supplier => {
+
+
+
+                return (
+
+                    supplier.code
+
+                    &&
+
+                    supplier.code
+
+                    .toLowerCase()
+
+                    .includes(keyword)
+
+                )
+
+                ||
+
+                (
+
+                    supplier.name
+
+                    &&
+
+                    supplier.name
+
+                    .toLowerCase()
+
+                    .includes(keyword)
+
+                );
+
+
+            }
+
+        );
+
+
+    }
 
 
 
@@ -82,55 +187,48 @@ class SupplierEngine {
 
     Create Supplier
 
-    建立供應商
-
     ==============================================
     */
 
 
-    async create(data){
+    create(
+
+        supplier
+
+    ){
 
 
 
-        if(!data){
+        const data = {
 
 
-            throw new Error(
-
-                "Supplier data required"
-
-            );
+            ...supplier,
 
 
-        }
+            status:
+
+                supplier.status
+
+                ||
+
+                "Active",
 
 
+            createDate:
 
+                new Date()
 
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.SupplierStatus.ACTIVE;
-
+                .toISOString()
 
 
 
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
+        };
 
 
 
 
 
-        return await this.storage.create(
+        return this.collection.insert(
 
             data
 
@@ -138,7 +236,6 @@ class SupplierEngine {
 
 
     }
-
 
 
 
@@ -153,279 +250,38 @@ class SupplierEngine {
     */
 
 
-    async update(
-        supplier
-    ){
+    update(
 
-
-
-        supplier.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            supplier
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get Supplier
-
-    ==============================================
-    */
-
-
-    async get(
-        id
-    ){
-
-
-
-        return await this.storage.get(
-
-            id
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get All
-
-    ==============================================
-    */
-
-
-    async getAll(){
-
-
-
-        return await this.storage.getAll();
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Category
-
-    材料分類
-
-    ==============================================
-    */
-
-
-    async findByCategory(
-        category
-    ){
-
-
-
-        const list =
-
-
-            await this.storage.getAll();
-
-
-
-
-
-        return list.filter(
-
-            supplier =>
-
-
-                supplier.categories &&
-
-
-                supplier.categories.includes(
-
-                    category
-
-                )
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find Active Supplier
-
-    ==============================================
-    */
-
-
-    async findActive(){
-
-
-
-        const list =
-
-
-            await this.storage.getAll();
-
-
-
-
-
-        return list.filter(
-
-            supplier =>
-
-
-                supplier.status ===
-
-                CWPSTypes.SupplierStatus.ACTIVE
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Link Quotation
-
-    關聯報價紀錄
-
-    ==============================================
-    */
-
-
-    async addQuotationHistory(
         supplierId,
-        quotationId
+
+        data
+
     ){
 
 
 
-        const supplier =
+        return this.collection.update(
 
-
-            await this.storage.get(
-
-                supplierId
-
-            );
-
-
-
-
-
-        if(!supplier){
-
-
-            throw new Error(
-
-                "Supplier not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        supplier.quotationHistory =
-
-
-            supplier.quotationHistory || [];
-
-
-
-
-
-        supplier.quotationHistory.push(
+            supplierId,
 
             {
 
-
-                quotationId:
-
-
-                    quotationId,
+                ...data,
 
 
-
-                date:
-
+                updateDate:
 
                     new Date()
 
                     .toISOString()
 
 
-
             }
-
-
-        );
-
-
-
-
-
-        return await this.storage.update(
-
-            supplier
 
         );
 
 
     }
-
 
 
 
@@ -434,98 +290,34 @@ class SupplierEngine {
     /*
     ==============================================
 
-    Link Purchase
-
-    關聯採購紀錄
+    Enable Supplier
 
     ==============================================
     */
 
 
-    async addPurchaseHistory(
-        supplierId,
-        purchaseId
+    enable(
+
+        supplierId
+
     ){
 
 
 
-        const supplier =
+        return this.update(
 
-
-            await this.storage.get(
-
-                supplierId
-
-            );
-
-
-
-
-
-        if(!supplier){
-
-
-            throw new Error(
-
-                "Supplier not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        supplier.purchaseHistory =
-
-
-            supplier.purchaseHistory || [];
-
-
-
-
-
-        supplier.purchaseHistory.push(
+            supplierId,
 
             {
 
-
-                purchaseId:
-
-
-                    purchaseId,
-
-
-
-                date:
-
-
-                    new Date()
-
-                    .toISOString()
-
-
+                status:"Active"
 
             }
-
-
-        );
-
-
-
-
-
-        return await this.storage.update(
-
-            supplier
 
         );
 
 
     }
-
 
 
 
@@ -536,37 +328,66 @@ class SupplierEngine {
 
     Disable Supplier
 
-    停用供應商
+    ==============================================
+    */
+
+
+    disable(
+
+        supplierId
+
+    ){
+
+
+
+        return this.update(
+
+            supplierId,
+
+            {
+
+                status:"Disabled"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Validate Supplier
 
     ==============================================
     */
 
 
-    async disable(
-        supplierId
+    validate(
+
+        supplier
+
     ){
 
 
 
-        const supplier =
-
-
-            await this.storage.get(
-
-                supplierId
-
-            );
+        const errors = [];
 
 
 
 
 
-        if(!supplier){
+        if(!supplier.name){
 
 
-            throw new Error(
+            errors.push(
 
-                "Supplier not found"
+                "Supplier name missing"
 
             );
 
@@ -577,35 +398,39 @@ class SupplierEngine {
 
 
 
-        supplier.status =
+        if(!supplier.contact){
 
 
-            CWPSTypes.SupplierStatus.INACTIVE;
+            errors.push(
+
+                "Contact missing"
+
+            );
 
 
-
-
-
-        supplier.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
+        }
 
 
 
 
 
-        return await this.storage.update(
+        return {
 
-            supplier
 
-        );
+            valid:
+
+                errors.length===0,
+
+
+            errors
+
+
+
+        };
+
 
 
     }
-
 
 
 
@@ -614,23 +439,21 @@ class SupplierEngine {
     /*
     ==============================================
 
-    Version
+    Get Active Suppliers
 
     ==============================================
     */
 
 
-    async createVersion(
-        supplier
-    ){
+    getActive(){
 
 
 
-        return await this.storage.createVersion(
+        return this.collection.where({
 
-            supplier
+            status:"Active"
 
-        );
+        });
 
 
     }
@@ -639,8 +462,35 @@ class SupplierEngine {
 
 
 
-}
+    /*
+    ==============================================
 
+    Delete Supplier
+
+    ==============================================
+    */
+
+
+    delete(
+
+        supplierId
+
+    ){
+
+
+
+        return this.collection.delete(
+
+            supplierId
+
+        );
+
+
+    }
+
+
+
+}
 
 
 
