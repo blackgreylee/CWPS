@@ -1,0 +1,283 @@
+{
+    "requirements": [
+
+        {
+            "id": "REQ001",
+
+            "projectId": "P001",
+
+            "batchId": "Z05",
+
+            "materialCode": "AL-6063",
+
+            "materialName": "6063鋁擠型",
+
+            "quantity": 2500,
+
+            "unit": "kg",
+
+            "requiredDate": "2026-10-15",
+
+            "status": "Quotation",
+
+            "supplierOptions": [
+
+                "S001"
+
+            ],
+
+            "createdAt": "2026-08-07T10:20:00"
+
+        },
+
+
+        {
+            "id": "REQ002",
+
+            "projectId": "P001",
+
+            "batchId": "Z05",
+
+            "materialCode": "GL-001",
+
+            "materialName": "Low-E複層玻璃",
+
+            "quantity": 1200,
+
+            "unit": "㎡",
+
+            "requiredDate": "2026-11-01",
+
+            "status": "Purchase",
+
+            "supplierOptions": [
+
+                "S002"
+
+            ],
+
+            "createdAt": "2026-08-07T10:25:00"
+
+        },
+
+
+        {
+            "id": "REQ003",
+
+            "projectId": "P002",
+
+            "batchId": "A01",
+
+            "materialCode": "HW-001",
+
+            "materialName": "不鏽鋼五金件",
+
+            "quantity": 800,
+
+            "unit": "pcs",
+
+            "requiredDate": "2027-01-10",
+
+            "status": "Pending",
+
+            "supplierOptions": [
+
+                "S003"
+
+            ],
+
+            "createdAt": "2026-08-07T10:30:00"
+
+        }
+
+    ],
+
+
+
+    "quotations": [
+
+        {
+
+            "id": "Q001",
+
+            "requirementId": "REQ001",
+
+            "supplierId": "S001",
+
+            "supplierName": "台灣鋁業有限公司",
+
+            "materialCode": "AL-6063",
+
+            "quantity": 2500,
+
+            "unitPrice": 280,
+
+            "totalAmount": 700000,
+
+            "deliveryDays": 14,
+
+            "status": "Approved",
+
+            "createdAt": "2026-08-07T11:00:00"
+
+        },
+
+
+        {
+
+            "id": "Q002",
+
+            "requirementId": "REQ002",
+
+            "supplierId": "S002",
+
+            "supplierName": "明達玻璃有限公司",
+
+            "materialCode": "GL-001",
+
+            "quantity": 1200,
+
+            "unitPrice": 4500,
+
+            "totalAmount": 5400000,
+
+            "deliveryDays": 30,
+
+            "status": "Approved",
+
+            "createdAt": "2026-08-07T11:05:00"
+
+        }
+
+    ],
+
+
+
+    "purchaseOrders": [
+
+        {
+
+            "id": "PO001",
+
+            "number": "CWPS-PO-0001",
+
+            "supplierId": "S001",
+
+            "supplierName": "台灣鋁業有限公司",
+
+            "requirementId": "REQ001",
+
+            "amount": 700000,
+
+            "status": "Processing",
+
+            "orderDate": "2026-08-10"
+
+        },
+
+
+        {
+
+            "id": "PO002",
+
+            "number": "CWPS-PO-0002",
+
+            "supplierId": "S002",
+
+            "supplierName": "明達玻璃有限公司",
+
+            "requirementId": "REQ002",
+
+            "amount": 5400000,
+
+            "status": "Completed",
+
+            "orderDate": "2026-08-12"
+
+        }
+
+    ],
+
+
+
+    "shipments": [
+
+        {
+
+            "id": "SHIP001",
+
+            "purchaseOrderId": "PO001",
+
+            "supplierId": "S001",
+
+            "shipmentDate": "2026-09-01",
+
+            "quantity": 2500,
+
+            "unit": "kg",
+
+            "status": "Preparing"
+
+        },
+
+
+        {
+
+            "id": "SHIP002",
+
+            "purchaseOrderId": "PO002",
+
+            "supplierId": "S002",
+
+            "shipmentDate": "2026-09-15",
+
+            "quantity": 1200,
+
+            "unit": "㎡",
+
+            "status": "Shipped"
+
+        }
+
+    ],
+
+
+
+    "invoices": [
+
+        {
+
+            "id": "INV001",
+
+            "purchaseOrderId": "PO001",
+
+            "supplierId": "S001",
+
+            "invoiceNumber": "AB12345678",
+
+            "amount": 700000,
+
+            "status": "Pending"
+
+        },
+
+
+        {
+
+            "id": "INV002",
+
+            "purchaseOrderId": "PO002",
+
+            "supplierId": "S002",
+
+            "invoiceNumber": "CD87654321",
+
+            "amount": 5400000,
+
+            "status": "Paid"
+
+        }
+
+    ]
+
+}
