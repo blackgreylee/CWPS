@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.6.5
+ 2.9.27
 
 
  Build:
@@ -25,7 +25,6 @@
 
 (function(global){
 
-
 "use strict";
 
 
@@ -37,15 +36,14 @@ class BOMController {
     constructor(){
 
 
-        this.engine =
+        this.bomEngine =
 
-            new BOMEngine();
+            new global.BOMEngine();
 
 
+        this.bomStorage =
 
-        this.storage =
-
-            new BOMStorage();
+            new global.BOMStorage();
 
 
 
@@ -55,110 +53,70 @@ class BOMController {
 
 
 
-
     /*
     ==============================================
 
-    Load BOM
+    Load BOM Version
 
     ==============================================
     */
 
 
-    async load(
-        projectId
-    ){
+    loadVersion(
 
-
-
-        const bom =
-
-
-            await this.storage.getByProject(
-
-                projectId
-
-            );
-
-
-
-
-
-        if(!bom){
-
-
-            return null;
-
-
-        }
-
-
-
-
-
-        return this.engine.buildTree(
-
-            bom
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get BOM Version
-
-    ==============================================
-    */
-
-
-    async getVersion(
         versionId
+
     ){
 
 
 
-        const bom =
+        return {
 
 
-            await this.storage.getVersion(
-
-                versionId
-
-            );
+            versionId,
 
 
+            tree:
 
+                this.bomEngine
 
+                .getTree(
 
-        if(!bom){
+                    versionId
 
-
-            return null;
-
-
-        }
+                )
 
 
 
-
-
-        return this.engine.buildTree(
-
-            bom
-
-        );
+        };
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Get BOM List
+
+    ==============================================
+    */
+
+
+    getList(){
+
+
+
+        return this.bomStorage
+
+            .getAll();
+
+
+
+    }
 
 
 
@@ -173,16 +131,19 @@ class BOMController {
     */
 
 
-    async import(
+    import(
+
         data
+
     ){
 
 
 
         const result =
 
+            this.bomEngine
 
-            this.engine.validateImport(
+            .validateImport(
 
                 data
 
@@ -195,11 +156,19 @@ class BOMController {
         if(!result.valid){
 
 
-            throw new Error(
+            return {
 
-                result.message
 
-            );
+                success:false,
+
+
+                errors:
+
+                    result.errors
+
+
+
+            };
 
 
         }
@@ -208,15 +177,29 @@ class BOMController {
 
 
 
-        return await this.storage.saveVersion(
+        return {
 
-            data
 
-        );
+            success:true,
+
+
+            data:
+
+                this.bomStorage
+
+                .createVersion(
+
+                    data
+
+                )
+
+
+
+        };
+
 
 
     }
-
 
 
 
@@ -225,27 +208,31 @@ class BOMController {
     /*
     ==============================================
 
-    Validate BOM
+    Expand BOM
 
     ==============================================
     */
 
 
-    validate(
-        bom
+    expand(
+
+        nodeId
+
     ){
 
 
 
-        return this.engine.validate(
+        return this.bomEngine
 
-            bom
+            .expandNode(
 
-        );
+                nodeId
+
+            );
+
 
 
     }
-
 
 
 
@@ -261,77 +248,21 @@ class BOMController {
 
 
     calculateQuantity(
-        bom
-    ){
 
-
-
-        return this.engine.calculateQuantity(
-
-            bom
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find Node
-
-    ==============================================
-    */
-
-
-    findNode(
-        root,
-        nodeId
-    ){
-
-
-
-        return this.engine.findNode(
-
-            root,
-
-            nodeId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Delete Version
-
-    ==============================================
-    */
-
-
-    async voidVersion(
         versionId
+
     ){
 
 
 
-        return await this.storage.voidVersion(
+        return this.bomEngine
 
-            versionId
+            .calculateQuantity(
 
-        );
+                versionId
+
+            );
+
 
 
     }
@@ -340,27 +271,128 @@ class BOMController {
 
 
 
-
     /*
     ==============================================
 
-    Get History
+    BOM Summary
 
     ==============================================
     */
 
 
-    async history(
-        projectId
+    summary(
+
+        versionId
+
     ){
 
 
 
-        return await this.storage.getHistory(
+        const tree =
 
-            projectId
+            this.loadVersion(
 
-        );
+                versionId
+
+            );
+
+
+
+
+
+        return {
+
+
+            versionId,
+
+
+            nodeCount:
+
+                this.countNodes(
+
+                    tree.tree
+
+                )
+
+
+
+        };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Count Nodes
+
+    ==============================================
+    */
+
+
+    countNodes(
+
+        node
+
+    ){
+
+
+
+        if(!node){
+
+
+            return 0;
+
+
+        }
+
+
+
+
+
+        let count = 1;
+
+
+
+
+
+        if(node.children){
+
+
+            node.children
+
+            .forEach(
+
+                child=>{
+
+
+                    count +=
+
+                    this.countNodes(
+
+                        child
+
+                    );
+
+
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+        return count;
+
 
 
     }
@@ -368,7 +400,6 @@ class BOMController {
 
 
 }
-
 
 
 
