@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.3.4
+ 2.9.18
 
 
  Build:
- Enterprise Shipment Engine
+ Enterprise Procurement Shipment Engine Layer
 
 
  Description:
- Shipment Tracking Management Engine
+ Shipment Processing Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,9 +36,15 @@ class ShipmentEngine {
     constructor(){
 
 
-        this.storage =
+        this.purchaseStorage =
 
-            new ShipmentStorage();
+            new global.PurchaseStorage();
+
+
+        this.shipmentStorage =
+
+            new global.ShipmentStorage();
+
 
 
     }
@@ -48,116 +53,34 @@ class ShipmentEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Create Shipment From Purchase
 
     ==============================================
     */
 
 
-    async init(){
+    createFromPurchase(
 
+        purchaseId
 
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
-
-
-    }
+    ){
 
 
 
+        const purchase =
 
+            this.purchaseStorage
 
+            .getById(
 
-    /*
-    ==============================================
-
-    Create Shipment
-
-    建立出貨資料
-
-    ==============================================
-    */
-
-
-    async create(data){
-
-
-
-        if(!data){
-
-
-            throw new Error(
-
-                "Shipment data required"
+                purchaseId
 
             );
 
 
-        }
-
-
-
-
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.ShipmentStatus.PENDING;
-
-
-
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.create(
-
-            data
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Generate From Purchase
-
-    Purchase → Shipment
-
-    ==============================================
-    */
-
-
-    async generateFromPurchase(
-        purchase
-    ){
 
 
 
@@ -166,7 +89,7 @@ class ShipmentEngine {
 
             throw new Error(
 
-                "Purchase required"
+                "Purchase not found"
 
             );
 
@@ -180,28 +103,7 @@ class ShipmentEngine {
         return {
 
 
-            purchaseId:
-
-                purchase.id,
-
-
-
-            quotationId:
-
-                purchase.quotationId,
-
-
-
-            requirementId:
-
-                purchase.requirementId,
-
-
-
-            projectId:
-
-                purchase.projectId,
-
+            purchaseId,
 
 
             supplierId:
@@ -209,25 +111,24 @@ class ShipmentEngine {
                 purchase.supplierId,
 
 
+            materialId:
 
-            items:
+                purchase.materialId,
 
-                purchase.items || [],
 
+            quantity:
+
+                purchase.quantity,
+
+
+            unit:
+
+                purchase.unit,
 
 
             status:
 
-                CWPSTypes.ShipmentStatus.PENDING,
-
-
-
-            createdAt:
-
-
-                new Date()
-
-                .toISOString()
+                "Preparing"
 
 
 
@@ -240,29 +141,62 @@ class ShipmentEngine {
 
 
 
-
     /*
     ==============================================
 
-    Start Shipment
-
-    出貨
+    Save Shipment
 
     ==============================================
     */
 
 
-    async start(
+    createShipment(
+
+        data
+
+    ){
+
+
+
+        return this.shipmentStorage
+
+            .create(
+
+                data
+
+            );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Ship
+
+    ==============================================
+    */
+
+
+    ship(
+
         shipmentId
+
     ){
 
 
 
-        return await this.storage.start(
+        return this.shipmentStorage
 
-            shipmentId
+            .ship(
 
-        );
+                shipmentId
+
+            );
 
 
     }
@@ -271,29 +205,30 @@ class ShipmentEngine {
 
 
 
-
     /*
     ==============================================
 
-    Receive Shipment
-
-    收貨確認
+    Receive
 
     ==============================================
     */
 
 
-    async receive(
+    receive(
+
         shipmentId
+
     ){
 
 
 
-        return await this.storage.receive(
+        return this.shipmentStorage
 
-            shipmentId
+            .receive(
 
-        );
+                shipmentId
+
+            );
 
 
     }
@@ -302,51 +237,30 @@ class ShipmentEngine {
 
 
 
-
     /*
     ==============================================
 
-    Close Shipment
+    Cancel
 
     ==============================================
     */
 
 
-    async close(
+    cancel(
+
         shipmentId
+
     ){
 
 
 
-        return await this.storage.close(
+        return this.shipmentStorage
 
-            shipmentId
+            .cancel(
 
-        );
+                shipmentId
 
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get All
-
-    ==============================================
-    */
-
-
-    async getAll(){
-
-
-
-        return await this.storage.getAll();
-
+            );
 
 
     }
@@ -355,124 +269,185 @@ class ShipmentEngine {
 
 
 
-
     /*
     ==============================================
 
-    Find By Project
+    Validate Shipment
 
     ==============================================
     */
 
 
-    async findByProject(
-        projectId
-    ){
+    validate(
 
-
-
-        return await this.storage.findByProject(
-
-            projectId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Purchase
-
-    ==============================================
-    */
-
-
-    async findByPurchase(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.findByPurchase(
-
-            purchaseId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find Supplier Shipment
-
-    ==============================================
-    */
-
-
-    async findBySupplier(
-        supplierId
-    ){
-
-
-
-        return await this.storage.findBySupplier(
-
-            supplierId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Shipment Version
-
-    ==============================================
-    */
-
-
-    async createVersion(
         shipment
+
     ){
 
 
 
-        return await this.storage.createVersion(
+        const errors = [];
 
-            shipment
 
-        );
+
+
+
+        if(!shipment.purchaseId){
+
+
+            errors.push(
+
+                "Purchase missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(!shipment.materialId){
+
+
+            errors.push(
+
+                "Material missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(
+
+            Number(
+
+                shipment.quantity || 0
+
+            )
+
+            <=0
+
+        ){
+
+
+            errors.push(
+
+                "Quantity invalid"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(!shipment.unit){
+
+
+            errors.push(
+
+                "Unit missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length===0,
+
+
+            errors
+
+
+
+        };
+
 
 
     }
 
 
+
+
+
+    /*
+    ==============================================
+
+    Quantity Check
+
+    ==============================================
+    */
+
+
+    checkQuantity(
+
+        purchase,
+
+        shipment
+
+    ){
+
+
+
+        return {
+
+
+            valid:
+
+                Number(
+
+                    shipment.quantity
+
+                )
+
+                <=
+
+                Number(
+
+                    purchase.quantity
+
+                ),
+
+
+
+            purchaseQuantity:
+
+                purchase.quantity,
+
+
+            shipmentQuantity:
+
+                shipment.quantity
+
+
+
+        };
+
+
+
+    }
 
 
 
 }
-
 
 
 
