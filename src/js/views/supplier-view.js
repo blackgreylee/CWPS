@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.7.2
+ 2.9.33
 
 
  Build:
@@ -16,7 +16,7 @@
 
 
  Description:
- Supplier Management UI View
+ Supplier Management User Interface View
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,14 +36,18 @@ class SupplierView {
     constructor(){
 
 
-        this.controller = null;
+        this.controller =
+
+            new global.SupplierController();
 
 
-        this.container = null;
+        this.container =
+
+            null;
+
 
 
     }
-
 
 
 
@@ -60,18 +63,14 @@ class SupplierView {
 
 
     init(
-        controller,
-        containerId = "app"
+
+        containerId
+
     ){
 
 
 
-        this.controller = controller;
-
-
-
         this.container =
-
 
             document.getElementById(
 
@@ -83,11 +82,11 @@ class SupplierView {
 
 
 
-        this.bindEvents();
+        this.render();
+
 
 
     }
-
 
 
 
@@ -102,9 +101,7 @@ class SupplierView {
     */
 
 
-    render(
-        suppliers
-    ){
+    render(){
 
 
 
@@ -120,220 +117,126 @@ class SupplierView {
 
 
 
-        let html = `
+        const suppliers =
+
+            this.controller
+
+            .getSuppliers();
 
 
-        <div class="supplier-page">
 
 
-            <div class="page-header">
+
+        this.container.innerHTML =
+
+        `
+
+        <div class="supplier-view">
 
 
-                <h2>
+            <h2>
 
-                    Supplier Management
+                Supplier Management
 
-                </h2>
-
-
-                <button
-
-                    id="btn-create-supplier"
-
-                    class="btn btn-primary"
-
-                >
-
-                    New Supplier
-
-                </button>
+            </h2>
 
 
-                <button
 
-                    id="btn-ranking-supplier"
+            <div class="supplier-list">
 
-                    class="btn btn-secondary"
 
-                >
+            ${
 
-                    Ranking
+            suppliers.map(
 
-                </button>
+                supplier =>
+
+                this.renderSupplier(
+
+                    supplier
+
+                )
+
+            )
+
+            .join("")
+
+
+            }
 
 
             </div>
 
 
-
-
-            <table class="table">
-
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Supplier ID
-                        </th>
-
-
-                        <th>
-                            Supplier Name
-                        </th>
-
-
-                        <th>
-                            Contact
-                        </th>
-
-
-                        <th>
-                            Rating
-                        </th>
-
-
-                        <th>
-                            Status
-                        </th>
-
-
-                        <th>
-                            Action
-                        </th>
-
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
+        </div>
 
         `;
 
 
 
+    }
 
 
-        suppliers.forEach(
 
-            supplier=>{
 
 
-                html += `
+    /*
+    ==============================================
 
+    Render Supplier Card
 
-                <tr>
+    ==============================================
+    */
 
 
-                    <td>
+    renderSupplier(
 
-                        ${
+        supplier
 
-                            supplier.id || ""
+    ){
 
-                        }
 
-                    </td>
 
+        return `
 
 
-                    <td>
+        <div class="supplier-card">
 
-                        ${
 
-                            supplier.name || ""
+            <h3>
 
-                        }
+                ${supplier.name}
 
-                    </td>
+            </h3>
 
 
+            <p>
 
-                    <td>
+            Code:
 
-                        ${
+            ${supplier.code || ""}
 
-                            supplier.contact || ""
+            </p>
 
-                        }
 
-                    </td>
+            <p>
 
+            Status:
 
+            ${supplier.status || ""}
 
-                    <td>
+            </p>
 
-                        ${
 
-                            supplier.averageRating || 0
 
-                        }
+            <button
 
-                    </td>
+            onclick="supplierView.detail('${supplier.id}')">
 
+                Detail
 
+            </button>
 
-                    <td>
-
-                        ${
-
-                            supplier.status || ""
-
-                        }
-
-                    </td>
-
-
-
-                    <td>
-
-
-                        <button
-
-                            class="btn-detail"
-
-                            data-id="${
-
-                                supplier.id
-
-                            }"
-
-                        >
-
-                            Detail
-
-                        </button>
-
-
-
-                    </td>
-
-
-                </tr>
-
-
-                `;
-
-
-            }
-
-        );
-
-
-
-
-
-        html += `
-
-
-                </tbody>
-
-
-            </table>
 
 
         </div>
@@ -342,18 +245,7 @@ class SupplierView {
         `;
 
 
-
-
-
-        this.container.innerHTML = html;
-
-
-
-        this.bindRowEvents();
-
-
     }
-
 
 
 
@@ -362,99 +254,25 @@ class SupplierView {
     /*
     ==============================================
 
-    Create Supplier
+    Show Detail
 
     ==============================================
     */
 
 
-    showCreateForm(){
+    detail(
 
-
-
-        const name =
-
-
-            prompt(
-
-                "Supplier Name"
-
-            );
-
-
-
-
-
-        const contact =
-
-
-            prompt(
-
-                "Contact"
-
-            );
-
-
-
-
-
-        if(!name){
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        this.controller.create({
-
-
-
-            name:
-
-                name,
-
-
-
-            contact:
-
-                contact
-
-
-
-        });
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Detail
-
-    ==============================================
-    */
-
-
-    async showDetail(
         supplierId
+
     ){
 
 
 
         const supplier =
 
+            this.controller
 
-            await this.controller.detail(
+            .getSupplier(
 
                 supplierId
 
@@ -464,35 +282,199 @@ class SupplierView {
 
 
 
-        if(!supplier){
+        const rating =
+
+            this.controller
+
+            .getRating(
+
+                supplierId
+
+            );
 
 
-            return;
-
-
-        }
 
 
 
+        this.container.innerHTML =
+
+        `
 
 
-        alert(
+        <div class="supplier-detail">
 
-            JSON.stringify(
 
-                supplier,
+            <h2>
 
-                null,
+            ${supplier.name}
 
-                4
+            </h2>
+
+
+
+            <p>
+
+            Code:
+
+            ${supplier.code || ""}
+
+            </p>
+
+
+
+            <p>
+
+            Contact:
+
+            ${supplier.contact || ""}
+
+            </p>
+
+
+
+            <h3>
+
+            Rating
+
+            </h3>
+
+
+
+            ${
+
+            rating.map(
+
+                item =>
+
+
+                `
+
+                <div>
+
+                Score:
+
+                ${item.score}
+
+
+                Grade:
+
+                ${item.grade}
+
+
+                </div>
+
+                `
+
 
             )
 
-        );
+            .join("")
+
+
+            }
+
+
+
+        </div>
+
+
+        `;
+
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Search
+
+    ==============================================
+    */
+
+
+    search(
+
+        keyword
+
+    ){
+
+
+
+        const result =
+
+            this.controller
+
+            .search(
+
+                keyword
+
+            );
+
+
+
+
+
+        this.renderSearchResult(
+
+            result
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Render Search Result
+
+    ==============================================
+    */
+
+
+    renderSearchResult(
+
+        list
+
+    ){
+
+
+
+        this.container.innerHTML =
+
+        list.map(
+
+            item =>
+
+
+            `
+
+            <div class="supplier-card">
+
+                ${item.name}
+
+            </div>
+
+            `
+
+
+        )
+
+        .join("");
+
+
+
+    }
 
 
 
@@ -507,84 +489,76 @@ class SupplierView {
     */
 
 
-    async showRanking(){
+    showRanking(){
 
 
 
-        const list =
+        const ranking =
 
+            this.controller
 
-            await this.controller.ranking();
-
-
-
-
-
-        let text =
-
-
-            "Supplier Ranking\n\n";
+            .ranking();
 
 
 
 
 
-        list.forEach(
+        this.container.innerHTML =
 
-            (item,index)=>{
-
-
-                text +=
+        `
 
 
-                    (
+        <h2>
 
-                        index + 1
+        Supplier Ranking
 
-                    )
-
-                    +
-
-                    ". "
-
-                    +
-
-                    (
-
-                        item.name || ""
-
-                    )
-
-                    +
-
-                    " : "
-
-                    +
-
-                    (
-
-                        item.performanceScore || 0
-
-                    )
-
-                    +
-
-                    "\n";
+        </h2>
 
 
-            }
+        ${
 
-        );
+        ranking.map(
+
+            (item,index)=>
+
+            `
+
+            <div>
+
+            ${index+1}.
+
+            ${item.supplierName}
 
 
+            Score:
+
+            ${item.score}
 
 
+            Grade:
 
-        alert(text);
+            ${item.grade}
+
+
+            </div>
+
+
+            `
+
+
+        )
+
+        .join("")
+
+
+        }
+
+
+        `;
+
 
 
     }
-
 
 
 
@@ -593,131 +567,25 @@ class SupplierView {
     /*
     ==============================================
 
-    Events
+    Refresh
 
     ==============================================
     */
 
 
-    bindEvents(){
+    refresh(){
 
 
 
-        document.addEventListener(
+        this.render();
 
-            "click",
-
-            event=>{
-
-
-                if(
-
-                    event.target.id ===
-
-                    "btn-create-supplier"
-
-                ){
-
-
-                    this.showCreateForm();
-
-
-                }
-
-
-
-
-
-                if(
-
-                    event.target.id ===
-
-                    "btn-ranking-supplier"
-
-                ){
-
-
-                    this.showRanking();
-
-
-                }
-
-
-            }
-
-        );
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Detail Events
-
-    ==============================================
-    */
-
-
-    bindRowEvents(){
-
-
-
-        const buttons =
-
-
-            document.querySelectorAll(
-
-                ".btn-detail"
-
-            );
-
-
-
-
-
-        buttons.forEach(
-
-            button=>{
-
-
-                button.addEventListener(
-
-                    "click",
-
-                    ()=>{
-
-
-                        this.showDetail(
-
-                            button.dataset.id
-
-                        );
-
-
-                    }
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
 
 
 
 }
-
 
 
 
