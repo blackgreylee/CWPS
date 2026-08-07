@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.1.8
+ 2.9.9
 
 
  Build:
- Enterprise Procurement Storage
+ Enterprise Purchase Storage Layer
 
 
  Description:
- Purchase Repository Service
+ Purchase Order Data Access Layer
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,82 +36,66 @@ class PurchaseStorage {
     constructor(){
 
 
-        this.db =
+        this.database =
 
-            new CWPSDatabase();
-
-
-
-        this.storeName =
-
-            "purchases";
+            global.cwpsDatabase;
 
 
-    }
+        this.collection =
 
+            this.database.collection(
 
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.db.open();
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create
-
-    ==============================================
-    */
-
-
-    async create(
-        purchase
-    ){
-
-
-
-        if(!purchase){
-
-
-            throw new Error(
-
-                "Purchase required"
+                "purchases"
 
             );
 
 
-        }
+    }
 
 
 
 
 
-        return await this.db.add(
+    /*
+    ==============================================
 
-            this.storeName,
+    Get All Purchases
 
-            purchase
+    ==============================================
+    */
+
+
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Purchase By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        purchaseId
+
+    ){
+
+
+        return this.collection.getById(
+
+            purchaseId
 
         );
 
@@ -123,60 +106,36 @@ class PurchaseStorage {
 
 
 
-
     /*
     ==============================================
 
-    Update
+    Get By Purchase No
 
     ==============================================
     */
 
 
-    async update(
-        purchase
+    getByNo(
+
+        purchaseNo
+
     ){
 
 
 
-        return await this.db.update(
+        const result =
 
-            this.storeName,
+            this.collection.where({
 
-            purchase
+                purchaseNo
 
-        );
-
-
-    }
+            });
 
 
 
 
 
-
-    /*
-    ==============================================
-
-    Get
-
-    ==============================================
-    */
-
-
-    async get(
-        id
-    ){
-
-
-
-        return await this.db.get(
-
-            this.storeName,
-
-            id
-
-        );
+        return result[0] || null;
 
 
     }
@@ -185,111 +144,28 @@ class PurchaseStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get All
+    Get By Quotation
 
     ==============================================
     */
 
 
-    async getAll(){
+    getByQuotation(
 
-
-
-        return await this.db.getAll(
-
-            this.storeName
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Quotation
-
-    ==============================================
-    */
-
-
-    async findByQuotation(
         quotationId
+
     ){
 
 
 
-        const list =
+        return this.collection.where({
 
+            quotationId
 
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.quotationId === quotationId
-
-
-
-        );
+        });
 
 
     }
@@ -298,84 +174,28 @@ class PurchaseStorage {
 
 
 
-
     /*
     ==============================================
 
-    Find By Supplier
+    Get By Status
 
     ==============================================
     */
 
 
-    async findBySupplier(
-        supplierId
-    ){
+    getByStatus(
 
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.supplierId === supplierId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Status
-
-    ==============================================
-    */
-
-
-    async findByStatus(
         status
+
     ){
 
 
 
-        const list =
+        return this.collection.where({
 
+            status
 
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.status === status
-
-
-
-        );
+        });
 
 
     }
@@ -384,341 +204,68 @@ class PurchaseStorage {
 
 
 
-
     /*
     ==============================================
 
-    Approve Purchase
+    Create Purchase
 
     ==============================================
     */
 
 
-    async approve(
-        id
-    ){
+    create(
 
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Purchase not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.PurchaseStatus.APPROVED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Order Purchase
-
-    ==============================================
-    */
-
-
-    async order(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Purchase not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.PurchaseStatus.ORDERED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Receive Purchase
-
-    ==============================================
-    */
-
-
-    async receive(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Purchase not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.PurchaseStatus.RECEIVED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Close Purchase
-
-    ==============================================
-    */
-
-
-    async close(
-        id
-    ){
-
-
-
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Purchase not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.PurchaseStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Version History
-
-    採購修改保留版本
-
-    ==============================================
-    */
-
-
-    async createVersion(
         purchase
+
     ){
 
 
 
-        const version = {
+        const exists =
 
+
+            this.getByNo(
+
+                purchase.purchaseNo
+
+            );
+
+
+
+
+
+        if(exists){
+
+
+            throw new Error(
+
+                "Purchase No already exists"
+
+            );
+
+
+        }
+
+
+
+
+
+        const data = {
 
 
             ...purchase,
 
 
+            status:
 
-            version:
+                purchase.status
 
+                ||
 
-
-                (purchase.version || 0)
-
-                + 1,
-
+                "Draft",
 
 
-            createdAt:
-
-
+            createDate:
 
                 new Date()
 
@@ -732,15 +279,14 @@ class PurchaseStorage {
 
 
 
-        return await this.create(
+        return this.collection.insert(
 
-            version
+            data
 
         );
 
 
     }
-
 
 
 
@@ -749,74 +295,41 @@ class PurchaseStorage {
     /*
     ==============================================
 
-    Remove
-
-    Enterprise:
-
-    不刪除資料
+    Update Purchase
 
     ==============================================
     */
 
 
-    async remove(
-        id
+    update(
+
+        purchaseId,
+
+        data
+
     ){
 
 
 
-        const item =
+        return this.collection.update(
+
+            purchaseId,
+
+            {
+
+                ...data,
 
 
-            await this.get(id);
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
 
 
-
-
-
-        if(!item){
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.PurchaseStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        await this.update(
-
-            item
+            }
 
         );
-
-
-
-
-
-        return true;
 
 
     }
@@ -824,8 +337,143 @@ class PurchaseStorage {
 
 
 
-}
 
+    /*
+    ==============================================
+
+    Confirm Purchase
+
+    ==============================================
+    */
+
+
+    confirm(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.update(
+
+            purchaseId,
+
+            {
+
+                status:"Confirmed"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Complete Purchase
+
+    ==============================================
+    */
+
+
+    complete(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.update(
+
+            purchaseId,
+
+            {
+
+                status:"Completed"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Cancel Purchase
+
+    ==============================================
+    */
+
+
+    cancel(
+
+        purchaseId
+
+    ){
+
+
+
+        return this.update(
+
+            purchaseId,
+
+            {
+
+                status:"Cancelled"
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete
+
+    ==============================================
+    */
+
+
+    delete(
+
+        purchaseId
+
+    ){
+
+
+        return this.collection.delete(
+
+            purchaseId
+
+        );
+
+
+    }
+
+
+
+}
 
 
 
