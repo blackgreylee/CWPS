@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.2.3
+ 2.9.14
 
 
  Build:
- Enterprise Quantity Engine Layer
+ Enterprise Quantity Calculation Engine Layer
 
 
  Description:
- BOM Quantity Calculation Engine
+ Quantity Processing Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,16 +36,14 @@ class QuantityEngine {
     constructor(){
 
 
-        this.bomEngine =
+        this.bomStorage =
 
-            new BOMEngine();
+            new global.BOMStorage();
 
 
+        this.materialStorage =
 
-        this.materialEngine =
-
-            new MaterialEngine();
-
+            new global.MaterialStorage();
 
 
     }
@@ -55,23 +52,60 @@ class QuantityEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Unit Normalize
 
     ==============================================
     */
 
 
-    async init(){
+    normalizeUnit(
+
+        unit
+
+    ){
 
 
-        await this.bomEngine.init();
+        const map = {
 
 
-        await this.materialEngine.init();
+            "平方公尺":"㎡",
+
+            "平方米":"㎡",
+
+            "M2":"㎡",
+
+
+            "公尺":"m",
+
+            "米":"m",
+
+
+            "支":"pcs",
+
+            "件":"pcs",
+
+            "個":"pcs",
+
+
+            "組":"set",
+
+            "套":"set"
+
+
+        };
+
+
+
+
+
+        return map[unit]
+
+            ||
+
+            unit;
 
 
     }
@@ -80,96 +114,46 @@ class QuantityEngine {
 
 
 
-
     /*
     ==============================================
 
-    Calculate Node Quantity
-
-    BOM 節點遞迴計算
+    Get Leaf Quantity
 
     ==============================================
     */
 
 
-    calculateNodeQuantity(
-        node,
-        parentQuantity = 1
+    getLeafQuantity(
+
+        versionId
+
     ){
 
 
 
-        const ownQuantity =
+        const nodes =
 
+            this.bomStorage.getLeafNodes(
 
-            Number(
-
-                node.quantity || 1
+                versionId
 
             );
 
 
 
 
-        const total =
 
+        return nodes.map(
 
-            parentQuantity *
-
-            ownQuantity;
-
+            node => {
 
 
 
+                const material =
 
-        return total;
+                    this.materialStorage.getById(
 
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Expand BOM Quantity
-
-    展開 BOM Tree
-
-    ==============================================
-    */
-
-
-    expandTree(
-        nodes,
-        parentQuantity = 1
-    ){
-
-
-
-        let result=[];
-
-
-
-
-
-        nodes.forEach(
-
-            node=>{
-
-
-
-                const quantity =
-
-
-                    this.calculateNodeQuantity(
-
-                        node,
-
-                        parentQuantity
+                        node.materialId
 
                     );
 
@@ -177,85 +161,54 @@ class QuantityEngine {
 
 
 
-                const item={
+                return {
+
+
+                    nodeId:
+
+                        node.nodeId,
+
+
+                    materialId:
+
+                        node.materialId,
+
+
+                    materialCode:
+
+                        material
+
+                        ?
+
+                        material.materialCode
+
+                        :
+
+                        "",
 
 
 
-                    id:
+                    quantity:
 
-                        node.id,
+                        Number(
 
+                            node.quantity || 0
 
-
-                    code:
-
-                        node.code,
+                        ),
 
 
 
-                    name:
+                    unit:
 
-                        node.name,
+                        this.normalizeUnit(
 
+                            node.unit
 
-
-                    type:
-
-                        node.type,
-
-
-
-                    quantity
+                        )
 
 
 
                 };
-
-
-
-
-
-                result.push(
-
-                    item
-
-                );
-
-
-
-
-
-                if(
-
-                    node.children &&
-
-                    node.children.length
-
-                ){
-
-
-
-                    result =
-
-                        result.concat(
-
-
-
-                            this.expandTree(
-
-                                node.children,
-
-                                quantity
-
-                            )
-
-
-
-                        );
-
-
-                }
-
 
 
 
@@ -264,15 +217,7 @@ class QuantityEngine {
         );
 
 
-
-
-
-        return result;
-
-
     }
-
-
 
 
 
@@ -281,64 +226,23 @@ class QuantityEngine {
     /*
     ==============================================
 
-    Calculate BOM Version Quantity
+    Summary By Material
 
     ==============================================
     */
 
 
-    async calculateVersion(
+    summarizeByMaterial(
+
         versionId
-    ){
 
-
-
-        const tree =
-
-
-            await this.bomEngine.getTree(
-
-                versionId
-
-            );
-
-
-
-
-
-        return this.expandTree(
-
-            tree
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Material Quantity
-
-    ==============================================
-    */
-
-
-    async calculateMaterialRequirement(
-        versionId
     ){
 
 
 
         const items =
 
-
-            await this.calculateVersion(
+            this.getLeafQuantity(
 
                 versionId
 
@@ -348,71 +252,52 @@ class QuantityEngine {
 
 
 
-        const materials =
-
-            items.filter(
-
-                item =>
-
-
-
-                    item.type ===
-
-                    CWPSTypes.BOMNodeType.MATERIAL
-
-
-
-            );
+        const result = {};
 
 
 
 
 
-        const result={};
+        items.forEach(
 
-
-
-
-
-        materials.forEach(
-
-            material=>{
+            item => {
 
 
 
                 const key =
 
-
-                    material.code;
-
-
+                    item.materialId;
 
 
 
                 if(!result[key]){
 
 
-
-                    result[key]={
-
+                    result[key] = {
 
 
-                        code:key,
+                        materialId:
+
+                            item.materialId,
 
 
+                        materialCode:
 
-                        name:
-
-                            material.name,
-
+                            item.materialCode,
 
 
-                        quantity:0
+                        quantity:
+
+                            0,
+
+
+                        unit:
+
+                            item.unit
 
 
 
                     };
-
 
 
                 }
@@ -423,9 +308,7 @@ class QuantityEngine {
 
                 result[key].quantity +=
 
-
-
-                    material.quantity;
+                    item.quantity;
 
 
 
@@ -450,242 +333,26 @@ class QuantityEngine {
 
 
 
-
-
-
     /*
     ==============================================
 
-    Unit Conversion
-
-    單位換算基礎
+    Summary By Unit
 
     ==============================================
     */
 
 
-    convert(
-        value,
-        from,
-        to
-    ){
+    summarizeByUnit(
 
-
-
-        if(from === to){
-
-
-            return value;
-
-
-        }
-
-
-
-
-
-        const table={
-
-
-            M_TO_MM:
-
-                1000,
-
-
-            MM_TO_M:
-
-                0.001
-
-
-
-        };
-
-
-
-
-
-        const key =
-
-
-
-            from +
-
-            "_TO_" +
-
-            to;
-
-
-
-
-
-        if(table[key]){
-
-
-
-            return value *
-
-                table[key];
-
-
-        }
-
-
-
-
-
-        throw new Error(
-
-            "Unsupported unit conversion: "
-
-            +
-
-            from
-
-            +
-
-            " to "
-
-            +
-
-            to
-
-        );
-
-
-    }
-
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Area
-
-    面積計算
-
-    ==============================================
-    */
-
-
-    calculateArea(
-        width,
-        height,
-        quantity = 1
-    ){
-
-
-
-        return {
-
-
-            width,
-
-
-            height,
-
-
-
-            quantity,
-
-
-
-            area:
-
-
-
-                width *
-
-                height *
-
-                quantity
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Total Weight
-
-    ==============================================
-    */
-
-
-    calculateWeight(
-        quantity,
-        singleWeight
-    ){
-
-
-
-        return {
-
-
-            quantity,
-
-
-
-            singleWeight,
-
-
-
-            totalWeight:
-
-
-
-                quantity *
-
-                singleWeight
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Summary
-
-    ==============================================
-    */
-
-
-    async summary(
         versionId
+
     ){
 
 
 
-        const requirements =
+        const items =
 
-
-            await this.calculateMaterialRequirement(
+            this.getLeafQuantity(
 
                 versionId
 
@@ -695,22 +362,264 @@ class QuantityEngine {
 
 
 
+        const result = {};
+
+
+
+
+
+        items.forEach(
+
+            item => {
+
+
+
+                if(!result[item.unit]){
+
+
+                    result[item.unit] = 0;
+
+
+                }
+
+
+
+
+
+                result[item.unit] +=
+
+                    item.quantity;
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return result;
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Validate Quantity
+
+    ==============================================
+    */
+
+
+    validate(
+
+        versionId
+
+    ){
+
+
+
+        const items =
+
+            this.getLeafQuantity(
+
+                versionId
+
+            );
+
+
+
+
+
+        const errors = [];
+
+
+
+
+
+        items.forEach(
+
+            item => {
+
+
+
+                if(
+
+                    item.quantity <= 0
+
+                ){
+
+
+
+                    errors.push({
+
+                        nodeId:
+
+                            item.nodeId,
+
+
+                        message:
+
+                            "Invalid quantity"
+
+
+                    });
+
+
+                }
+
+
+
+                if(
+
+                    !item.unit
+
+                ){
+
+
+
+                    errors.push({
+
+                        nodeId:
+
+                            item.nodeId,
+
+
+                        message:
+
+                            "Unit missing"
+
+
+                    });
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
         return {
 
 
-            materialCount:
+            valid:
 
-                requirements.length,
+                errors.length === 0,
 
 
-
-            materials:
-
-                requirements
+            errors
 
 
 
         };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Calculate Weight
+
+    ==============================================
+    */
+
+
+    calculateWeight(
+
+        versionId
+
+    ){
+
+
+
+        const items =
+
+            this.getLeafQuantity(
+
+                versionId
+
+            );
+
+
+
+
+
+        let total = 0;
+
+
+
+
+
+        items.forEach(
+
+            item => {
+
+
+
+                const material =
+
+                    this.materialStorage
+
+                    .getById(
+
+                        item.materialId
+
+                    );
+
+
+
+
+
+                if(material){
+
+
+
+                    total +=
+
+
+                        item.quantity *
+
+                        Number(
+
+                            material.unitWeight || 0
+
+                        );
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return total;
+
 
 
     }
@@ -718,7 +627,6 @@ class QuantityEngine {
 
 
 }
-
 
 
 
