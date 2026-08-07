@@ -1,151 +1,137 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>
-CWPS Enterprise
-</title>
+    <title>CWPS Enterprise</title>
 
-
-<link rel="stylesheet"
-href="css/cwps.css">
-
+    <link rel="stylesheet" href="css/cwps.css">
 
 </head>
 
-
 <body>
 
+    <header id="header">
 
-<header>
+        <h1>CWPS Enterprise</h1>
 
-<h1>
-CWPS Enterprise
-</h1>
+    </header>
 
-</header>
 
+    <nav id="menu"></nav>
 
 
-<nav id="menu">
+    <main id="content"></main>
 
-</nav>
 
+    <div id="loading" style="display:none;">
+        Loading...
+    </div>
 
 
-<main id="content">
+    <!-- ========================= -->
+    <!-- Core -->
+    <!-- ========================= -->
 
-</main>
+    <script src="src/js/core/schema.js"></script>
 
 
+    <!-- ========================= -->
+    <!-- Storage -->
+    <!-- ========================= -->
 
-<div id="loading">
+    <script src="src/js/storage/database.js"></script>
+    <script src="src/js/storage/version-storage.js"></script>
+    <script src="src/js/storage/project-storage.js"></script>
+    <script src="src/js/storage/bom-storage.js"></script>
+    <script src="src/js/storage/material-storage.js"></script>
+    <script src="src/js/storage/requirement-storage.js"></script>
+    <script src="src/js/storage/quotation-storage.js"></script>
+    <script src="src/js/storage/purchase-storage.js"></script>
+    <script src="src/js/storage/shipment-storage.js"></script>
+    <script src="src/js/storage/invoice-storage.js"></script>
 
-Loading...
 
-</div>
+    <!-- ========================= -->
+    <!-- Core Engine -->
+    <!-- ========================= -->
 
+    <script src="src/js/core/bom-engine.js"></script>
+    <script src="src/js/core/material-engine.js"></script>
+    <script src="src/js/core/quantity-engine.js"></script>
 
 
-<script src="src/js/core/schema.js"></script>
+    <!-- ========================= -->
+    <!-- Procurement -->
+    <!-- ========================= -->
 
+    <script src="src/js/procurement/requirement-engine.js"></script>
+    <script src="src/js/procurement/quotation-engine.js"></script>
+    <script src="src/js/procurement/purchase-engine.js"></script>
+    <script src="src/js/procurement/shipment-engine.js"></script>
+    <script src="src/js/procurement/invoice-engine.js"></script>
 
-<script src="src/js/storage/database.js"></script>
 
-<script src="src/js/storage/project-storage.js"></script>
+    <!-- ========================= -->
+    <!-- Supplier -->
+    <!-- ========================= -->
 
-<script src="src/js/storage/bom-storage.js"></script>
+    <script src="src/js/supplier/supplier-engine.js"></script>
+    <script src="src/js/supplier/supplier-rating.js"></script>
+    <script src="src/js/supplier/supplier-price-history.js"></script>
 
-<script src="src/js/storage/material-storage.js"></script>
 
-<script src="src/js/storage/requirement-storage.js"></script>
+    <!-- ========================= -->
+    <!-- Analysis -->
+    <!-- ========================= -->
 
-<script src="src/js/storage/quotation-storage.js"></script>
+    <script src="src/js/analysis/cost-analysis.js"></script>
+    <script src="src/js/analysis/material-analysis.js"></script>
+    <script src="src/js/analysis/procurement-analysis.js"></script>
+    <script src="src/js/analysis/supplier-analysis.js"></script>
 
-<script src="src/js/storage/purchase-storage.js"></script>
 
-<script src="src/js/storage/shipment-storage.js"></script>
+    <!-- ========================= -->
+    <!-- Controllers -->
+    <!-- ========================= -->
 
-<script src="src/js/storage/invoice-storage.js"></script>
+    <script src="src/js/controllers/menu-controller.js"></script>
+    <script src="src/js/controllers/project-controller.js"></script>
+    <script src="src/js/controllers/bom-controller.js"></script>
+    <script src="src/js/controllers/procurement-controller.js"></script>
+    <script src="src/js/controllers/supplier-controller.js"></script>
 
 
+    <!-- ========================= -->
+    <!-- Views -->
+    <!-- ========================= -->
 
-<script src="src/js/core/bom-engine.js"></script>
+    <script src="src/js/views/ui-manager.js"></script>
+    <script src="src/js/views/dashboard-view.js"></script>
+    <script src="src/js/views/project-view.js"></script>
+    <script src="src/js/views/bom-view.js"></script>
+    <script src="src/js/views/procurement-view.js"></script>
+    <script src="src/js/views/supplier-view.js"></script>
 
-<script src="src/js/core/material-engine.js"></script>
 
-<script src="src/js/core/quantity-engine.js"></script>
+    <!-- ========================= -->
+    <!-- App -->
+    <!-- ========================= -->
 
+    <script src="src/js/app/database-init.js"></script>
+    <script src="src/js/app/test-data-loader.js"></script>
+    <script src="src/js/app/page-loader.js"></script>
+    <script src="src/js/app/app-controller.js"></script>
 
 
-<script src="src/js/procurement/requirement-engine.js"></script>
+    <!-- ========================= -->
+    <!-- Main -->
+    <!-- ========================= -->
 
-<script src="src/js/procurement/quotation-engine.js"></script>
-
-<script src="src/js/procurement/purchase-engine.js"></script>
-
-<script src="src/js/procurement/shipment-engine.js"></script>
-
-<script src="src/js/procurement/invoice-engine.js"></script>
-
-
-
-<script src="src/js/supplier/supplier-engine.js"></script>
-
-<script src="src/js/supplier/supplier-rating.js"></script>
-
-<script src="src/js/supplier/supplier-price-history.js"></script>
-
-
-
-<script src="src/js/analysis/cost-analysis.js"></script>
-
-<script src="src/js/analysis/material-analysis.js"></script>
-
-<script src="src/js/analysis/procurement-analysis.js"></script>
-
-<script src="src/js/analysis/supplier-analysis.js"></script>
-
-
-
-<script src="src/js/controllers/menu-controller.js"></script>
-
-<script src="src/js/controllers/project-controller.js"></script>
-
-<script src="src/js/controllers/bom-controller.js"></script>
-
-<script src="src/js/controllers/procurement-controller.js"></script>
-
-<script src="src/js/controllers/supplier-controller.js"></script>
-
-
-
-<script src="src/js/views/ui-manager.js"></script>
-
-<script src="src/js/views/dashboard-view.js"></script>
-
-<script src="src/js/views/project-view.js"></script>
-
-<script src="src/js/views/bom-view.js"></script>
-
-<script src="src/js/views/procurement-view.js"></script>
-
-<script src="src/js/views/supplier-view.js"></script>
-
-
-
-<script src="src/js/app/page-loader.js"></script>
-
-<script src="src/js/app/app-controller.js"></script>
-
-
-
-<script src="src/js/main.js"></script>
-
+    <script src="src/js/main.js"></script>
 
 </body>
 
