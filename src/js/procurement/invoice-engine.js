@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.3.5
+ 2.9.19
 
 
  Build:
- Enterprise Invoice Engine
+ Enterprise Procurement Invoice Engine Layer
 
 
  Description:
- Invoice & Payment Management Engine
+ Invoice Processing Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,9 +36,15 @@ class InvoiceEngine {
     constructor(){
 
 
-        this.storage =
+        this.shipmentStorage =
 
-            new InvoiceStorage();
+            new global.ShipmentStorage();
+
+
+        this.invoiceStorage =
+
+            new global.InvoiceStorage();
+
 
 
     }
@@ -48,116 +53,34 @@ class InvoiceEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Create Invoice From Shipment
 
     ==============================================
     */
 
 
-    async init(){
+    createFromShipment(
 
+        shipmentId
 
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
-
-
-    }
+    ){
 
 
 
+        const shipment =
 
+            this.shipmentStorage
 
+            .getById(
 
-    /*
-    ==============================================
-
-    Create Invoice
-
-    建立請款資料
-
-    ==============================================
-    */
-
-
-    async create(data){
-
-
-
-        if(!data){
-
-
-            throw new Error(
-
-                "Invoice data required"
+                shipmentId
 
             );
 
 
-        }
-
-
-
-
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.InvoiceStatus.DRAFT;
-
-
-
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.create(
-
-            data
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Generate From Shipment
-
-    Shipment → Invoice
-
-    ==============================================
-    */
-
-
-    async generateFromShipment(
-        shipment
-    ){
 
 
 
@@ -166,7 +89,7 @@ class InvoiceEngine {
 
             throw new Error(
 
-                "Shipment required"
+                "Shipment not found"
 
             );
 
@@ -180,10 +103,7 @@ class InvoiceEngine {
         return {
 
 
-            shipmentId:
-
-                shipment.id,
-
+            shipmentId,
 
 
             purchaseId:
@@ -191,43 +111,34 @@ class InvoiceEngine {
                 shipment.purchaseId,
 
 
-
-            projectId:
-
-                shipment.projectId,
-
-
-
             supplierId:
 
                 shipment.supplierId,
 
 
+            materialId:
 
-            items:
+                shipment.materialId,
 
-                shipment.items || [],
 
+            quantity:
+
+                shipment.quantity,
+
+
+            unit:
+
+                shipment.unit,
 
 
             amount:
 
-                shipment.totalAmount || 0,
-
+                shipment.amount || 0,
 
 
             status:
 
-                CWPSTypes.InvoiceStatus.DRAFT,
-
-
-
-            createdAt:
-
-
-                new Date()
-
-                .toISOString()
+                "Draft"
 
 
 
@@ -240,29 +151,62 @@ class InvoiceEngine {
 
 
 
-
     /*
     ==============================================
 
-    Submit Invoice
-
-    提交請款
+    Save Invoice
 
     ==============================================
     */
 
 
-    async submit(
+    createInvoice(
+
+        data
+
+    ){
+
+
+
+        return this.invoiceStorage
+
+            .create(
+
+                data
+
+            );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Issue Invoice
+
+    ==============================================
+    */
+
+
+    issue(
+
         invoiceId
+
     ){
 
 
 
-        return await this.storage.submit(
+        return this.invoiceStorage
 
-            invoiceId
+            .issue(
 
-        );
+                invoiceId
+
+            );
 
 
     }
@@ -271,29 +215,30 @@ class InvoiceEngine {
 
 
 
-
     /*
     ==============================================
 
-    Approve Invoice
-
-    審核通過
+    Paid Invoice
 
     ==============================================
     */
 
 
-    async approve(
+    paid(
+
         invoiceId
+
     ){
 
 
 
-        return await this.storage.approve(
+        return this.invoiceStorage
 
-            invoiceId
+            .paid(
 
-        );
+                invoiceId
+
+            );
 
 
     }
@@ -302,33 +247,33 @@ class InvoiceEngine {
 
 
 
-
     /*
     ==============================================
 
-    Pay Invoice
-
-    完成付款
+    Cancel Invoice
 
     ==============================================
     */
 
 
-    async pay(
+    cancel(
+
         invoiceId
+
     ){
 
 
 
-        return await this.storage.pay(
+        return this.invoiceStorage
 
-            invoiceId
+            .cancel(
 
-        );
+                invoiceId
+
+            );
 
 
     }
-
 
 
 
@@ -337,137 +282,34 @@ class InvoiceEngine {
     /*
     ==============================================
 
-    Close Invoice
+    Validate Invoice
 
     ==============================================
     */
 
 
-    async close(
-        invoiceId
+    validate(
+
+        invoice
+
     ){
 
 
 
-        return await this.storage.close(
+        const errors = [];
 
-            invoiceId
 
-        );
 
 
-    }
 
+        if(!invoice.shipmentId){
 
 
+            errors.push(
 
+                "Shipment missing"
 
-
-    /*
-    ==============================================
-
-    Query
-
-    ==============================================
-    */
-
-
-    async getAll(){
-
-
-
-        return await this.storage.getAll();
-
-
-
-    }
-
-
-
-
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        return await this.storage.findByProject(
-
-            projectId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    async findByPurchase(
-        purchaseId
-    ){
-
-
-
-        return await this.storage.findByPurchase(
-
-            purchaseId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    async findBySupplier(
-        supplierId
-    ){
-
-
-
-        return await this.storage.findBySupplier(
-
-            supplierId
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Cost Summary
-
-    採購成本統計
-
-    ==============================================
-    */
-
-
-    calculateTotal(
-        invoices
-    ){
-
-
-
-        if(!Array.isArray(invoices)){
-
-
-            return 0;
+            );
 
 
         }
@@ -476,20 +318,130 @@ class InvoiceEngine {
 
 
 
+        if(!invoice.supplierId){
+
+
+            errors.push(
+
+                "Supplier missing"
+
+            );
+
+
+        }
+
+
+
+
+
+        if(
+
+            Number(
+
+                invoice.amount || 0
+
+            )
+
+            <=0
+
+        ){
+
+
+            errors.push(
+
+                "Amount invalid"
+
+            );
+
+
+        }
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length===0,
+
+
+            errors
+
+
+
+        };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Calculate Invoice Amount
+
+    ==============================================
+    */
+
+
+    calculateAmount(
+
+        quantity,
+
+        unitPrice
+
+    ){
+
+
+
+        return Number(quantity || 0)
+
+        *
+
+        Number(unitPrice || 0);
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Total Invoice Amount
+
+    ==============================================
+    */
+
+
+    totalAmount(
+
+        invoices
+
+    ){
+
+
+
         return invoices.reduce(
 
-            (total,item)=>{
+            (sum,item)=>{
 
 
-                return (
+                return sum +
 
-                    total +
+                Number(
 
-                    Number(
-
-                        item.amount || 0
-
-                    )
+                    item.amount || 0
 
                 );
 
@@ -505,39 +457,7 @@ class InvoiceEngine {
 
 
 
-
-
-
-    /*
-    ==============================================
-
-    Version Management
-
-    ==============================================
-    */
-
-
-    async createVersion(
-        invoice
-    ){
-
-
-
-        return await this.storage.createVersion(
-
-            invoice
-
-        );
-
-
-    }
-
-
-
-
-
 }
-
 
 
 
