@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.5.2
+ 2.9.24
 
 
  Build:
- Enterprise Material Analysis Layer
+ Enterprise Material Analysis Engine Layer
 
 
  Description:
- Material Usage & Consumption Analysis Service
+ Material Consumption Analysis Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -39,13 +38,13 @@ class MaterialAnalysis {
 
         this.materialStorage =
 
-            new MaterialStorage();
+            new global.MaterialStorage();
 
 
+        this.quantityEngine =
 
-        this.bomStorage =
+            new global.QuantityEngine();
 
-            new BOMStorage();
 
 
     }
@@ -54,158 +53,79 @@ class MaterialAnalysis {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Get Material Info
 
     ==============================================
     */
 
 
-    async init(){
+    getMaterial(
 
+        materialId
 
-        if(this.materialStorage.init){
-
-
-            await this.materialStorage.init();
-
-
-        }
-
-
-
-        if(this.bomStorage.init){
-
-
-            await this.bomStorage.init();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Material Summary
-
-    材料總表
-
-    ==============================================
-    */
-
-
-    summarize(
-        materials
     ){
 
 
 
-        if(
+        return this.materialStorage
 
-            !Array.isArray(materials)
+            .getById(
 
-        ){
+                materialId
 
+            );
 
-            return [];
 
+    }
 
-        }
 
 
 
 
+    /*
+    ==============================================
 
-        const map = {};
+    Analyze Material Usage
 
+    ==============================================
+    */
 
 
+    analyzeUsage(
 
+        versionId
 
-        materials.forEach(
+    ){
 
-            item=>{
 
 
-                const code =
+        const items =
 
+            this.quantityEngine
 
-                    item.materialCode ||
+            .summarizeByMaterial(
 
-                    "UNKNOWN";
+                versionId
 
+            );
 
 
 
 
-                if(!map[code]){
 
+        return items.map(
 
-                    map[code] = {
+            item => {
 
 
+                const material =
 
-                        materialCode:
+                    this.getMaterial(
 
-                            code,
-
-
-
-                        materialName:
-
-                            item.materialName,
-
-
-
-                        unit:
-
-                            item.unit,
-
-
-
-                        quantity:
-
-                            0,
-
-
-
-                        weight:
-
-                            0,
-
-
-
-                        area:
-
-                            0
-
-
-
-                    };
-
-
-                }
-
-
-
-
-
-                map[code].quantity +=
-
-
-                    Number(
-
-                        item.quantity || 0
+                        item.materialId
 
                     );
 
@@ -213,27 +133,44 @@ class MaterialAnalysis {
 
 
 
-                map[code].weight +=
+                return {
 
 
-                    Number(
+                    materialId:
 
-                        item.weight || 0
-
-                    );
+                        item.materialId,
 
 
+                    materialCode:
+
+                        item.materialCode,
+
+
+                    category:
+
+                        material
+
+                        ?
+
+                        material.category
+
+                        :
+
+                        "",
+
+
+                    quantity:
+
+                        item.quantity,
+
+
+                    unit:
+
+                        item.unit
 
 
 
-                map[code].area +=
-
-
-                    Number(
-
-                        item.area || 0
-
-                    );
+                };
 
 
             }
@@ -242,17 +179,7 @@ class MaterialAnalysis {
 
 
 
-
-
-        return Object.values(
-
-            map
-
-        );
-
-
     }
-
 
 
 
@@ -261,37 +188,21 @@ class MaterialAnalysis {
     /*
     ==============================================
 
-    Group By Material Type
-
-    材料分類統計
+    Group By Material Category
 
     ==============================================
     */
 
 
     groupByCategory(
+
         materials
+
     ){
 
 
 
-        if(
-
-            !Array.isArray(materials)
-
-        ){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        const map = {};
+        const result = {};
 
 
 
@@ -304,41 +215,20 @@ class MaterialAnalysis {
 
                 const category =
 
+                    item.category
 
-                    item.category ||
+                    ||
 
-                    "OTHER";
-
-
-
-
-
-                if(!map[category]){
-
-
-                    map[category] = {
+                    "Unknown";
 
 
 
-                        category:
-
-                            category,
 
 
-
-                        count:
-
-                            0,
+                if(!result[category]){
 
 
-
-                        quantity:
-
-                            0
-
-
-
-                    };
+                    result[category] = [];
 
 
                 }
@@ -347,20 +237,14 @@ class MaterialAnalysis {
 
 
 
-                map[category].count++;
+                result[category]
 
+                .push(
 
+                    item
 
+                );
 
-
-                map[category].quantity +=
-
-
-                    Number(
-
-                        item.quantity || 0
-
-                    );
 
 
             }
@@ -371,15 +255,56 @@ class MaterialAnalysis {
 
 
 
-        return Object.values(
+        return result;
 
-            map
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Calculate Total Quantity
+
+    ==============================================
+    */
+
+
+    totalQuantity(
+
+        items
+
+    ){
+
+
+
+        return items.reduce(
+
+            (sum,item)=>{
+
+
+                return sum +
+
+                Number(
+
+                    item.quantity || 0
+
+                );
+
+
+            },
+
+            0
 
         );
 
 
-    }
 
+    }
 
 
 
@@ -388,225 +313,92 @@ class MaterialAnalysis {
     /*
     ==============================================
 
-    Calculate Consumption
+    Weight Analysis
 
-    用量計算
-
-    ==============================================
-    */
-
-
-    calculateConsumption(
-        required,
-        purchased
-    ){
-
-
-
-        return {
-
-
-
-            required:
-
-
-                Number(
-
-                    required || 0
-
-                ),
-
-
-
-            purchased:
-
-
-                Number(
-
-                    purchased || 0
-
-                ),
-
-
-
-            difference:
-
-
-                Number(
-
-                    purchased || 0
-
-                )
-
-                -
-
-                Number(
-
-                    required || 0
-
-                )
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Waste Rate
-
-    損耗率
+    單重分析
 
     ==============================================
     */
 
 
-    calculateWasteRate(
-        required,
-        purchased
+    analyzeWeight(
+
+        items
+
     ){
 
 
 
-        if(
+        return items.map(
 
-            Number(required) === 0
-
-        ){
+            item=>{
 
 
-            return 0;
+                const material =
 
+                    this.getMaterial(
 
-        }
-
-
-
-
-
-        return Number(
-
-            (
-
-                (
-
-                    purchased -
-
-                    required
-
-                )
-
-                /
-
-                required *
-
-                100
-
-            )
-
-            .toFixed(2)
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Material Cost Distribution
-
-    材料成本分布
-
-    ==============================================
-    */
-
-
-    costDistribution(
-        materials
-    ){
-
-
-
-        const total =
-
-
-            materials.reduce(
-
-                (sum,item)=>{
-
-
-                    return sum +
-
-                    Number(
-
-                        item.amount || 0
+                        item.materialId
 
                     );
 
 
-                },
-
-                0
-
-            );
 
 
 
+                const unitWeight =
+
+                    material
+
+                    ?
+
+                    Number(
+
+                        material.unitWeight || 0
+
+                    )
+
+                    :
+
+                    0;
 
 
-        return materials.map(
 
-            item=>{
 
 
                 return {
 
 
+                    materialId:
 
-                    ...item,
-
-
-
-                    percentage:
+                        item.materialId,
 
 
-                        total === 0
+                    materialCode:
 
-                        ?
+                        item.materialCode,
 
-                        0
 
-                        :
+                    quantity:
+
+                        item.quantity,
+
+
+                    unitWeight,
+
+
+                    totalWeight:
+
 
                         Number(
 
-                            (
-
-                                item.amount /
-
-                                total *
-
-                                100
-
-                            )
-
-                            .toFixed(2)
+                            item.quantity
 
                         )
+
+                        *
+
+                        unitWeight
 
 
 
@@ -618,8 +410,8 @@ class MaterialAnalysis {
         );
 
 
-    }
 
+    }
 
 
 
@@ -628,40 +420,109 @@ class MaterialAnalysis {
     /*
     ==============================================
 
-    Compare BOM And Purchase
-
-    BOM 與採購比較
+    Heavy Material Ranking
 
     ==============================================
     */
 
 
-    compareRequirement(
-        bomQuantity,
-        purchaseQuantity
+    weightRanking(
+
+        items
+
     ){
 
 
 
-        const bom =
+        return this.analyzeWeight(
+
+            items
+
+        )
+
+        .sort(
+
+            (a,b)=>{
 
 
-            Number(
+                return b.totalWeight -
 
-                bomQuantity || 0
-
-            );
+                    a.totalWeight;
 
 
+            }
+
+        );
 
 
 
-        const purchase =
+    }
 
 
-            Number(
 
-                purchaseQuantity || 0
+
+
+    /*
+    ==============================================
+
+    Quantity Ranking
+
+    ==============================================
+    */
+
+
+    quantityRanking(
+
+        items
+
+    ){
+
+
+
+        return items.sort(
+
+            (a,b)=>{
+
+
+                return b.quantity -
+
+                    a.quantity;
+
+
+            }
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Material Summary
+
+    ==============================================
+    */
+
+
+    summary(
+
+        versionId
+
+    ){
+
+
+
+        const usage =
+
+            this.analyzeUsage(
+
+                versionId
 
             );
 
@@ -672,60 +533,29 @@ class MaterialAnalysis {
         return {
 
 
+            materialCount:
 
-            bomQuantity:
-
-                bom,
-
+                usage.length,
 
 
-            purchaseQuantity:
+            categories:
 
-                purchase,
+                Object.keys(
 
+                    this.groupByCategory(
 
-
-            variance:
-
-
-                purchase -
-
-                bom,
-
-
-
-            percentage:
-
-
-                bom === 0
-
-                ?
-
-                0
-
-                :
-
-                Number(
-
-                    (
-
-                        (
-
-                            purchase -
-
-                            bom
-
-                        )
-
-                        /
-
-                        bom *
-
-                        100
+                        usage
 
                     )
 
-                    .toFixed(2)
+                ),
+
+
+            totalQuantity:
+
+                this.totalQuantity(
+
+                    usage
 
                 )
 
@@ -734,15 +564,12 @@ class MaterialAnalysis {
         };
 
 
+
     }
 
 
 
-
-
-
 }
-
 
 
 
