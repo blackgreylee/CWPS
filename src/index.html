@@ -1,288 +1,151 @@
 <!DOCTYPE html>
 
-<html lang="zh-Hant">
+<html lang="zh-TW">
 
 <head>
 
-```
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>
-    CWPS Enterprise
+CWPS Enterprise
 </title>
 
 
-<!-- Bootstrap 5 CSS -->
-<link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
->
+<link rel="stylesheet"
+href="css/cwps.css">
 
-
-<!-- CWPS CSS -->
-
-<link
-    rel="stylesheet"
-    href="css/style.css"
->
-
-<link
-    rel="stylesheet"
-    href="css/layout.css"
->
-
-<link
-    rel="stylesheet"
-    href="css/menu.css"
->
-
-<link
-    rel="stylesheet"
-    href="css/dashboard.css"
->
-```
 
 </head>
 
+
 <body>
 
-<div id="cwps-app">
 
-```
-<!-- Header -->
+<header>
 
-<header class="cwps-header">
-
-    <div class="container-fluid">
-
-        <div class="row align-items-center">
-
-
-            <div class="col">
-
-                <h4 class="mb-0">
-
-                    CWPS Enterprise
-
-                </h4>
-
-                <small>
-
-                    Curtain Wall Procurement System
-
-                </small>
-
-            </div>
-
-
-            <div class="col-auto">
-
-
-                <span id="system-version">
-
-                    Sprint 1.3.1
-
-                </span>
-
-
-            </div>
-
-
-        </div>
-
-    </div>
-
+<h1>
+CWPS Enterprise
+</h1>
 
 </header>
 
 
 
-<!-- Main Layout -->
+<nav id="menu">
 
-<div class="cwps-container">
+</nav>
 
 
-    <!-- Sidebar -->
 
-    <aside
-        id="sidebar"
-        class="cwps-sidebar"
-    >
+<main id="content">
 
+</main>
 
-        <nav>
 
 
-            <ul class="cwps-menu">
+<div id="loading">
 
-
-                <li>
-
-                    <a href="?page=dashboard">
-
-                        Dashboard
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=batch">
-
-                        Batch Management
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=bom">
-
-                        BOM Tree
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=material">
-
-                        Material Management
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=supplier">
-
-                        Supplier
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=purchase">
-
-                        Purchase
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=shipment">
-
-                        Shipment
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=invoice">
-
-                        Invoice
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a href="?page=setting">
-
-                        Setting
-
-                    </a>
-
-                </li>
-
-
-            </ul>
-
-
-        </nav>
-
-
-    </aside>
-
-
-
-
-    <!-- Content Area -->
-
-    <main
-        id="cwps-content"
-        class="cwps-content"
-    >
-
-
-        <div class="container-fluid">
-
-
-            <div id="page-container">
-
-
-                <!-- Dynamic Page Loading -->
-
-                <h5>
-
-                    Loading CWPS...
-
-                </h5>
-
-
-            </div>
-
-
-        </div>
-
-
-    </main>
-
-
-
-</div>
-```
+Loading...
 
 </div>
 
-<!-- Bootstrap 5 JS -->
 
-<script
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
 
-<!-- CWPS Core JS -->
+<script src="src/js/core/schema.js"></script>
 
-<script src="js/storage.js"></script>
 
-<script src="js/utils.js"></script>
+<script src="src/js/storage/database.js"></script>
 
-<script src="js/router.js"></script>
+<script src="src/js/storage/project-storage.js"></script>
 
-<script src="js/ui.js"></script>
+<script src="src/js/storage/bom-storage.js"></script>
 
-<script src="js/app.js"></script>
+<script src="src/js/storage/material-storage.js"></script>
+
+<script src="src/js/storage/requirement-storage.js"></script>
+
+<script src="src/js/storage/quotation-storage.js"></script>
+
+<script src="src/js/storage/purchase-storage.js"></script>
+
+<script src="src/js/storage/shipment-storage.js"></script>
+
+<script src="src/js/storage/invoice-storage.js"></script>
+
+
+
+<script src="src/js/core/bom-engine.js"></script>
+
+<script src="src/js/core/material-engine.js"></script>
+
+<script src="src/js/core/quantity-engine.js"></script>
+
+
+
+<script src="src/js/procurement/requirement-engine.js"></script>
+
+<script src="src/js/procurement/quotation-engine.js"></script>
+
+<script src="src/js/procurement/purchase-engine.js"></script>
+
+<script src="src/js/procurement/shipment-engine.js"></script>
+
+<script src="src/js/procurement/invoice-engine.js"></script>
+
+
+
+<script src="src/js/supplier/supplier-engine.js"></script>
+
+<script src="src/js/supplier/supplier-rating.js"></script>
+
+<script src="src/js/supplier/supplier-price-history.js"></script>
+
+
+
+<script src="src/js/analysis/cost-analysis.js"></script>
+
+<script src="src/js/analysis/material-analysis.js"></script>
+
+<script src="src/js/analysis/procurement-analysis.js"></script>
+
+<script src="src/js/analysis/supplier-analysis.js"></script>
+
+
+
+<script src="src/js/controllers/menu-controller.js"></script>
+
+<script src="src/js/controllers/project-controller.js"></script>
+
+<script src="src/js/controllers/bom-controller.js"></script>
+
+<script src="src/js/controllers/procurement-controller.js"></script>
+
+<script src="src/js/controllers/supplier-controller.js"></script>
+
+
+
+<script src="src/js/views/ui-manager.js"></script>
+
+<script src="src/js/views/dashboard-view.js"></script>
+
+<script src="src/js/views/project-view.js"></script>
+
+<script src="src/js/views/bom-view.js"></script>
+
+<script src="src/js/views/procurement-view.js"></script>
+
+<script src="src/js/views/supplier-view.js"></script>
+
+
+
+<script src="src/js/app/page-loader.js"></script>
+
+<script src="src/js/app/app-controller.js"></script>
+
+
+
+<script src="src/js/main.js"></script>
+
 
 </body>
 
