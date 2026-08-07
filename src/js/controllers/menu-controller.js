@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.6.4
+ 2.9.31
 
 
  Build:
- Enterprise Menu Navigation Controller
+ Enterprise Menu Controller Layer
 
 
  Description:
- Main Navigation Controller
+ System Navigation Controller
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,288 +36,209 @@ class MenuController {
     constructor(){
 
 
-        this.router =
+        this.currentPage =
 
-            new Router();
-
-
-
-        this.currentMenu = null;
+            null;
 
 
 
-        this.menuItems = {
-
-
-
-            dashboard:
+        this.menuItems = [
 
 
             {
 
 
-                path:
-
-                    "dashboard",
+                id:"dashboard",
 
 
+                name:"Dashboard",
 
-                title:
 
-                    "Dashboard"
+                page:"dashboard"
 
 
             },
 
 
-
-
-            project:
-
-
             {
 
 
-                path:
-
-                    "project",
+                id:"project",
 
 
+                name:"Project",
 
-                title:
 
-                    "Project Management"
+                page:"project"
 
 
             },
 
 
-
-
-            batch:
-
-
             {
 
 
-                path:
-
-                    "batch",
+                id:"bom",
 
 
+                name:"BOM Management",
 
-                title:
 
-                    "Batch Management"
+                page:"bom"
 
 
             },
 
 
-
-
-            bom:
-
-
             {
 
 
-                path:
-
-                    "bom",
+                id:"procurement",
 
 
+                name:"Procurement",
 
-                title:
 
-                    "BOM Management"
+                page:"procurement"
 
 
             },
 
 
-
-
-            material:
-
-
             {
 
 
-                path:
-
-                    "material",
+                id:"supplier",
 
 
+                name:"Supplier",
 
-                title:
 
-                    "Material Management"
+                page:"supplier"
 
 
             },
 
 
-
-
-            supplier:
-
-
             {
 
 
-                path:
+                id:"analysis",
 
-                    "supplier",
 
+                name:"Analysis",
 
 
-                title:
-
-                    "Supplier Management"
-
-
-            },
-
-
-
-
-            quotation:
-
-
-            {
-
-
-                path:
-
-                    "quotation",
-
-
-
-                title:
-
-                    "Quotation Management"
-
-
-            },
-
-
-
-
-            purchase:
-
-
-            {
-
-
-                path:
-
-                    "purchase",
-
-
-
-                title:
-
-                    "Purchase Management"
-
-
-            },
-
-
-
-
-            shipment:
-
-
-            {
-
-
-                path:
-
-                    "shipment",
-
-
-
-                title:
-
-                    "Shipment Management"
-
-
-            },
-
-
-
-
-            invoice:
-
-
-            {
-
-
-                path:
-
-                    "invoice",
-
-
-
-                title:
-
-                    "Invoice Management"
-
-
-            },
-
-
-
-
-            report:
-
-
-            {
-
-
-                path:
-
-                    "report",
-
-
-
-                title:
-
-                    "Report & Analysis"
-
-
-            },
-
-
-
-
-            setting:
-
-
-            {
-
-
-                path:
-
-                    "setting",
-
-
-
-                title:
-
-                    "System Setting"
+                page:"analysis"
 
 
             }
+
+
+
+        ];
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Menu
+
+    ==============================================
+    */
+
+
+    getMenu(){
+
+
+
+        return this.menuItems;
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Open Page
+
+    ==============================================
+    */
+
+
+    navigate(
+
+        page
+
+    ){
+
+
+
+        const menu =
+
+            this.menuItems.find(
+
+                item =>
+
+                item.page === page
+
+            );
+
+
+
+
+
+        if(!menu){
+
+
+            throw new Error(
+
+                "Page not found"
+
+            );
+
+
+        }
+
+
+
+
+
+        this.currentPage =
+
+            page;
+
+
+
+
+
+        return {
+
+
+            success:true,
+
+
+            page
 
 
 
         };
 
 
-    }
 
+    }
 
 
 
@@ -327,17 +247,17 @@ class MenuController {
     /*
     ==============================================
 
-    Initialize
+    Current Page
 
     ==============================================
     */
 
 
-    init(){
+    getCurrentPage(){
 
 
 
-        this.bindEvents();
+        return this.currentPage;
 
 
 
@@ -347,141 +267,31 @@ class MenuController {
 
 
 
-
     /*
     ==============================================
 
-    Bind Menu Events
+    Check Menu
 
     ==============================================
     */
 
 
-    bindEvents(){
+    exists(
 
+        page
 
-
-        const menus =
-
-
-            document.querySelectorAll(
-
-                "[data-menu]"
-
-            );
-
-
-
-
-
-        menus.forEach(
-
-            menu=>{
-
-
-                menu.addEventListener(
-
-                    "click",
-
-                    ()=>{
-
-
-                        const target =
-
-
-                            menu.dataset.menu;
-
-
-
-
-
-                        this.open(
-
-                            target
-
-                        );
-
-
-                    }
-
-                );
-
-
-            }
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Open Menu
-
-    ==============================================
-    */
-
-
-    open(
-        menu
     ){
 
 
 
-        const item =
+        return this.menuItems.some(
 
+            item =>
 
-            this.menuItems[menu];
-
-
-
-
-
-        if(!item){
-
-
-            console.warn(
-
-                "Menu not found:",
-
-                menu
-
-            );
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        this.currentMenu = menu;
-
-
-
-
-
-        this.router.navigate(
-
-            item.path
+            item.page === page
 
         );
 
-
-        this.setActive(
-
-            menu
-
-        );
 
 
     }
@@ -490,83 +300,32 @@ class MenuController {
 
 
 
-
     /*
     ==============================================
 
-    Active Menu
+    Add Menu
 
     ==============================================
     */
 
 
-    setActive(
-        menu
+    addMenu(
+
+        item
+
     ){
 
 
 
-        const menus =
+        this.menuItems.push(
 
-
-            document.querySelectorAll(
-
-                "[data-menu]"
-
-            );
-
-
-
-
-
-        menus.forEach(
-
-            item=>{
-
-
-                item.classList.remove(
-
-                    "active"
-
-                );
-
-
-            }
+            item
 
         );
 
 
 
-
-
-        const active =
-
-
-            document.querySelector(
-
-                `[data-menu="${menu}"]`
-
-            );
-
-
-
-
-
-        if(active){
-
-
-            active.classList.add(
-
-                "active"
-
-            );
-
-
-        }
-
-
     }
-
 
 
 
@@ -575,22 +334,33 @@ class MenuController {
     /*
     ==============================================
 
-    Get Current Menu
+    Remove Menu
 
     ==============================================
     */
 
 
-    getCurrent(){
+    removeMenu(
+
+        page
+
+    ){
 
 
 
-        return this.currentMenu;
+        this.menuItems =
+
+            this.menuItems.filter(
+
+                item =>
+
+                item.page !== page
+
+            );
 
 
 
     }
-
 
 
 
@@ -599,37 +369,27 @@ class MenuController {
     /*
     ==============================================
 
-    Refresh
+    Reset
 
     ==============================================
     */
 
 
-    refresh(){
+    reset(){
 
 
 
-        if(this.currentMenu){
+        this.currentPage =
 
+            null;
 
-            this.open(
-
-                this.currentMenu
-
-            );
-
-
-        }
 
 
     }
-
-
 
 
 
 }
-
 
 
 
