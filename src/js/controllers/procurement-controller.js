@@ -8,7 +8,7 @@
 
 
  Sprint:
- 2.6.2
+ 2.9.29
 
 
  Build:
@@ -25,7 +25,6 @@
 
 (function(global){
 
-
 "use strict";
 
 
@@ -39,45 +38,35 @@ class ProcurementController {
 
         this.requirementEngine =
 
-            new RequirementEngine();
-
+            new global.RequirementEngine();
 
 
         this.quotationEngine =
 
-            new QuotationEngine();
-
+            new global.QuotationEngine();
 
 
         this.purchaseEngine =
 
-            new PurchaseEngine();
-
+            new global.PurchaseEngine();
 
 
         this.shipmentEngine =
 
-            new ShipmentEngine();
-
+            new global.ShipmentEngine();
 
 
         this.invoiceEngine =
 
-            new InvoiceEngine();
+            new global.InvoiceEngine();
 
 
 
-        this.analysis =
+        this.currentProject = null;
 
-            new ProcurementAnalysis();
-
-
-
-        this.view = null;
 
 
     }
-
 
 
 
@@ -86,133 +75,25 @@ class ProcurementController {
     /*
     ==============================================
 
-    Initialize
+    Set Project Context
 
     ==============================================
     */
 
 
-    async init(view){
+    setProject(
+
+        projectId
+
+    ){
 
 
+        this.currentProject =
 
-        this.view = view;
-
-
-
-        await this.requirementEngine.init();
-
-
-        await this.quotationEngine.init();
-
-
-        await this.purchaseEngine.init();
-
-
-        await this.shipmentEngine.init();
-
-
-        await this.invoiceEngine.init();
-
-
-        await this.analysis.init();
-
-
-
-        await this.load();
+            projectId;
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Load Procurement Dashboard
-
-    ==============================================
-    */
-
-
-    async load(){
-
-
-
-        const data = {
-
-
-            requirements:
-
-
-                await this.requirementEngine.getAll(),
-
-
-
-            quotations:
-
-
-                await this.quotationEngine.getAll(),
-
-
-
-            purchases:
-
-
-                await this.purchaseEngine.getAll(),
-
-
-
-            shipments:
-
-
-                await this.shipmentEngine.getAll(),
-
-
-
-            invoices:
-
-
-                await this.invoiceEngine.getAll()
-
-
-
-        };
-
-
-
-
-
-        if(
-
-            this.view &&
-
-            this.view.render
-
-        ){
-
-
-            this.view.render(
-
-                data
-
-            );
-
-
-        }
-
-
-
-
-
-        return data;
-
-
-    }
-
 
 
 
@@ -229,56 +110,50 @@ class ProcurementController {
     */
 
 
-    async createRequirement(
+    getRequirements(){
+
+
+
+        return this.requirementEngine
+
+            .getAll();
+
+
+
+    }
+
+
+
+
+
+    createRequirement(
+
         data
+
     ){
 
 
 
-        const result =
+        return this.requirementEngine
+
+            .create(
+
+                {
+
+                    ...data,
 
 
-            await this.requirementEngine.create(
+                    projectId:
 
-                data
+                        this.currentProject
+
+
+                }
 
             );
 
 
-
-
-
-        await this.load();
-
-
-
-
-
-        return result;
-
-
     }
-
-
-
-
-
-
-    async getRequirements(
-        projectId
-    ){
-
-
-
-        return await this.requirementEngine.findByProject(
-
-            projectId
-
-        );
-
-
-    }
-
 
 
 
@@ -289,62 +164,80 @@ class ProcurementController {
 
     Quotation
 
-    詢價
+    報價
 
     ==============================================
     */
 
 
-    async createQuotation(
-        data
+    createQuotationRequest(
+
+        requirementId,
+
+        supplierId
+
     ){
 
 
 
-        const result =
+        return this.quotationEngine
+
+            .createRequest(
+
+                requirementId,
+
+                supplierId
+
+            );
 
 
-            await this.quotationEngine.create(
+    }
+
+
+
+
+
+    saveQuotation(
+
+        data
+
+    ){
+
+
+
+        return this.quotationEngine
+
+            .createQuotation(
 
                 data
 
             );
 
 
-
-
-
-        await this.load();
-
-
-
-
-
-        return result;
-
-
     }
 
 
 
 
 
+    approveQuotation(
 
-    async submitQuotation(
         quotationId
+
     ){
 
 
 
-        return await this.quotationEngine.submit(
+        return this.quotationEngine
 
-            quotationId
+            .approve(
 
-        );
+                quotationId
+
+            );
 
 
     }
-
 
 
 
@@ -361,18 +254,21 @@ class ProcurementController {
     */
 
 
-    async createPurchase(
-        data
+    createPurchase(
+
+        quotationId
+
     ){
 
 
 
-        const result =
+        const purchase =
 
+            this.purchaseEngine
 
-            await this.purchaseEngine.create(
+            .createFromQuotation(
 
-                data
+                quotationId
 
             );
 
@@ -380,13 +276,14 @@ class ProcurementController {
 
 
 
-        await this.load();
+        return this.purchaseEngine
 
+            .createPurchase(
 
+                purchase
 
+            );
 
-
-        return result;
 
 
     }
@@ -395,22 +292,24 @@ class ProcurementController {
 
 
 
+    confirmPurchase(
 
-    async approvePurchase(
         purchaseId
+
     ){
 
 
 
-        return await this.purchaseEngine.approve(
+        return this.purchaseEngine
 
-            purchaseId
+            .confirm(
 
-        );
+                purchaseId
+
+            );
 
 
     }
-
 
 
 
@@ -427,18 +326,21 @@ class ProcurementController {
     */
 
 
-    async createShipmentFromPurchase(
-        purchase
+    createShipment(
+
+        purchaseId
+
     ){
 
 
 
-        const data =
+        const shipment =
 
+            this.shipmentEngine
 
-            await this.shipmentEngine.generateFromPurchase(
+            .createFromPurchase(
 
-                purchase
+                purchaseId
 
             );
 
@@ -446,11 +348,13 @@ class ProcurementController {
 
 
 
-        return await this.shipmentEngine.create(
+        return this.shipmentEngine
 
-            data
+            .createShipment(
 
-        );
+                shipment
+
+            );
 
 
     }
@@ -459,22 +363,24 @@ class ProcurementController {
 
 
 
+    receiveShipment(
 
-    async receiveShipment(
         shipmentId
+
     ){
 
 
 
-        return await this.shipmentEngine.receive(
+        return this.shipmentEngine
 
-            shipmentId
+            .receive(
 
-        );
+                shipmentId
+
+            );
 
 
     }
-
 
 
 
@@ -485,24 +391,27 @@ class ProcurementController {
 
     Invoice
 
-    請款
+    發票
 
     ==============================================
     */
 
 
-    async createInvoiceFromShipment(
-        shipment
+    createInvoice(
+
+        shipmentId
+
     ){
 
 
 
-        const data =
+        const invoice =
 
+            this.invoiceEngine
 
-            await this.invoiceEngine.generateFromShipment(
+            .createFromShipment(
 
-                shipment
+                shipmentId
 
             );
 
@@ -510,11 +419,14 @@ class ProcurementController {
 
 
 
-        return await this.invoiceEngine.create(
+        return this.invoiceEngine
 
-            data
+            .createInvoice(
 
-        );
+                invoice
+
+            );
+
 
 
     }
@@ -523,42 +435,24 @@ class ProcurementController {
 
 
 
+    paidInvoice(
 
-    async approveInvoice(
         invoiceId
+
     ){
 
 
 
-        return await this.invoiceEngine.approve(
+        return this.invoiceEngine
 
-            invoiceId
+            .paid(
 
-        );
+                invoiceId
 
-
-    }
-
-
-
-
-
-
-    async payInvoice(
-        invoiceId
-    ){
-
-
-
-        return await this.invoiceEngine.pay(
-
-            invoiceId
-
-        );
+            );
 
 
     }
-
 
 
 
@@ -567,67 +461,38 @@ class ProcurementController {
     /*
     ==============================================
 
-    Project Summary
-
-    專案採購分析
+    Procurement Summary
 
     ==============================================
     */
 
 
-    async projectSummary(
-        projectId
-    ){
+    summary(){
 
 
 
-        return await this.analysis.projectSummary(
-
-            projectId
-
-        );
+        return {
 
 
-    }
+            requirements:
+
+                this.getRequirements(),
 
 
+            project:
 
-
-
-
-    /*
-    ==============================================
-
-    Procurement Cost
-
-    採購成本
-
-    ==============================================
-    */
-
-
-    async calculateCost(
-        purchases
-    ){
+                this.currentProject
 
 
 
-        return this.analysis.calculatePurchaseAmount(
-
-            purchases
-
-        );
+        };
 
 
     }
-
-
-
 
 
 
 }
-
 
 
 
