@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.7.4
+ 2.9.35
 
 
  Build:
- Enterprise BOM View Layer
+ Enterprise BOM Tree View Layer
 
 
  Description:
- BOM Tree Management UI View
+ BOM Tree User Interface View
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,17 +36,18 @@ class BOMView {
     constructor(){
 
 
-        this.controller = null;
+        this.controller =
+
+            new global.BOMController();
 
 
-        this.container = null;
+        this.container =
 
+            null;
 
-        this.currentVersion = null;
 
 
     }
-
 
 
 
@@ -63,18 +63,14 @@ class BOMView {
 
 
     init(
-        controller,
-        containerId = "app"
+
+        containerId
+
     ){
 
 
 
-        this.controller = controller;
-
-
-
         this.container =
-
 
             document.getElementById(
 
@@ -86,11 +82,11 @@ class BOMView {
 
 
 
-        this.bindEvents();
+        this.render();
+
 
 
     }
-
 
 
 
@@ -106,16 +102,16 @@ class BOMView {
 
 
     render(
-        bom
+
+        versionId
+
     ){
 
 
 
         if(!this.container){
 
-
             return;
-
 
         }
 
@@ -123,61 +119,33 @@ class BOMView {
 
 
 
-        this.container.innerHTML = `
+        const data =
 
+            this.controller
 
-        <div class="bom-page">
+            .loadVersion(
 
+                versionId
 
-            <div class="page-header">
-
-
-                <h2>
-
-                    BOM Management
-
-                </h2>
-
-
-                <button
-
-                    id="btn-import-bom"
-
-                >
-
-                    Import BOM
-
-                </button>
-
-
-            </div>
+            );
 
 
 
 
 
-            <div class="bom-version">
+        this.container.innerHTML =
+
+        `
 
 
-                Version:
-
-                <span>
-
-                    ${
-
-                        bom.version ||
-
-                        ""
-
-                    }
-
-                </span>
+        <div class="bom-view">
 
 
-            </div>
+            <h2>
 
+            BOM Management
 
-
+            </h2>
 
 
             <div class="bom-tree">
@@ -185,11 +153,12 @@ class BOMView {
 
                 ${
 
-                    this.renderNode(
+                this.renderNode(
 
-                        bom.root
+                    data.tree
 
-                    )
+                )
+
 
                 }
 
@@ -204,11 +173,7 @@ class BOMView {
 
 
 
-        this.bindTreeEvents();
-
-
     }
-
 
 
 
@@ -217,14 +182,16 @@ class BOMView {
     /*
     ==============================================
 
-    Render BOM Node
+    Render Tree Node
 
     ==============================================
     */
 
 
     renderNode(
+
         node
+
     ){
 
 
@@ -234,132 +201,13 @@ class BOMView {
 
             return "";
 
-
         }
 
 
 
 
 
-        let html = `
-
-
-
-        <div class="bom-node">
-
-
-            <div class="node-header">
-
-
-                <span
-
-                    class="toggle"
-
-                    data-id="${
-
-                        node.id
-
-                    }"
-
-                >
-
-                    [+]
-
-                </span>
-
-
-
-                <b>
-
-                    ${
-
-                        node.code ||
-
-                        ""
-
-                    }
-
-                </b>
-
-
-
-                <span>
-
-                    (
-
-                    ${
-
-                        node.type ||
-
-                        ""
-
-                    }
-
-                    )
-
-                </span>
-
-
-
-                <span>
-
-                    Qty:
-
-                    ${
-
-                        node.quantity ||
-
-                        0
-
-                    }
-
-                </span>
-
-
-            </div>
-
-
-        `;
-
-
-
-
-
-
-        if(
-
-            node.material
-
-        ){
-
-
-            html += `
-
-
-
-            <div class="material-info">
-
-
-                Material:
-
-                ${
-
-                    node.material.name ||
-
-                    ""
-
-                }
-
-
-
-            </div>
-
-
-            `;
-
-
-        }
-
+        let children = "";
 
 
 
@@ -375,58 +223,56 @@ class BOMView {
 
 
 
-            html += `
+            children =
 
 
-            <div
+            `
 
-                class="children"
-
-                id="node-${
-
-                    node.id
-
-                }"
-
-            >
+            <ul>
 
 
-            `;
+            ${
+
+            node.children.map(
+
+                child =>
 
 
+                `
+
+                <li>
 
 
+                ${
 
-            node.children.forEach(
+                this.renderNode(
 
-                child=>{
+                    child
 
-
-                    html +=
-
-
-                        this.renderNode(
-
-                            child
-
-                        );
-
+                )
 
                 }
 
-            );
+
+                </li>
 
 
+                `
 
 
+            )
 
-            html += `
+            .join("")
 
 
-            </div>
+            }
+
+
+            </ul>
 
 
             `;
+
 
 
         }
@@ -435,7 +281,71 @@ class BOMView {
 
 
 
-        html += `
+        return `
+
+
+        <div class="bom-node">
+
+
+            <div class="bom-title">
+
+
+                <strong>
+
+                ${node.code || ""}
+
+                </strong>
+
+
+                -
+
+                ${node.name || ""}
+
+
+
+            </div>
+
+
+
+            <div class="bom-info">
+
+
+                Type:
+
+                ${node.type || ""}
+
+
+
+                <br>
+
+
+                Quantity:
+
+                ${node.quantity || 0}
+
+
+
+                ${
+
+                node.unit
+
+                ?
+
+                node.unit
+
+                :
+
+                ""
+
+                }
+
+
+
+            </div>
+
+
+
+            ${children}
 
 
         </div>
@@ -445,13 +355,7 @@ class BOMView {
 
 
 
-
-
-        return html;
-
-
     }
-
 
 
 
@@ -460,30 +364,57 @@ class BOMView {
     /*
     ==============================================
 
-    Version Change
+    Expand Node
 
     ==============================================
     */
 
 
-    async changeVersion(
-        versionId
+    expand(
+
+        nodeId
+
     ){
 
 
 
-        this.currentVersion =
+        return this.controller
 
-            versionId;
+            .expand(
 
+                nodeId
 
-
-
-
-        const bom =
+            );
 
 
-            await this.controller.getVersion(
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Summary
+
+    ==============================================
+    */
+
+
+    showSummary(
+
+        versionId
+
+    ){
+
+
+
+        const summary =
+
+            this.controller
+
+            .summary(
 
                 versionId
 
@@ -493,11 +424,51 @@ class BOMView {
 
 
 
-        this.render(
+        this.container.innerHTML =
 
-            bom
 
-        );
+        `
+
+
+        <div class="bom-summary">
+
+
+            <h3>
+
+            BOM Summary
+
+            </h3>
+
+
+            <p>
+
+
+            Version:
+
+            ${summary.versionId}
+
+
+            </p>
+
+
+
+            <p>
+
+
+            Node Count:
+
+            ${summary.nodeCount}
+
+
+            </p>
+
+
+
+        </div>
+
+
+        `;
+
 
 
     }
@@ -506,213 +477,36 @@ class BOMView {
 
 
 
-
     /*
     ==============================================
 
-    Import BOM
+    Refresh
 
     ==============================================
     */
 
 
-    importBOM(){
+    refresh(
 
+        versionId
 
-
-        if(
-
-            this.controller.import
-
-        ){
-
-
-            this.controller.import();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Toggle Node
-
-    ==============================================
-    */
-
-
-    toggleNode(
-        id
     ){
 
 
 
-        const element =
+        this.render(
 
-
-            document.getElementById(
-
-                "node-" + id
-
-            );
-
-
-
-
-
-        if(!element){
-
-
-            return;
-
-
-        }
-
-
-
-
-
-        element.style.display =
-
-
-            element.style.display ===
-
-            "none"
-
-            ?
-
-            "block"
-
-            :
-
-            "none";
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Events
-
-    ==============================================
-    */
-
-
-    bindEvents(){
-
-
-
-        document.addEventListener(
-
-            "click",
-
-            event=>{
-
-
-                if(
-
-                    event.target.id ===
-
-                    "btn-import-bom"
-
-                ){
-
-
-                    this.importBOM();
-
-
-                }
-
-
-            }
+            versionId
 
         );
 
 
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Tree Events
-
-    ==============================================
-    */
-
-
-    bindTreeEvents(){
-
-
-
-        const buttons =
-
-
-            document.querySelectorAll(
-
-                ".toggle"
-
-            );
-
-
-
-
-
-        buttons.forEach(
-
-            button=>{
-
-
-                button.addEventListener(
-
-                    "click",
-
-                    ()=>{
-
-
-                        this.toggleNode(
-
-                            button.dataset.id
-
-                        );
-
-
-                    }
-
-                );
-
-
-            }
-
-        );
-
 
     }
-
-
 
 
 
 }
-
 
 
 
