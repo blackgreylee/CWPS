@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.1.6
+ 2.9.7
 
 
  Build:
- Enterprise Procurement Storage
+ Enterprise Procurement Requirement Storage Layer
 
 
  Description:
- Requirement Repository Service
+ Procurement Requirement Data Access Layer
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,87 +36,21 @@ class RequirementStorage {
     constructor(){
 
 
-        this.db =
+        this.database =
 
-            new CWPSDatabase();
-
-
-
-        this.storeName =
-
-            "requirements";
+            global.cwpsDatabase;
 
 
-    }
+        this.collection =
 
+            this.database.collection(
 
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.db.open();
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create
-
-    ==============================================
-    */
-
-
-    async create(
-        requirement
-    ){
-
-
-
-        if(!requirement){
-
-
-            throw new Error(
-
-                "Requirement required"
+                "requirements"
 
             );
 
 
-        }
-
-
-
-
-        return await this.db.add(
-
-            this.storeName,
-
-            requirement
-
-        );
-
-
     }
-
 
 
 
@@ -126,23 +59,43 @@ class RequirementStorage {
     /*
     ==============================================
 
-    Update
+    Get All Requirements
 
     ==============================================
     */
 
 
-    async update(
-        requirement
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Requirement By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        requirementId
+
     ){
 
 
+        return this.collection.getById(
 
-        return await this.db.update(
-
-            this.storeName,
-
-            requirement
+            requirementId
 
         );
 
@@ -153,29 +106,27 @@ class RequirementStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get
+    Get By Material
 
     ==============================================
     */
 
 
-    async get(
-        id
+    getByMaterial(
+
+        materialId
+
     ){
 
 
+        return this.collection.where({
 
-        return await this.db.get(
+            materialId
 
-            this.storeName,
-
-            id
-
-        );
+        });
 
 
     }
@@ -184,201 +135,30 @@ class RequirementStorage {
 
 
 
-
     /*
     ==============================================
 
-    Get All
+    Get By Status
 
     ==============================================
     */
 
 
-    async getAll(){
+    getByStatus(
 
-
-
-        return await this.db.getAll(
-
-            this.storeName
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Batch Version
-
-    ==============================================
-    */
-
-
-    async findByVersion(
-        versionId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.versionId === versionId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Material
-
-    ==============================================
-    */
-
-
-    async findByMaterial(
-        materialCode
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.materialCode === materialCode
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Status
-
-    ==============================================
-    */
-
-
-    async findByStatus(
         status
+
     ){
 
 
+        return this.collection.where({
 
-        const list =
+            status
 
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.status === status
-
-
-
-        );
+        });
 
 
     }
-
 
 
 
@@ -387,72 +167,174 @@ class RequirementStorage {
     /*
     ==============================================
 
-    Confirm Requirement
+    Create Requirement
 
     ==============================================
     */
 
 
-    async confirm(
-        id
+    create(
+
+        requirement
+
     ){
 
 
-
-        const item =
-
-
-            await this.get(id);
+        const data = {
 
 
+            ...requirement,
 
 
+            status:
 
-        if(!item){
+                requirement.status
 
+                ||
 
-            throw new Error(
-
-                "Requirement not found"
-
-            );
+                "Draft",
 
 
-        }
+            createDate:
 
+                new Date()
+
+                .toISOString()
 
 
 
-
-        item.status =
-
-
-            CWPSTypes.RequirementStatus.CONFIRMED;
+        };
 
 
 
 
 
-        item.updatedAt =
+        return this.collection.insert(
 
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
+            data
 
         );
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Create Multiple Requirements
+
+    ==============================================
+    */
+
+
+    createMany(
+
+        requirements
+
+    ){
+
+
+        return requirements.map(
+
+            item =>
+
+                this.create(
+
+                    item
+
+                )
+
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Update Requirement
+
+    ==============================================
+    */
+
+
+    update(
+
+        requirementId,
+
+        data
+
+    ){
+
+
+        return this.collection.update(
+
+            requirementId,
+
+            {
+
+                ...data,
+
+
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
+
+
+            }
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Change Status
+
+    ==============================================
+    */
+
+
+    changeStatus(
+
+        requirementId,
+
+        status
+
+    ){
+
+
+        return this.update(
+
+            requirementId,
+
+            {
+
+                status
+
+            }
+
+        );
+
+
+    }
 
 
 
@@ -467,66 +349,23 @@ class RequirementStorage {
     */
 
 
-    async close(
-        id
+    close(
+
+        requirementId
+
     ){
 
 
+        return this.changeStatus(
 
-        const item =
+            requirementId,
 
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Requirement not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.RequirementStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
+            "Closed"
 
         );
 
 
     }
-
 
 
 
@@ -535,71 +374,19 @@ class RequirementStorage {
     /*
     ==============================================
 
-    Remove
-
-    注意:
-    Enterprise 不直接刪除資料
+    Pending Purchase
 
     ==============================================
     */
 
 
-    async remove(id){
+    getPending(){
 
+        return this.collection.where({
 
+            status:"Pending"
 
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.RequirementStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        await this.update(
-
-            item
-
-        );
-
-
-
-
-
-        return true;
+        });
 
 
     }
@@ -607,8 +394,35 @@ class RequirementStorage {
 
 
 
-}
 
+    /*
+    ==============================================
+
+    Delete
+
+    ==============================================
+    */
+
+
+    delete(
+
+        requirementId
+
+    ){
+
+
+        return this.collection.delete(
+
+            requirementId
+
+        );
+
+
+    }
+
+
+
+}
 
 
 
