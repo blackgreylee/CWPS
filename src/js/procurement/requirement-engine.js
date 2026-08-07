@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.3.1
+ 2.9.15
 
 
  Build:
- Enterprise Procurement Requirement Engine
+ Enterprise Procurement Requirement Engine Layer
 
 
  Description:
- Material Requirement Generation Engine
+ Generate Procurement Requirement From BOM
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -39,13 +38,12 @@ class RequirementEngine {
 
         this.quantityEngine =
 
-            new QuantityEngine();
+            new global.QuantityEngine();
 
 
+        this.requirementStorage =
 
-        this.storage =
-
-            new RequirementStorage();
+            new global.RequirementStorage();
 
 
 
@@ -55,125 +53,30 @@ class RequirementEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Generate Requirement
 
     ==============================================
     */
 
 
-    async init(){
+    generate(
 
+        versionId,
 
-        await this.quantityEngine.init();
+        projectId
 
-
-
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create Requirement
-
-    ==============================================
-    */
-
-
-    async create(data){
-
-
-
-        if(!data){
-
-
-            throw new Error(
-
-                "Requirement data required"
-
-            );
-
-
-        }
-
-
-
-
-
-        data.status =
-
-
-            data.status ||
-
-            CWPSTypes.RequirementStatus.DRAFT;
-
-
-
-
-
-        data.createdAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.create(
-
-            data
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Generate From BOM Version
-
-    BOM → Requirement
-
-    ==============================================
-    */
-
-
-    async generateFromBOM(
-        versionId
     ){
 
 
 
         const materials =
 
+            this.quantityEngine
 
-            await this.quantityEngine.calculateMaterialRequirement(
+            .summarizeByMaterial(
 
                 versionId
 
@@ -191,71 +94,51 @@ class RequirementEngine {
 
         materials.forEach(
 
-            material=>{
+            item => {
 
 
 
-                requirements.push(
+                requirements.push({
+
+
+                    projectId,
+
+
+                    versionId,
+
+
+                    materialId:
+
+                        item.materialId,
+
+
+                    materialCode:
+
+                        item.materialCode,
+
+
+                    quantity:
+
+                        item.quantity,
+
+
+                    unit:
+
+                        item.unit,
+
+
+                    source:
+
+                        "BOM",
+
+
+                    status:
+
+                        "Pending"
 
 
 
-                    {
-
-
-                        versionId,
-
-
-
-                        materialCode:
-
-                            material.code,
-
-
-
-                        materialName:
-
-                            material.name,
-
-
-
-                        quantity:
-
-                            material.quantity,
-
-
-
-                        unit:
-
-                            material.unit ||
-
-
-
-                            CWPSTypes.UnitType.PCS,
-
-
-
-                        status:
-
-
-                            CWPSTypes.RequirementStatus.DRAFT,
-
-
-
-                        createdAt:
-
-
-
-                            new Date()
-
-                            .toISOString()
-
-
-
-                    }
-
-
-
-                );
+                });
 
 
             }
@@ -276,49 +159,233 @@ class RequirementEngine {
 
 
 
-
     /*
     ==============================================
 
-    Save Generated Requirements
+    Save Requirement
 
     ==============================================
     */
 
 
-    async saveGenerated(
-        requirements
+    createFromBOM(
+
+        versionId,
+
+        projectId
+
     ){
 
 
 
-        const result=[];
+        const data =
 
+            this.generate(
 
+                versionId,
 
-
-        for(
-
-            const item of requirements
-
-        ){
-
-
-
-            result.push(
-
-
-                await this.create(
-
-                    item
-
-                )
-
+                projectId
 
             );
 
 
-        }
+
+
+
+        return this.requirementStorage
+
+            .createMany(
+
+                data
+
+            );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Validate Requirement
+
+    ==============================================
+    */
+
+
+    validate(
+
+        requirements
+
+    ){
+
+
+
+        const errors = [];
+
+
+
+
+
+        requirements.forEach(
+
+            item => {
+
+
+
+                if(!item.materialId){
+
+
+                    errors.push({
+
+                        message:
+
+                        "Material missing",
+
+                        item
+
+
+                    });
+
+
+                }
+
+
+
+
+
+                if(
+
+                    item.quantity <= 0
+
+                ){
+
+
+                    errors.push({
+
+                        message:
+
+                        "Quantity invalid",
+
+                        item
+
+
+                    });
+
+
+                }
+
+
+
+
+
+                if(!item.unit){
+
+
+                    errors.push({
+
+                        message:
+
+                        "Unit missing",
+
+                        item
+
+
+                    });
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length === 0,
+
+
+            errors
+
+
+
+        };
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Group Requirement
+
+    ==============================================
+    */
+
+
+    groupByMaterial(
+
+        requirements
+
+    ){
+
+
+
+        const result = {};
+
+
+
+
+
+        requirements.forEach(
+
+            item => {
+
+
+
+                if(!result[item.materialId]){
+
+
+                    result[item.materialId] = [];
+
+
+                }
+
+
+
+
+
+                result[item.materialId]
+
+                .push(
+
+                    item
+
+                );
+
+
+
+            }
+
+        );
+
 
 
 
@@ -326,9 +393,8 @@ class RequirementEngine {
         return result;
 
 
+
     }
-
-
 
 
 
@@ -337,224 +403,30 @@ class RequirementEngine {
     /*
     ==============================================
 
-    Get Requirement List
+    Close Requirement
 
     ==============================================
     */
 
 
-    async getAll(){
+    close(
 
-
-
-        return await this.storage.getAll();
-
-
-
-    }
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Confirm Requirement
-
-    ==============================================
-    */
-
-
-    async confirm(
         requirementId
+
     ){
 
 
 
-        const item =
+        return this.requirementStorage
 
-
-            await this.storage.get(
+            .close(
 
                 requirementId
 
             );
 
 
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Requirement not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.RequirementStatus.CONFIRMED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            item
-
-        );
-
-
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Cancel Requirement
-
-    ==============================================
-    */
-
-
-    async cancel(
-        requirementId
-    ){
-
-
-
-        const item =
-
-
-            await this.storage.get(
-
-                requirementId
-
-            );
-
-
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Requirement not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.RequirementStatus.CLOSED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.storage.update(
-
-            item
-
-        );
-
-
-    }
-
-
 
 
 
