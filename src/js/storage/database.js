@@ -8,121 +8,75 @@
 
 
  Sprint:
- 2.1.1
+ 2.9.2
 
 
  Build:
- Enterprise Persistence Layer
+ Enterprise Database Core Layer
 
 
  Description:
- IndexedDB Database Core
+ Schema Based Database Manager
 
 
 ==================================================
 */
 
 
-(function (global) {
+(function(global){
 
 
-    "use strict";
-
-
-
-    class CWPSDatabase {
+"use strict";
 
 
 
-        constructor() {
-
-
-            this.databaseName =
-
-                "CWPS_DATABASE";
+class Database {
 
 
 
-            this.version = 2;
+    constructor(){
+
+
+        this.name =
+
+            "CWPS_DATABASE";
+
+
+        this.schema =
+
+            global.CWPS_SCHEMA;
+
+
+        this.data = {};
+
+
+        this.initialized = false;
 
 
 
-            this.db = null;
+    }
 
 
 
-            this.isReady = false;
+
+
+    /*
+    ==============================================
+
+    Initialize Database
+
+    ==============================================
+    */
+
+
+    async init(){
 
 
 
-            this.stores = {
+        if(this.initialized){
 
 
-                meta:
-                    "cwps_meta",
-
-
-
-                projects:
-                    "projects",
-
-
-
-                batches:
-                    "batches",
-
-
-
-                versions:
-                    "versions",
-
-
-
-                bom:
-                    "bom",
-
-
-
-                materials:
-                    "materials",
-
-
-
-                materialUsages:
-                    "materialUsages",
-
-
-
-                suppliers:
-                    "suppliers",
-
-
-
-                requirements:
-                    "requirements",
-
-
-
-                quotations:
-                    "quotations",
-
-
-
-                purchases:
-                    "purchases",
-
-
-
-                shipments:
-                    "shipments",
-
-
-
-                invoices:
-                    "invoices"
-
-
-            };
+            return;
 
 
         }
@@ -130,821 +84,137 @@
 
 
 
-        /*
-        ==============================================
-        
-        Initialize Database
-        
-        ==============================================
-        */
+
+        this.createCollections();
 
 
-        async open() {
+
+        this.load();
 
 
-            if (this.isReady && this.db) {
+
+        this.initialized = true;
 
 
-                return this.db;
+
+        console.log(
+
+            "CWPS Database Ready"
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Collections
+
+    ==============================================
+    */
+
+
+    createCollections(){
+
+
+
+        Object.keys(
+
+            this.schema.collections
+
+        )
+
+        .forEach(
+
+            collection => {
+
+
+
+                if(!this.data[collection]){
+
+
+                    this.data[collection] = [];
+
+
+                }
 
 
             }
 
+        );
 
 
-            return new Promise(
 
-                (resolve, reject) => {
+    }
 
 
 
-                    const request =
 
-                        indexedDB.open(
 
-                            this.databaseName,
+    /*
+    ==============================================
 
-                            this.version
+    Load
 
-                        );
+    ==============================================
+    */
 
 
+    load(){
 
 
 
-                    request.onupgradeneeded =
+        const saved =
 
-                        event => {
 
+            localStorage.getItem(
 
-
-                            const db =
-
-                                event.target.result;
-
-
-
-                            this.upgradeDatabase(
-
-                                db,
-
-                                event.oldVersion,
-
-                                event.newVersion
-
-                            );
-
-
-
-                        };
-
-
-
-
-
-                    request.onsuccess =
-
-                        event => {
-
-
-
-                            this.db =
-
-                                event.target.result;
-
-
-
-                            this.isReady = true;
-
-
-
-                            resolve(this.db);
-
-
-
-                        };
-
-
-
-
-
-                    request.onerror =
-
-                        event => {
-
-
-
-                            reject(
-
-                                this.error(
-
-                                    "Database open failed",
-
-                                    event.target.error
-
-                                )
-
-                            );
-
-
-
-                        };
-
-
-
-                }
-
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Database Upgrade
-
-        ==============================================
-        */
-
-
-        upgradeDatabase(
-            db,
-            oldVersion,
-            newVersion
-        ) {
-
-
-
-            Object.values(
-
-                this.stores
-
-            ).forEach(
-
-                storeName => {
-
-
-
-                    if (
-
-                        !db.objectStoreNames.contains(
-
-                            storeName
-
-                        )
-
-                    ) {
-
-
-
-                        const store =
-
-                            db.createObjectStore(
-
-                                storeName,
-
-                                {
-
-                                    keyPath:"id"
-
-                                }
-
-                            );
-
-
-
-                        store.createIndex(
-
-                            "createdAt",
-
-                            "createdAt",
-
-                            {
-
-                                unique:false
-
-                            }
-
-                        );
-
-
-
-                    }
-
-
-
-                }
+                this.name
 
             );
 
 
 
-        }
 
 
+        if(saved){
 
 
+            try{
 
 
-        /*
-        ==============================================
+                this.data =
 
-        Transaction Helper
+                    JSON.parse(
 
-        ==============================================
-        */
-
-
-        async transaction(
-            storeNames,
-            mode,
-            callback
-        ) {
-
-
-            const db =
-
-                await this.open();
-
-
-
-            return new Promise(
-
-                (resolve,reject)=> {
-
-
-
-                    const tx =
-
-                        db.transaction(
-
-                            storeNames,
-
-                            mode
-
-                        );
-
-
-
-                    const stores = {};
-
-
-
-                    storeNames.forEach(
-
-                        name => {
-
-
-
-                            stores[name] =
-
-                                tx.objectStore(name);
-
-
-
-                        }
+                        saved
 
                     );
 
 
+            }
 
-                    Promise.resolve(
+            catch(error){
 
-                        callback(stores)
 
-                    )
+                console.error(
 
-                    .then(
+                    "Database Load Error",
 
-                        result => {
+                    error
 
+                );
 
 
-                            tx.oncomplete =
+                this.createCollections();
 
-                                ()=>resolve(result);
 
-
-
-                        }
-
-                    )
-
-                    .catch(
-
-                        error => {
-
-
-
-                            tx.abort();
-
-
-
-                            reject(error);
-
-
-
-                        }
-
-                    );
-
-
-
-                    tx.onerror =
-
-                        event => {
-
-
-
-                            reject(
-
-                                event.target.error
-
-                            );
-
-
-                        };
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Add
-
-        ==============================================
-        */
-
-
-        async add(
-            storeName,
-            data
-        ) {
-
-
-            return this.transaction(
-
-                [storeName],
-
-                "readwrite",
-
-                stores => {
-
-
-
-                    stores[storeName].add(data);
-
-
-
-                    return data;
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Update
-
-        ==============================================
-        */
-
-
-        async update(
-            storeName,
-            data
-        ) {
-
-
-            return this.transaction(
-
-                [storeName],
-
-                "readwrite",
-
-                stores => {
-
-
-
-                    stores[storeName].put(data);
-
-
-
-                    return data;
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Get
-
-        ==============================================
-        */
-
-
-        async get(
-            storeName,
-            id
-        ) {
-
-
-            const db =
-
-                await this.open();
-
-
-
-            return new Promise(
-
-                (resolve,reject)=> {
-
-
-
-                    const tx =
-
-                        db.transaction(
-
-                            storeName,
-
-                            "readonly"
-
-                        );
-
-
-
-                    const request =
-
-                        tx.objectStore(
-
-                            storeName
-
-                        )
-
-                        .get(id);
-
-
-
-                    request.onsuccess =
-
-                        ()=> {
-
-
-
-                            resolve(
-
-                                request.result || null
-
-                            );
-
-
-
-                        };
-
-
-
-                    request.onerror =
-
-                        event => {
-
-
-
-                            reject(
-
-                                event.target.error
-
-                            );
-
-
-
-                        };
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Get All
-
-        ==============================================
-        */
-
-
-        async getAll(
-            storeName
-        ) {
-
-
-            const db =
-
-                await this.open();
-
-
-
-            return new Promise(
-
-                (resolve,reject)=> {
-
-
-
-                    const request =
-
-                        db.transaction(
-
-                            storeName,
-
-                            "readonly"
-
-                        )
-
-                        .objectStore(
-
-                            storeName
-
-                        )
-
-                        .getAll();
-
-
-
-
-                    request.onsuccess =
-
-                        ()=>resolve(
-
-                            request.result
-
-                        );
-
-
-
-                    request.onerror =
-
-                        event=>reject(
-
-                            event.target.error
-
-                        );
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Remove
-
-        ==============================================
-        */
-
-
-        async remove(
-            storeName,
-            id
-        ) {
-
-
-            return this.transaction(
-
-                [storeName],
-
-                "readwrite",
-
-                stores=> {
-
-
-
-                    stores[storeName]
-
-                    .delete(id);
-
-
-
-                    return true;
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Clear
-
-        ==============================================
-        */
-
-
-        async clear(
-            storeName
-        ) {
-
-
-            return this.transaction(
-
-                [storeName],
-
-                "readwrite",
-
-                stores=> {
-
-
-
-                    stores[storeName]
-
-                    .clear();
-
-
-
-                    return true;
-
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Metadata
-
-        ==============================================
-        */
-
-
-        async saveMeta(data) {
-
-
-            return this.update(
-
-                this.stores.meta,
-
-                {
-
-
-                    id:"database",
-
-
-                    version:this.version,
-
-
-                    updatedAt:
-
-                        new Date()
-
-                        .toISOString(),
-
-
-                    ...data
-
-
-                }
-
-            );
-
-
-        }
-
-
-
-
-
-
-        async getMeta() {
-
-
-            return this.get(
-
-                this.stores.meta,
-
-                "database"
-
-            );
-
-
-        }
-
-
-
-
-
-
-        /*
-        ==============================================
-
-        Error Handler
-
-        ==============================================
-        */
-
-
-        error(
-            message,
-            detail
-        ) {
-
-
-            return {
-
-
-                message,
-
-
-                detail,
-
-
-                time:
-
-                    new Date()
-
-                    .toISOString()
-
-
-            };
+            }
 
 
         }
@@ -956,9 +226,563 @@
 
 
 
-    global.CWPSDatabase =
 
-        CWPSDatabase;
+    /*
+    ==============================================
+
+    Save
+
+    ==============================================
+    */
+
+
+    save(){
+
+
+
+        localStorage.setItem(
+
+            this.name,
+
+            JSON.stringify(
+
+                this.data
+
+            )
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Collection
+
+    ==============================================
+    */
+
+
+    collection(
+        name
+    ){
+
+
+
+        if(!this.schema.collections[name]){
+
+
+            throw new Error(
+
+                `Unknown collection: ${name}`
+
+            );
+
+
+        }
+
+
+
+
+
+        return new Collection(
+
+            this,
+
+            name
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Clear
+
+    ==============================================
+    */
+
+
+    clear(){
+
+
+
+        this.data = {};
+
+
+        this.createCollections();
+
+
+        this.save();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Export
+
+    ==============================================
+    */
+
+
+    export(){
+
+
+
+        return JSON.parse(
+
+            JSON.stringify(
+
+                this.data
+
+            )
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Import
+
+    ==============================================
+    */
+
+
+    import(
+        data
+    ){
+
+
+
+        this.data = data;
+
+
+        this.save();
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+class Collection {
+
+
+
+    constructor(
+        database,
+        name
+    ){
+
+
+        this.database = database;
+
+
+        this.name = name;
+
+
+        this.items =
+
+            database.data[name];
+
+
+        this.schema =
+
+            database.schema.collections[name];
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get All
+
+    ==============================================
+    */
+
+
+    getAll(){
+
+
+
+        return [
+
+            ...this.items
+
+        ];
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get By Id
+
+    ==============================================
+    */
+
+
+    getById(
+        id
+    ){
+
+
+
+        return this.items.find(
+
+
+            item =>
+
+
+                item[
+
+                    this.schema.primaryKey
+
+                ]
+
+                ===
+
+                id
+
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Insert
+
+    ==============================================
+    */
+
+
+    insert(
+        data
+    ){
+
+
+
+        const key =
+
+
+            this.schema.primaryKey;
+
+
+
+
+
+        if(!data[key]){
+
+
+            throw new Error(
+
+                "Primary key required"
+
+            );
+
+
+        }
+
+
+
+
+
+        this.items.push(
+
+            data
+
+        );
+
+
+        this.database.save();
+
+
+
+        return data;
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Update
+
+    ==============================================
+    */
+
+
+    update(
+        id,
+
+        data
+    ){
+
+
+
+        const index =
+
+
+            this.items.findIndex(
+
+
+                item =>
+
+
+                item[
+
+                    this.schema.primaryKey
+
+                ]
+
+                ===
+
+                id
+
+
+            );
+
+
+
+
+
+        if(index < 0){
+
+
+            return null;
+
+
+        }
+
+
+
+
+
+        this.items[index] = {
+
+
+            ...
+
+            this.items[index],
+
+
+            ...
+
+            data
+
+
+        };
+
+
+
+
+
+        this.database.save();
+
+
+
+        return this.items[index];
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Delete
+
+    ==============================================
+    */
+
+
+    delete(
+        id
+    ){
+
+
+
+        const index =
+
+
+            this.items.findIndex(
+
+
+                item =>
+
+
+                item[
+
+                    this.schema.primaryKey
+
+                ]
+
+                ===
+
+                id
+
+
+            );
+
+
+
+
+
+        if(index < 0){
+
+
+            return false;
+
+
+        }
+
+
+
+
+
+        this.items.splice(
+
+            index,
+
+            1
+
+        );
+
+
+
+
+
+        this.database.save();
+
+
+
+        return true;
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Where
+
+    ==============================================
+    */
+
+
+    where(
+        condition
+    ){
+
+
+
+        return this.items.filter(
+
+
+            item => {
+
+
+
+                return Object.keys(condition)
+
+                .every(
+
+
+                    key =>
+
+
+                    item[key]
+
+                    ===
+
+                    condition[key]
+
+
+                );
+
+
+            }
+
+
+        );
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+global.Database = Database;
+
+global.Collection = Collection;
 
 
 
