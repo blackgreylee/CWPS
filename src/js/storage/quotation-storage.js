@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.1.7
+ 2.9.8
 
 
  Build:
- Enterprise Procurement Storage
+ Enterprise Quotation Storage Layer
 
 
  Description:
- Quotation Repository Service
+ Supplier Quotation Data Access Layer
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,88 +36,222 @@ class QuotationStorage {
     constructor(){
 
 
-        this.db =
+        this.database =
 
-            new CWPSDatabase();
-
-
-
-        this.storeName =
-
-            "quotations";
+            global.cwpsDatabase;
 
 
-    }
+        this.collection =
 
+            this.database.collection(
 
-
-
-
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        await this.db.open();
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Create
-
-    ==============================================
-    */
-
-
-    async create(
-        quotation
-    ){
-
-
-
-        if(!quotation){
-
-
-            throw new Error(
-
-                "Quotation required"
+                "quotations"
 
             );
 
 
-        }
+    }
 
 
 
 
 
-        return await this.db.add(
+    /*
+    ==============================================
 
-            this.storeName,
+    Get All Quotations
 
-            quotation
+    ==============================================
+    */
+
+
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get By ID
+
+    ==============================================
+    */
+
+
+    getById(
+
+        quotationId
+
+    ){
+
+
+        return this.collection.getById(
+
+            quotationId
 
         );
 
 
     }
 
+
+
+
+
+    /*
+    ==============================================
+
+    Get By Requirement
+
+    ==============================================
+    */
+
+
+    getByRequirement(
+
+        requirementId
+
+    ){
+
+
+        return this.collection.where({
+
+            requirementId
+
+        });
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get By Supplier
+
+    ==============================================
+    */
+
+
+    getBySupplier(
+
+        supplierId
+
+    ){
+
+
+        return this.collection.where({
+
+            supplierId
+
+        });
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Quotation
+
+    ==============================================
+    */
+
+
+    create(
+
+        quotation
+
+    ){
+
+
+        const data = {
+
+
+            ...quotation,
+
+
+            status:
+
+                quotation.status
+
+                ||
+
+                "Draft",
+
+
+            createDate:
+
+                new Date()
+
+                .toISOString()
+
+
+
+        };
+
+
+
+
+
+        return this.collection.insert(
+
+            data
+
+        );
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Create Multiple
+
+    ==============================================
+    */
+
+
+    createMany(
+
+        quotations
+
+    ){
+
+
+        return quotations.map(
+
+            item =>
+
+                this.create(
+
+                    item
+
+                )
+
+        );
+
+
+    }
 
 
 
@@ -133,296 +266,38 @@ class QuotationStorage {
     */
 
 
-    async update(
-        quotation
+    update(
+
+        quotationId,
+
+        data
+
     ){
 
 
 
-        return await this.db.update(
+        return this.collection.update(
 
-            this.storeName,
+            quotationId,
 
-            quotation
+            {
 
-        );
-
-
-    }
+                ...data,
 
 
+                updateDate:
+
+                    new Date()
+
+                    .toISOString()
 
 
-
-
-    /*
-    ==============================================
-
-    Get
-
-    ==============================================
-    */
-
-
-    async get(
-        id
-    ){
-
-
-
-        return await this.db.get(
-
-            this.storeName,
-
-            id
+            }
 
         );
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get All
-
-    ==============================================
-    */
-
-
-    async getAll(){
-
-
-
-        return await this.db.getAll(
-
-            this.storeName
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Project
-
-    ==============================================
-    */
-
-
-    async findByProject(
-        projectId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.projectId === projectId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Requirement
-
-    ==============================================
-    */
-
-
-    async findByRequirement(
-        requirementId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.requirementId === requirementId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Supplier
-
-    ==============================================
-    */
-
-
-    async findBySupplier(
-        supplierId
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.supplierId === supplierId
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Material
-
-    ==============================================
-    */
-
-
-    async findByMaterial(
-        materialCode
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.materialCode === materialCode
-
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find By Status
-
-    ==============================================
-    */
-
-
-    async findByStatus(
-        status
-    ){
-
-
-
-        const list =
-
-
-            await this.getAll();
-
-
-
-
-
-        return list.filter(
-
-            item =>
-
-
-                item.status === status
-
-
-
-        );
-
-
-    }
-
 
 
 
@@ -437,66 +312,28 @@ class QuotationStorage {
     */
 
 
-    async approve(
-        id
+    approve(
+
+        quotationId
+
     ){
 
 
 
-        const item =
+        return this.update(
 
+            quotationId,
 
-            await this.get(id);
+            {
 
+                status:"Approved"
 
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Quotation not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.QuotationStatus.APPROVED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
+            }
 
         );
 
 
     }
-
 
 
 
@@ -511,66 +348,28 @@ class QuotationStorage {
     */
 
 
-    async reject(
-        id
+    reject(
+
+        quotationId
+
     ){
 
 
 
-        const item =
+        return this.update(
 
+            quotationId,
 
-            await this.get(id);
+            {
 
+                status:"Rejected"
 
-
-
-
-        if(!item){
-
-
-            throw new Error(
-
-                "Quotation not found"
-
-            );
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.QuotationStatus.REJECTED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        return await this.update(
-
-            item
+            }
 
         );
 
 
     }
-
 
 
 
@@ -579,63 +378,30 @@ class QuotationStorage {
     /*
     ==============================================
 
-    Version History
-
-    報價修改不可覆蓋
+    Get Approved
 
     ==============================================
     */
 
 
-    async createVersion(
-        quotation
+    getApproved(
+
+        requirementId
+
     ){
 
 
 
-        const version = {
+        return this.collection.where({
 
+            requirementId,
 
+            status:"Approved"
 
-            ...quotation,
-
-
-
-            version:
-
-
-
-                (quotation.version || 0)
-
-                + 1,
-
-
-
-            createdAt:
-
-
-
-                new Date()
-
-                .toISOString()
-
-
-
-        };
-
-
-
-
-
-        return await this.create(
-
-            version
-
-        );
+        });
 
 
     }
-
 
 
 
@@ -644,83 +410,31 @@ class QuotationStorage {
     /*
     ==============================================
 
-    Remove
-
-    Enterprise:
-
-    不刪除，只改狀態
+    Delete
 
     ==============================================
     */
 
 
-    async remove(
-        id
+    delete(
+
+        quotationId
+
     ){
 
 
+        return this.collection.delete(
 
-        const item =
-
-
-            await this.get(id);
-
-
-
-
-
-        if(!item){
-
-
-            return false;
-
-
-        }
-
-
-
-
-
-        item.status =
-
-
-            CWPSTypes.QuotationStatus.REJECTED;
-
-
-
-
-
-        item.updatedAt =
-
-
-            new Date()
-
-            .toISOString();
-
-
-
-
-
-        await this.update(
-
-            item
+            quotationId
 
         );
 
 
-
-
-
-        return true;
-
-
     }
-
 
 
 
 }
-
 
 
 
