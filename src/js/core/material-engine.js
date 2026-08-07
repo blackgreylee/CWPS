@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.2.2
+ 2.9.13
 
 
  Build:
- Enterprise Material Engine Layer
+ Enterprise Material Analysis Engine Layer
 
 
  Description:
- Material Classification & Aggregation Engine
+ Material Business Logic Engine
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,9 +36,15 @@ class MaterialEngine {
     constructor(){
 
 
-        this.bomEngine =
+        this.materialStorage =
 
-            new BOMEngine();
+            new global.MaterialStorage();
+
+
+        this.bomStorage =
+
+            new global.BOMStorage();
+
 
 
     }
@@ -48,20 +53,27 @@ class MaterialEngine {
 
 
 
-
     /*
     ==============================================
 
-    Initialize
+    Get Material
 
     ==============================================
     */
 
 
-    async init(){
+    getMaterial(
+
+        materialId
+
+    ){
 
 
-        await this.bomEngine.init();
+        return this.materialStorage.getById(
+
+            materialId
+
+        );
 
 
     }
@@ -70,20 +82,19 @@ class MaterialEngine {
 
 
 
-
     /*
     ==============================================
 
-    Extract Material Nodes
-
-    從 BOM Tree 找材料
+    Get BOM Materials
 
     ==============================================
     */
 
 
-    async extractMaterials(
+    getBOMMaterials(
+
         versionId
+
     ){
 
 
@@ -91,7 +102,7 @@ class MaterialEngine {
         const nodes =
 
 
-            await this.bomEngine.storage.findByVersion(
+            this.bomStorage.getLeafNodes(
 
                 versionId
 
@@ -105,14 +116,9 @@ class MaterialEngine {
 
             node =>
 
-
-
-                node.type ===
-
-                CWPSTypes.BOMNodeType.MATERIAL
+                node.materialId
 
         );
-
 
 
     }
@@ -121,43 +127,75 @@ class MaterialEngine {
 
 
 
-
     /*
     ==============================================
 
-    Group Materials
-
-    材料分類合併
+    Material Summary
 
     ==============================================
     */
 
 
-    groupMaterials(
-        materials
+    summarize(
+
+        versionId
+
     ){
 
 
 
-        const result={};
+        const nodes =
+
+            this.getBOMMaterials(
+
+                versionId
+
+            );
 
 
 
 
 
-        materials.forEach(
+        const result = {};
 
-            material=>{
+
+
+
+
+        nodes.forEach(
+
+            node => {
+
+
+
+                const material =
+
+                    this.getMaterial(
+
+                        node.materialId
+
+                    );
+
+
+
+
+
+                if(!material){
+
+
+                    return;
+
+
+                }
+
+
 
 
 
                 const key =
 
+                    material.materialId;
 
-
-                    material.materialCode ||
-
-                    material.code;
 
 
 
@@ -166,18 +204,22 @@ class MaterialEngine {
 
 
 
-                    result[key]={
+                    result[key] = {
 
 
+                        materialId:
 
-                        code:key,
+                            material.materialId,
 
 
+                        materialCode:
 
-                        name:
+                            material.materialCode,
 
-                            material.name,
 
+                        materialName:
+
+                            material.materialName,
 
 
                         category:
@@ -185,18 +227,19 @@ class MaterialEngine {
                             material.category,
 
 
+                        quantity:
 
-                        unit:
-
-                            material.unit,
-
+                            0,
 
 
-                        quantity:0,
+                        unitWeight:
+
+                            material.unitWeight || 0,
 
 
+                        weight:
 
-                        items:[]
+                            0
 
 
 
@@ -212,10 +255,9 @@ class MaterialEngine {
                 result[key].quantity +=
 
 
-
                     Number(
 
-                        material.quantity || 0
+                        node.quantity || 0
 
                     );
 
@@ -223,11 +265,12 @@ class MaterialEngine {
 
 
 
-                result[key].items.push(
+                result[key].weight =
 
-                    material
 
-                );
+                    result[key].quantity *
+
+                    result[key].unitWeight;
 
 
 
@@ -252,26 +295,26 @@ class MaterialEngine {
 
 
 
-
     /*
     ==============================================
 
-    Calculate Material Usage
+    Group By Category
 
     ==============================================
     */
 
 
-    async calculateUsage(
+    groupByCategory(
+
         versionId
+
     ){
 
 
 
         const materials =
 
-
-            await this.extractMaterials(
+            this.summarize(
 
                 versionId
 
@@ -281,378 +324,37 @@ class MaterialEngine {
 
 
 
-        return this.groupMaterials(
+        const result = {};
 
-            materials
 
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Find Material By Category
-
-    ==============================================
-    */
-
-
-    filterByCategory(
-        materials,
-        category
-    ){
-
-
-
-        return materials.filter(
-
-            material =>
-
-
-
-                material.category === category
-
-
-        );
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Calculate Weight
-
-    單重分析基礎
-
-    ==============================================
-    */
-
-
-    calculateWeight(
-        material
-    ){
-
-
-
-        const quantity =
-
-
-            Number(
-
-                material.quantity || 0
-
-            );
-
-
-
-        const weight =
-
-
-            Number(
-
-                material.singleWeight || 0
-
-            );
-
-
-
-
-        return {
-
-
-            quantity,
-
-
-            singleWeight:weight,
-
-
-            totalWeight:
-
-
-
-                quantity *
-
-                weight
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Material Summary
-
-    材料統計報表基礎
-
-    ==============================================
-    */
-
-
-    async summary(
-        versionId
-    ){
-
-
-
-        const materials =
-
-
-            await this.calculateUsage(
-
-                versionId
-
-            );
-
-
-
-
-
-        let totalWeight = 0;
 
 
 
         materials.forEach(
 
-            material=>{
+            item => {
 
 
-                totalWeight +=
 
+                if(!result[item.category]){
 
 
-                    this.calculateWeight(
-
-                        material
-
-                    )
-
-                    .totalWeight;
-
-
-
-            }
-
-        );
-
-
-
-
-        return {
-
-
-            count:
-
-                materials.length,
-
-
-
-            materials,
-
-
-
-            totalWeight
-
-
-
-        };
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Compare Material Difference
-
-    ==============================================
-    */
-
-
-    compare(
-        oldMaterials,
-        newMaterials
-    ){
-
-
-
-        const result={
-
-
-
-            added:[],
-
-
-            removed:[],
-
-
-            changed:[]
-
-
-
-        };
-
-
-
-
-        const oldMap={};
-
-        const newMap={};
-
-
-
-
-        oldMaterials.forEach(
-
-            item=>{
-
-
-                oldMap[item.code]=item;
-
-
-            }
-
-        );
-
-
-
-
-        newMaterials.forEach(
-
-            item=>{
-
-
-                newMap[item.code]=item;
-
-
-            }
-
-        );
-
-
-
-
-
-        Object.keys(newMap)
-
-        .forEach(
-
-            code=>{
-
-
-
-                if(!oldMap[code]){
-
-
-
-                    result.added.push(
-
-                        newMap[code]
-
-                    );
-
-
-
-                }
-
-                else if(
-
-
-
-                    oldMap[code].quantity !==
-
-                    newMap[code].quantity
-
-
-
-                ){
-
-
-
-                    result.changed.push(
-
-
-
-                        {
-
-
-                            old:
-
-                                oldMap[code],
-
-
-
-                            new:
-
-                                newMap[code]
-
-
-
-                        }
-
-
-                    );
+                    result[item.category] = [];
 
 
                 }
 
 
 
-            }
-
-        );
 
 
+                result[item.category]
 
+                .push(
 
+                    item
 
-        Object.keys(oldMap)
-
-        .forEach(
-
-            code=>{
-
-
-
-                if(!newMap[code]){
-
-
-
-                    result.removed.push(
-
-                        oldMap[code]
-
-                    );
-
-
-                }
-
+                );
 
 
             }
@@ -666,9 +368,157 @@ class MaterialEngine {
         return result;
 
 
+
     }
 
 
+
+
+
+    /*
+    ==============================================
+
+    Total Weight
+
+    ==============================================
+    */
+
+
+    totalWeight(
+
+        versionId
+
+    ){
+
+
+
+        return this.summarize(
+
+            versionId
+
+        )
+
+        .reduce(
+
+            (sum,item)=>{
+
+
+                return sum +
+
+                Number(
+
+                    item.weight || 0
+
+                );
+
+
+            },
+
+            0
+
+        );
+
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Missing Material Check
+
+    ==============================================
+    */
+
+
+    validate(
+
+        versionId
+
+    ){
+
+
+
+        const nodes =
+
+            this.bomStorage.getLeafNodes(
+
+                versionId
+
+            );
+
+
+
+
+
+        const errors = [];
+
+
+
+
+
+        nodes.forEach(
+
+            node => {
+
+
+
+                if(
+
+                    !node.materialId
+
+                ){
+
+
+
+                    errors.push({
+
+                        nodeId:
+
+                            node.nodeId,
+
+
+                        message:
+
+                            "Material missing"
+
+
+                    });
+
+
+                }
+
+
+
+            }
+
+        );
+
+
+
+
+
+        return {
+
+
+            valid:
+
+                errors.length === 0,
+
+
+            errors
+
+
+
+        };
+
+
+
+    }
 
 
 
