@@ -1,0 +1,234 @@
+{
+    "suppliers": [
+
+        {
+            "id": "S001",
+
+            "code": "SUP-AL-001",
+
+            "name": "台灣鋁業有限公司",
+
+            "category": [
+                "鋁材",
+                "鋁擠型",
+                "鋁板"
+            ],
+
+            "contact": {
+
+                "person": "王先生",
+
+                "phone": "04-12345678",
+
+                "email": "sales@al-test.com"
+
+            },
+
+
+            "address": "台中市工業區",
+
+
+            "status": "Active",
+
+
+            "rating": {
+
+                "quality": 95,
+
+                "delivery": 90,
+
+                "price": 88,
+
+                "service": 92,
+
+                "score": 91.25,
+
+                "grade": "A"
+
+            },
+
+
+            "materials": [
+
+                {
+                    "materialCode": "AL-6063",
+
+                    "materialName": "6063鋁擠型",
+
+                    "unit": "kg",
+
+                    "lastPrice": 280
+
+                },
+
+                {
+                    "materialCode": "AL-6061",
+
+                    "materialName": "6061鋁材",
+
+                    "unit": "kg",
+
+                    "lastPrice": 295
+
+                }
+
+            ],
+
+
+            "createdAt": "2026-08-07T10:10:00"
+
+        },
+
+
+
+        {
+            "id": "S002",
+
+            "code": "SUP-GL-001",
+
+            "name": "明達玻璃有限公司",
+
+
+            "category": [
+
+                "玻璃",
+
+                "複層玻璃"
+
+            ],
+
+
+            "contact": {
+
+                "person": "陳先生",
+
+                "phone": "03-23456789",
+
+                "email": "glass-test@example.com"
+
+            },
+
+
+            "address": "桃園市",
+
+
+            "status": "Active",
+
+
+            "rating": {
+
+                "quality": 92,
+
+                "delivery": 88,
+
+                "price": 85,
+
+                "service": 90,
+
+                "score": 88.75,
+
+                "grade": "A"
+
+            },
+
+
+            "materials": [
+
+                {
+
+                    "materialCode": "GL-001",
+
+                    "materialName": "Low-E玻璃",
+
+                    "unit": "㎡",
+
+                    "lastPrice": 4500
+
+                }
+
+            ],
+
+
+            "createdAt": "2026-08-07T10:12:00"
+
+        },
+
+
+
+        {
+            "id": "S003",
+
+            "code": "SUP-HW-001",
+
+            "name": "精工五金有限公司",
+
+
+            "category": [
+
+                "五金",
+
+                "配件"
+
+            ],
+
+
+            "contact": {
+
+                "person": "林小姐",
+
+                "phone": "02-34567890",
+
+                "email": "hardware-test@example.com"
+
+            },
+
+
+            "address": "新北市",
+
+
+            "status": "Active",
+
+
+            "rating": {
+
+                "quality": 90,
+
+                "delivery": 85,
+
+                "price": 92,
+
+                "service": 88,
+
+                "score": 88.75,
+
+                "grade": "A"
+
+            },
+
+
+            "materials": [
+
+                {
+
+                    "materialCode": "HW-001",
+
+                    "materialName": "不鏽鋼五金件",
+
+                    "unit": "pcs",
+
+                    "lastPrice": 350
+
+                }
+
+            ],
+
+
+            "createdAt": "2026-08-07T10:15:00"
+
+        }
+
+
+
+    ]
+
+}
