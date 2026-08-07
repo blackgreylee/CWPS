@@ -1,0 +1,75 @@
+{
+ "version":"Z05-V1",
+
+ "tree":{
+
+  "code":"Z05",
+
+  "name":"Z05批次",
+
+  "type":"BATCH",
+
+  "children":[
+
+   {
+
+    "code":"AU001",
+
+    "name":"組合圖",
+
+    "type":"ASSEMBLY",
+
+    "children":[
+
+
+     {
+
+      "code":"AC001",
+
+      "name":"小組合圖",
+
+      "type":"SUB_ASSEMBLY",
+
+      "children":[
+
+       {
+
+        "code":"AC001-1",
+
+        "name":"加工件",
+
+        "type":"PART",
+
+        "quantity":4,
+
+        "unit":"pcs"
+
+       },
+
+       {
+
+        "code":"GL001",
+
+        "name":"玻璃",
+
+        "type":"GLASS",
+
+        "quantity":1,
+
+        "unit":"pcs"
+
+       }
+
+      ]
+
+     }
+
+    ]
+
+   }
+
+  ]
+
+ }
+
+}
