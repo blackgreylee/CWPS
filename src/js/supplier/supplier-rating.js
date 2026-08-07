@@ -8,15 +8,15 @@
 
 
  Sprint:
- 2.4.2
+ 2.9.21
 
 
  Build:
- Enterprise Supplier Evaluation Layer
+ Enterprise Supplier Rating Analysis Layer
 
 
  Description:
- Supplier Rating & Evaluation Service
+ Supplier Evaluation System
 
 
 ==================================================
@@ -24,7 +24,6 @@
 
 
 (function(global){
-
 
 "use strict";
 
@@ -37,37 +36,18 @@ class SupplierRating {
     constructor(){
 
 
-        this.storage =
+        this.database =
 
-            new SupplierStorage();
-
-
-    }
+            global.cwpsDatabase;
 
 
+        this.collection =
 
+            this.database.collection(
 
+                "supplierRatings"
 
-
-    /*
-    ==============================================
-
-    Initialize
-
-    ==============================================
-    */
-
-
-    async init(){
-
-
-        if(this.storage.init){
-
-
-            await this.storage.init();
-
-
-        }
+            );
 
 
     }
@@ -76,31 +56,79 @@ class SupplierRating {
 
 
 
-
     /*
     ==============================================
 
-    Create Evaluation
-
-    建立評估紀錄
+    Get All Ratings
 
     ==============================================
     */
 
 
-    async createEvaluation(
-        supplierId,
-        evaluation
+    getAll(){
+
+
+        return this.collection.getAll();
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Get Supplier Ratings
+
+    ==============================================
+    */
+
+
+    getBySupplier(
+
+        supplierId
+
     ){
 
 
 
-        const supplier =
+        return this.collection.where({
+
+            supplierId
+
+        });
 
 
-            await this.storage.get(
+    }
 
-                supplierId
+
+
+
+
+    /*
+    ==============================================
+
+    Create Rating
+
+    ==============================================
+    */
+
+
+    create(
+
+        rating
+
+    ){
+
+
+
+        const score =
+
+            this.calculateScore(
+
+                rating
 
             );
 
@@ -108,59 +136,25 @@ class SupplierRating {
 
 
 
-        if(!supplier){
+        const data = {
 
 
-            throw new Error(
-
-                "Supplier not found"
-
-            );
+            ...rating,
 
 
-        }
+            score,
 
 
+            grade:
 
+                this.getGrade(
 
-
-        supplier.ratings =
-
-
-            supplier.ratings || [];
-
-
-
-
-
-        const record = {
-
-
-
-            ...evaluation,
-
-
-
-            supplierId:
-
-
-                supplierId,
-
-
-
-            totalScore:
-
-
-                this.calculateScore(
-
-                    evaluation
+                    score
 
                 ),
 
 
-
-            createdAt:
-
+            createDate:
 
                 new Date()
 
@@ -174,38 +168,14 @@ class SupplierRating {
 
 
 
-        supplier.ratings.push(
+        return this.collection.insert(
 
-            record
-
-        );
-
-
-
-
-
-        supplier.averageRating =
-
-
-            this.calculateAverage(
-
-                supplier.ratings
-
-            );
-
-
-
-
-
-        return await this.storage.update(
-
-            supplier
+            data
 
         );
 
 
     }
-
 
 
 
@@ -216,50 +186,43 @@ class SupplierRating {
 
     Calculate Score
 
-    計算總分
-
     ==============================================
     */
 
 
     calculateScore(
-        data
+
+        rating
+
     ){
-
-
-
-        const price =
-
-
-            Number(
-
-                data.price || 0
-
-            );
-
-
 
 
 
         const quality =
 
-
             Number(
 
-                data.quality || 0
+                rating.quality || 0
 
             );
 
 
 
-
-
         const delivery =
-
 
             Number(
 
-                data.delivery || 0
+                rating.delivery || 0
+
+            );
+
+
+
+        const price =
+
+            Number(
+
+                rating.price || 0
 
             );
 
@@ -269,10 +232,9 @@ class SupplierRating {
 
         const service =
 
-
             Number(
 
-                data.service || 0
+                rating.service || 0
 
             );
 
@@ -280,24 +242,18 @@ class SupplierRating {
 
 
 
-        return (
+        return Math.round(
 
+            quality * 0.35 +
 
+            delivery * 0.30 +
 
-            price * 0.3 +
-
-
-            quality * 0.3 +
-
-
-            delivery * 0.25 +
-
+            price * 0.20 +
 
             service * 0.15
 
-
-
         );
+
 
 
     }
@@ -306,31 +262,152 @@ class SupplierRating {
 
 
 
-
     /*
     ==============================================
 
-    Average Rating
-
-    平均評分
+    Grade
 
     ==============================================
     */
 
 
-    calculateAverage(
-        ratings
+    getGrade(
+
+        score
+
     ){
 
 
 
-        if(
+        if(score >= 90){
 
-            !ratings ||
 
-            ratings.length === 0
+            return "A";
 
-        ){
+
+        }
+
+
+
+        if(score >= 80){
+
+
+            return "B";
+
+
+        }
+
+
+
+        if(score >= 70){
+
+
+            return "C";
+
+
+        }
+
+
+
+        return "D";
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Latest Rating
+
+    ==============================================
+    */
+
+
+    latest(
+
+        supplierId
+
+    ){
+
+
+
+        const list =
+
+            this.getBySupplier(
+
+                supplierId
+
+            );
+
+
+
+
+
+        return list.sort(
+
+            (a,b)=>{
+
+
+                return new Date(
+
+                    b.createDate
+
+                )
+
+                -
+
+                new Date(
+
+                    a.createDate
+
+                );
+
+
+            }
+
+        )[0];
+
+
+    }
+
+
+
+
+
+    /*
+    ==============================================
+
+    Average Score
+
+    ==============================================
+    */
+
+
+    average(
+
+        supplierId
+
+    ){
+
+
+
+        const list =
+
+            this.getBySupplier(
+
+                supplierId
+
+            );
+
+
+
+
+
+        if(!list.length){
 
 
             return 0;
@@ -342,23 +419,18 @@ class SupplierRating {
 
 
 
-        const total =
+        return Math.round(
 
-
-            ratings.reduce(
+            list.reduce(
 
                 (sum,item)=>{
 
 
-                    return (
+                    return sum +
 
-                        sum +
+                    Number(
 
-                        Number(
-
-                            item.totalScore || 0
-
-                        )
+                        item.score
 
                     );
 
@@ -367,25 +439,14 @@ class SupplierRating {
 
                 0
 
-            );
-
-
-
-
-
-        return Number(
-
-            (
-
-                total /
-
-                ratings.length
-
             )
 
-            .toFixed(2)
+            /
+
+            list.length
 
         );
+
 
 
     }
@@ -394,160 +455,35 @@ class SupplierRating {
 
 
 
-
     /*
     ==============================================
 
-    Get Rating History
+    Delete Rating
 
     ==============================================
     */
 
 
-    async getHistory(
-        supplierId
+    delete(
+
+        ratingId
+
     ){
 
 
 
-        const supplier =
+        return this.collection.delete(
 
-
-            await this.storage.get(
-
-                supplierId
-
-            );
-
-
-
-
-
-        if(!supplier){
-
-
-            return [];
-
-
-        }
-
-
-
-
-
-        return supplier.ratings || [];
-
-
-
-    }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Get Ranking
-
-    供應商排名
-
-    ==============================================
-    */
-
-
-    async ranking(){
-
-
-
-        const suppliers =
-
-
-            await this.storage.getAll();
-
-
-
-
-
-        return suppliers.sort(
-
-            (a,b)=>{
-
-
-                return (
-
-                    Number(
-
-                        b.averageRating || 0
-
-                    )
-
-                    -
-
-                    Number(
-
-                        a.averageRating || 0
-
-                    )
-
-                );
-
-
-            }
+            ratingId
 
         );
 
 
     }
-
-
-
-
-
-
-    /*
-    ==============================================
-
-    Recommend Supplier
-
-    推薦供應商
-
-    ==============================================
-    */
-
-
-    async recommend(
-        limit = 5
-    ){
-
-
-
-        const list =
-
-
-            await this.ranking();
-
-
-
-
-
-        return list.slice(
-
-            0,
-
-            limit
-
-        );
-
-
-    }
-
 
 
 
 }
-
 
 
 
